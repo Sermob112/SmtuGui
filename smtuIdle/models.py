@@ -1,5 +1,6 @@
 from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, FloatField, DateField, ForeignKeyField, ManyToManyField
-
+from datetime import date
+from random import randint, uniform
 import sqlite3
 db = SqliteDatabase('test.db')
 
@@ -34,11 +35,9 @@ class Purchase(BaseModel):
     ApplicationStartDate = DateField(null=True, default="Нет данных", verbose_name="Дата начала заявки")
     ApplicationEndDate = DateField(null=True,  default="Нет данных", verbose_name="Дата окончания заявки")
     AuctionDate = DateField(null=True,  default="Нет данных", verbose_name="Дата аукциона")
-
     # Добавленные поля
     QueryCount = IntegerField(null=True,  default="Нет данных", verbose_name="Количество запросов")
     ResponseCount = IntegerField(null=True,  default="Нет данных", verbose_name="Количество ответов") 
-
     AveragePrice = FloatField(null=True,  default="Нет данных", verbose_name="Среднее значение цены")
     MinPrice = FloatField(null=True,  default="Нет данных", verbose_name="Минимальная цена")
     MaxPrice = FloatField(null=True,  default="Нет данных", verbose_name="Максимальная цена")
@@ -83,3 +82,50 @@ class UserRole(Model):
         database = db
 
 
+db.connect()
+db.create_tables([Purchase])
+
+def add_test_data():
+    for _ in range(10):  # Change this number as needed
+        Purchase.create(
+            PurchaseOrder=f"Order {_}",
+            RegistryNumber=f"Registry {_}",
+            ProcurementMethod=f"Method {_}",
+            PurchaseName=f"Purchase {_}",
+            AuctionSubject=f"Subject {_}",
+            PurchaseIdentificationCode=f"Code {_}",
+            LotNumber=randint(1, 10),
+            LotName=f"Lot {_}",
+            InitialMaxContractPrice=uniform(1000, 10000),
+            Currency="USD",
+            InitialMaxContractPriceInCurrency=uniform(1000, 10000),
+            ContractCurrency="USD",
+            OKDPClassification=f"OKDP {_}",
+            OKPDClassification=f"OKPD {_}",
+            OKPD2Classification=f"OKPD2 {_}",
+            PositionCode=f"Position {_}",
+            CustomerName=f"Customer {_}",
+            ProcurementOrganization=f"Organization {_}",
+            PlacementDate=date.today(),
+            UpdateDate=date.today(),
+            ProcurementStage=f"Stage {_}",
+            ProcurementFeatures=f"Features {_}",
+            ApplicationStartDate=date.today(),
+            ApplicationEndDate=date.today(),
+            AuctionDate=date.today(),
+            QueryCount=randint(1, 10),
+            ResponseCount=randint(1, 10),
+            AveragePrice=uniform(1000, 10000),
+            MinPrice=uniform(1000, 10000),
+            MaxPrice=uniform(1000, 10000),
+            StandardDeviation=uniform(1, 10),
+            CoefficientOfVariation=uniform(0.1, 1),
+            NMCKMarket=uniform(1000, 10000),
+            FinancingLimit=uniform(1000, 10000)
+        )
+
+# Call the function to add test data
+add_test_data()
+
+# Close the database connection
+db.close()
