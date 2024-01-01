@@ -85,47 +85,47 @@ class UserRole(Model):
 db.connect()
 db.create_tables([Purchase])
 
-def add_test_data():
-    for _ in range(10):  # Change this number as needed
-        Purchase.create(
-            PurchaseOrder=f"Order {_}",
-            RegistryNumber=f"Registry {_}",
-            ProcurementMethod=f"Method {_}",
-            PurchaseName=f"Purchase {_}",
-            AuctionSubject=f"Subject {_}",
-            PurchaseIdentificationCode=f"Code {_}",
-            LotNumber=randint(1, 10),
-            LotName=f"Lot {_}",
-            InitialMaxContractPrice=uniform(1000, 10000),
-            Currency="USD",
-            InitialMaxContractPriceInCurrency=uniform(1000, 10000),
-            ContractCurrency="USD",
-            OKDPClassification=f"OKDP {_}",
-            OKPDClassification=f"OKPD {_}",
-            OKPD2Classification=f"OKPD2 {_}",
-            PositionCode=f"Position {_}",
-            CustomerName=f"Customer {_}",
-            ProcurementOrganization=f"Organization {_}",
-            PlacementDate=date.today(),
-            UpdateDate=date.today(),
-            ProcurementStage=f"Stage {_}",
-            ProcurementFeatures=f"Features {_}",
-            ApplicationStartDate=date.today(),
-            ApplicationEndDate=date.today(),
-            AuctionDate=date.today(),
-            QueryCount=randint(1, 10),
-            ResponseCount=randint(1, 10),
-            AveragePrice=uniform(1000, 10000),
-            MinPrice=uniform(1000, 10000),
-            MaxPrice=uniform(1000, 10000),
-            StandardDeviation=uniform(1, 10),
-            CoefficientOfVariation=uniform(0.1, 1),
-            NMCKMarket=uniform(1000, 10000),
-            FinancingLimit=uniform(1000, 10000)
-        )
+# def add_test_data():
+#     for _ in range(10):  # Change this number as needed
+#         Purchase.create(
+#             PurchaseOrder=f"Order {_}",
+#             RegistryNumber=f"Registry {_}",
+#             ProcurementMethod=f"Method {_}",
+#             PurchaseName=f"Purchase {_}",
+#             AuctionSubject=f"Subject {_}",
+#             PurchaseIdentificationCode=f"Code {_}",
+#             LotNumber=randint(1, 10),
+#             LotName=f"Lot {_}",
+#             InitialMaxContractPrice=uniform(1000, 10000),
+#             Currency="USD",
+#             InitialMaxContractPriceInCurrency=uniform(1000, 10000),
+#             ContractCurrency="USD",
+#             OKDPClassification=f"OKDP {_}",
+#             OKPDClassification=f"OKPD {_}",
+#             OKPD2Classification=f"OKPD2 {_}",
+#             PositionCode=f"Position {_}",
+#             CustomerName=f"Customer {_}",
+#             ProcurementOrganization=f"Organization {_}",
+#             PlacementDate=date.today(),
+#             UpdateDate=date.today(),
+#             ProcurementStage=f"Stage {_}",
+#             ProcurementFeatures=f"Features {_}",
+#             ApplicationStartDate=date.today(),
+#             ApplicationEndDate=date.today(),
+#             AuctionDate=date.today(),
+#             QueryCount=randint(1, 10),
+#             ResponseCount=randint(1, 10),
+#             AveragePrice=uniform(1000, 10000),
+#             MinPrice=uniform(1000, 10000),
+#             MaxPrice=uniform(1000, 10000),
+#             StandardDeviation=uniform(1, 10),
+#             CoefficientOfVariation=uniform(0.1, 1),
+#             NMCKMarket=uniform(1000, 10000),
+#             FinancingLimit=uniform(1000, 10000)
+#         )
 
 # Call the function to add test data
-add_test_data()
+# add_test_data()
 
 # Close the database connection
 db.close()

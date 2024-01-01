@@ -5,7 +5,7 @@ from playhouse.shortcuts import model_to_dict
 from PySide6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QPushButton
 from PySide6 import QtCore
 from DBtest import PurchasesWidget
-
+from LoadCsv import CsvLoaderWidget
 
 
 
@@ -110,10 +110,12 @@ class Ui_MainWindow(object):
         # self.tableWidget.setHorizontalHeaderLabels(["Колонка 1", "Колонка 2", "Колонка 3"])
     
         self.purchaseViewer = PurchasesWidget()
-
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
 
+        self.loadCsv = CsvLoaderWidget()
+        layout = QVBoxLayout(self.page3)
+        layout.addWidget(self.loadCsv)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
 
@@ -151,7 +153,7 @@ class Ui_MainWindow(object):
 
     def load_data_into_table(self):
         # Очищаем таблицу перед добавлением новых данных
-        self.tableWidget.clearContents()
+        self.stackedWidget.clearContents()
 
         # Получаем данные из базы данных
         # purchases = Purchase.select().limit(5)  # Пример: загружаем первые 5 записей
