@@ -43,7 +43,7 @@ class PurchasesWidget(QWidget):
         layout.addWidget(self.next_button)
 
         # Получаем данные из базы данных и отображаем первую запись
-        purchases = Purchase.select().limit(10)
+        purchases = Purchase.select()
         self.purchases_list = list(purchases)
         self.show_current_purchase()
 
