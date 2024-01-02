@@ -102,12 +102,6 @@ class Ui_MainWindow(object):
         self.label3 = QtWidgets.QLabel(self.page3)
         self.stackedWidget.addWidget(self.page3)
 
-        # self.tableWidget = QtWidgets.QTableWidget(self.page2)
-        # self.tableWidget.setGeometry(QtCore.QRect(100, 100, 400, 200))
-        # self.tableWidget.setObjectName("tableWidget")
-        # self.tableWidget.setColumnCount(3)
-        # self.tableWidget.setRowCount(5)
-        # self.tableWidget.setHorizontalHeaderLabels(["Колонка 1", "Колонка 2", "Колонка 3"])
     
         self.purchaseViewer = PurchasesWidget()
         layout = QVBoxLayout(self.page2)
@@ -148,12 +142,12 @@ class Ui_MainWindow(object):
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
 
         # Загрузка данных в таблицу при отображении каждой из страниц
-        self.stackedWidget.currentChanged.connect(self.load_data_into_table)
+        # self.stackedWidget.currentChanged.connect(self.load_data_into_table)
 
 
-    def load_data_into_table(self):
-        # Очищаем таблицу перед добавлением новых данных
-        self.stackedWidget.clearContents()
+    # def load_data_into_table(self):
+    #     # Очищаем таблицу перед добавлением новых данных
+    #     self.stackedWidget.clearContents()
 
         # Получаем данные из базы данных
         # purchases = Purchase.select().limit(5)  # Пример: загружаем первые 5 записей
