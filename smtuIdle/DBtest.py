@@ -22,7 +22,7 @@ cursor = db.cursor()
 class PurchasesWidget(QWidget):
     def __init__(self):
         super().__init__()
-
+        self.selected_text = None
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
         self.table.setColumnCount(2)
@@ -60,8 +60,9 @@ class PurchasesWidget(QWidget):
         self.max_data_input = QLineEdit(self)
         self.max_data_input.setPlaceholderText("Формат: дд-мм-гггг")
         self.max_data_input.setFixedWidth(150)
-
-
+         #  кнопка "Сбросить фильтры" 
+        self.reset_filters_button = QPushButton("Сбросить фильтры", self)
+        self.reset_filters_button.clicked.connect(self.resetFilters)
         # Создаем поле ввода для поиска
         
         self.search_input = QLineEdit(self)
@@ -69,9 +70,12 @@ class PurchasesWidget(QWidget):
         self.unique_values_query = self.findUnic()
         completer = QCompleter(self.unique_values_query )
         completer.setCaseSensitivity(Qt.CaseInsensitive)
+
+        completer.activated.connect(self.handleActivated)
         self.search_input.setCompleter(completer)
 
 
+        
         # Создаем макет и добавляем элементы
      
   
@@ -129,7 +133,7 @@ class PurchasesWidget(QWidget):
 
         # Добавляем кнопку "Применить фильтр"
         layout.addWidget(self.apply_filter_button)
-
+        layout.addWidget(self.reset_filters_button)
         # Добавляем таблицу и остальные элементы в макет
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
@@ -252,17 +256,40 @@ class PurchasesWidget(QWidget):
             (Purchase.PlacementDate.between(min_date, max_date) if min_date and max_date else True)
         )
         # Фильтр по законам
-         # Фильтр по законам
+       
         selected_order = self.sort_by_putch_order.currentText()
         if selected_order != "Сортировать по Закону":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.PurchaseOrder == selected_order
             )
+       
+        keyword = self.selected_text
 
+    # Добавляем фильтр по ключевому слову (RegistryNumber)
+        if keyword:
+            purchases_query_combined = purchases_query_combined.where(
+                (Purchase.RegistryNumber.contains(keyword)) |
+                (Purchase.ProcurementOrganization.contains(keyword)) |
+                     (Purchase.RegistryNumber.contains(keyword)) |
+                     (Purchase.CustomerName.contains(keyword))
+            )
+        
         purchases = purchases_query_combined.order_by(order_by)
 
         self.purchases_list = list(purchases)
         self.show_current_purchase()
+
+         # Фильтр по ключевым словам
+        # selected_order_key = str(self.selected_text)
+        # if selected_order_key:
+        #     purchases_query_combined = purchases_query_combined.where(
+        #         (
+        #             (Purchase.PurchaseName == selected_order_key) |
+        #             (Purchase.ProcurementOrganization == selected_order_key) |
+        #             (Purchase.RegistryNumber == selected_order_key) |
+        #             (Purchase.CustomerName == selected_order_key)
+        #         )
+        #     )
 
     def findUnic(self):
             unique_values_list = []
@@ -296,10 +323,33 @@ class PurchasesWidget(QWidget):
                 ])
             unique_values_list = [value for value in unique_values_list if value is not None]
             return unique_values_list
+    def handleActivated(self, text):
+        # Обработка выбора элемента из автозаполнения
+        self.selected_text = text
+
+    def resetFilters(self):
+        # Очищаем все поля ввода
+        self.min_price_input.clear()
+        self.max_price_input.clear()
+        self.min_data_input.clear()
+        self.max_data_input.clear()
+        self.sort_by_putch_order.setCurrentIndex(0)  # Сбрасываем выбранное значение в выпадающем списке
+        self.search_input.clear()
+
+        # Очищаем и снова получаем уникальные значения для автозаполнения
+        self.unique_values_query = self.findUnic()
+        
+        
+        # Возвращаем записи в исходное состояние без применения каких-либо фильтров
+        purchases_query_combined = Purchase.select()
+        self.purchases_list = list(purchases_query_combined)
+        self.show_current_purchase()
+
+        
         
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    csv_loader_widget = PurchasesWidget()
-    csv_loader_widget.show()
-    sys.exit(app.exec())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     csv_loader_widget = PurchasesWidget()
+#     csv_loader_widget.show()
+#     sys.exit(app.exec())
