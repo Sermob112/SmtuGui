@@ -118,7 +118,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.label1.setText("Окно 1")
-        self.label2.setText("Окно 2")
+        # self.label2.setText("Окно 2")
         self.label3.setText("Окно 3")
 
         # Подключение сигналов к слотам
