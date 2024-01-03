@@ -2,6 +2,7 @@ from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, Fl
 from datetime import date
 from random import randint, uniform
 import sqlite3
+import json
 db = SqliteDatabase('test.db')
 
 class BaseModel(Model):
@@ -36,6 +37,7 @@ class Purchase(BaseModel):
     ApplicationEndDate = DateField(null=True,  default="Нет данных", verbose_name="Дата окончания заявки")
     AuctionDate = DateField(null=True,  default="Нет данных", verbose_name="Дата аукциона")
     # Добавленные поля
+    TKPData = CharField(null=True, max_length=500, default="[]", verbose_name="Данные по ТКП")
     QueryCount = IntegerField(null=True,  default="Нет данных", verbose_name="Количество запросов")
     ResponseCount = IntegerField(null=True,  default="Нет данных", verbose_name="Количество ответов") 
     AveragePrice = FloatField(null=True,  default="Нет данных", verbose_name="Среднее значение цены")
@@ -48,9 +50,30 @@ class Purchase(BaseModel):
 
 
 
+class Contract(Model):
+    Id = AutoField(primary_key=True, verbose_name="Идентификатор")
+    TotalApplications = IntegerField(verbose_name="Общее количество заявок", null=True)
+    AdmittedApplications = IntegerField(verbose_name="Общее количество допущенных заявок", null=True)
+    RejectedApplications = IntegerField(verbose_name="Общее количество отклоненных заявок", null=True)
+    PriceProposal = FloatField(verbose_name="Ценовое предложение (по числу ответов), руб.", null=True)
+    Applicant = FloatField(verbose_name="Заявитель (по числу ответов)", null=True)
+    ApplicantStatus = CharField(verbose_name="Статус заявителя (по числу ответов)", max_length=255, default="допущен/отклонен")
+    WinnerExecutor = CharField(verbose_name="Победитель-исполнитель контракта", max_length=255, null=True)
+    ContractingAuthority = CharField(verbose_name="Заказчик по контракту", max_length=255, null=True)
+    ContractIdentifier = CharField(verbose_name="Идентификатор договора", max_length=255, null=True)
+    RegistryNumber = CharField(verbose_name="Реестровый номер договора", max_length=255, null=True)
+    ContractNumber = CharField(verbose_name="№ договора", max_length=255, null=True)
+    StartDate = DateField(verbose_name="Дата начала/подписания", null=True)
+    EndDate = DateField(verbose_name="Дата окончания/исполнения", null=True)
+    ContractPrice = FloatField(verbose_name="Цена договора, руб.", null=True)
+    AdvancePayment = CharField(verbose_name="Размер авансирования, руб./(%)", max_length=255, null=True)
+    ReductionNMC = FloatField(verbose_name="Снижение НМЦК, руб.", null=True)
+    ReductionNMCPercent = FloatField(verbose_name="Снижение НМЦК, %", null=True)
+    SupplierProtocol = CharField(verbose_name="Протоколы определения поставщика (выписка)", max_length=255, null=True)
+    ContractFile = CharField(verbose_name="Договор", max_length=255, null=True)
 
-
-
+    class Meta:
+        database = db  
 
 class User(Model):
     id = AutoField(primary_key=True, verbose_name="Идентификатор")
@@ -85,6 +108,14 @@ class UserRole(Model):
 db.connect()
 db.create_tables([Purchase])
 
+# tkp_data = [
+#     {"ТКП1": 12000},
+#     {"ТКП2": 13000},
+#     {"ТКП3": 15000}
+# ]
+# tkp_data_json = json.dumps(tkp_data)
+# purchase = Purchase(TKPData=tkp_data_json)
+# purchase.save()
 # def add_test_data():
 #     for _ in range(10):  # Change this number as needed
 #         Purchase.create(

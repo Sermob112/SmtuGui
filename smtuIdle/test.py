@@ -2,15 +2,16 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
-from PySide6.QtWidgets import QApplication, QMainWindow, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QPushButton
+from PySide6.QtWidgets import *
 from PySide6 import QtCore
 from DBtest import PurchasesWidget
 from LoadCsv import CsvLoaderWidget
-
+from InsertWidget import InsertWidget
 
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
+        
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(800, 600)
 
@@ -41,21 +42,15 @@ class Ui_MainWindow(object):
         # Статический виджет в правой части
         self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
         self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
-
         self.userLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.userLabel.setText("Пользователь: Заглушка")
         self.rightTopLayout.addWidget(self.userLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.purchaseLabel.setText("Закупок в БД: _______. Дата: _______")
         self.rightTopLayout.addWidget(self.purchaseLabel)
-
         # Добавление виджета в верхний макет
-    
-
         self.topLayout.addWidget(self.rightTopWidget)
-
         self.verticalLayout.addLayout(self.topLayout)
-
         # Общий макет
         self.horizontalLayout = QtWidgets.QHBoxLayout()
 
@@ -73,6 +68,10 @@ class Ui_MainWindow(object):
         self.pushButton3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton3.setObjectName("pushButton3")
         self.leftPanelLayout.addWidget(self.pushButton3)
+
+        self.pushButton4 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton4.setObjectName("pushButton4")
+        self.leftPanelLayout.addWidget(self.pushButton4)
 
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
@@ -102,14 +101,23 @@ class Ui_MainWindow(object):
         self.label3 = QtWidgets.QLabel(self.page3)
         self.stackedWidget.addWidget(self.page3)
 
-    
+        self.page4 = QtWidgets.QWidget()
+        self.label4 = QtWidgets.QLabel(self.page4)
+        self.stackedWidget.addWidget(self.page4)
+
+        #Загрузка виджета БД
         self.purchaseViewer = PurchasesWidget()
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
-
+         #Загрузка виджета CSV
         self.loadCsv = CsvLoaderWidget()
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.loadCsv)
+        
+        #Загрузка виджета ввод данных
+        self.Insert = InsertWidget()
+        layout = QVBoxLayout(self.page4)
+        layout.addWidget(self.Insert)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
 
@@ -117,15 +125,11 @@ class Ui_MainWindow(object):
 
         MainWindow.setCentralWidget(self.centralwidget)
 
-        self.label1.setText("Окно 1")
-        # self.label2.setText("Окно 2")
-        self.label3.setText("Окно 3")
-
         # Подключение сигналов к слотам
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
-
+        self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -135,31 +139,13 @@ class Ui_MainWindow(object):
         self.pushButton1.setText(_translate("MainWindow", "Кнопка 1"))
         self.pushButton2.setText(_translate("MainWindow", "Кнопка 2"))
         self.pushButton3.setText(_translate("MainWindow", "Кнопка 3"))
+        self.pushButton4.setText(_translate("MainWindow", "Кнопка 4"))
 
-        # Добавление обработчиков событий для кнопок переключения страниц
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
+        self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
 
-        # Загрузка данных в таблицу при отображении каждой из страниц
-        # self.stackedWidget.currentChanged.connect(self.load_data_into_table)
-
-
-    # def load_data_into_table(self):
-    #     # Очищаем таблицу перед добавлением новых данных
-    #     self.stackedWidget.clearContents()
-
-        # Получаем данные из базы данных
-        # purchases = Purchase.select().limit(5)  # Пример: загружаем первые 5 записей
-
-        # Заполняем таблицу данными из запроса к базе данных
-        # for row, purchase in enumerate(purchases):
-        #     self.tableWidget.setItem(row, 0, QTableWidgetItem(str(purchase.Id)))
-        #     self.tableWidget.setItem(row, 1, QTableWidgetItem(purchase.PurchaseOrder))
-        #     self.tableWidget.setItem(row, 2, QTableWidgetItem(purchase.AuctionSubject))
-
-    
-    
 
 if __name__ == "__main__":
     import sys
