@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
-import sqlite3
+
 
 
 # Создаем соединение с базой данных
