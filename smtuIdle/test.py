@@ -7,6 +7,7 @@ from PySide6 import QtCore
 from DBtest import PurchasesWidget
 from LoadCsv import CsvLoaderWidget
 from InsertWidget import InsertWidget
+from statisticWidget import StatisticWidget
 
 
 class Ui_MainWindow(object):
@@ -73,6 +74,9 @@ class Ui_MainWindow(object):
         self.pushButton4.setObjectName("pushButton4")
         self.leftPanelLayout.addWidget(self.pushButton4)
 
+        self.pushButton5 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton5.setObjectName("pushButton4")
+        self.leftPanelLayout.addWidget(self.pushButton5)
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
 
@@ -105,6 +109,10 @@ class Ui_MainWindow(object):
         self.label4 = QtWidgets.QLabel(self.page4)
         self.stackedWidget.addWidget(self.page4)
 
+        self.page5 = QtWidgets.QWidget()
+        self.label5 = QtWidgets.QLabel(self.page5)
+        self.stackedWidget.addWidget(self.page5)
+
         #Загрузка виджета БД
         self.purchaseViewer = PurchasesWidget()
         layout = QVBoxLayout(self.page2)
@@ -118,6 +126,10 @@ class Ui_MainWindow(object):
         self.Insert = InsertWidget()
         layout = QVBoxLayout(self.page4)
         layout.addWidget(self.Insert)
+          #Загрузка виджета статистического анализа
+        self.Statistic = StatisticWidget()
+        layout = QVBoxLayout(self.page5)
+        layout.addWidget(self.Statistic)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
 
@@ -130,6 +142,7 @@ class Ui_MainWindow(object):
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
+        self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -140,11 +153,13 @@ class Ui_MainWindow(object):
         self.pushButton2.setText(_translate("MainWindow", "Кнопка 2"))
         self.pushButton3.setText(_translate("MainWindow", "Кнопка 3"))
         self.pushButton4.setText(_translate("MainWindow", "Кнопка 4"))
+        self.pushButton5.setText(_translate("MainWindow", "Кнопка 5"))
 
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
+        self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
 
 
 if __name__ == "__main__":

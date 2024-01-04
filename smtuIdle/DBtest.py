@@ -144,7 +144,7 @@ class PurchasesWidget(QWidget):
         self.show_current_purchase()
     def show_current_purchase(self):
 
-        if self.purchases_list:
+        if len(self.purchases_list) != 0:
             current_purchase = self.purchases_list[self.current_position]
             # Отображаем информацию о текущей записи в лейбле
             self.label.setText(f"Запись {self.current_position + 1} из {len(self.purchases_list)}")
@@ -154,47 +154,48 @@ class PurchasesWidget(QWidget):
             self.label.setText("Нет записей")
         # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)
+        if len(self.purchases_list) != 0:
+            # Получаем текущую запись
+            current_purchase = self.purchases_list[self.current_position]
 
-        # Получаем текущую запись
-        current_purchase = self.purchases_list[self.current_position]
-
-        # Добавляем данные в виде "название поля - значение поля"
-        self.add_row_to_table("Идентификатор", str(current_purchase.Id))
-        self.add_row_to_table("Закон", current_purchase.PurchaseOrder)
-        self.add_row_to_table("Реестровый номер", current_purchase.RegistryNumber)
-        self.add_row_to_table("Метод закупки", current_purchase.ProcurementMethod)
-        self.add_row_to_table("Наименование закупки", current_purchase.PurchaseName)
-        self.add_row_to_table("Предмет аукциона", current_purchase.AuctionSubject)
-        self.add_row_to_table("Код идентификации закупки", current_purchase.PurchaseIdentificationCode)
-        self.add_row_to_table("Номер лота", str(current_purchase.LotNumber))
-        self.add_row_to_table("Наименование лота", current_purchase.LotName)
-        self.add_row_to_table("Начальная максимальная цена контракта", str(current_purchase.InitialMaxContractPrice))
-        self.add_row_to_table("Валюта", current_purchase.Currency)
-        self.add_row_to_table("Начальная максимальная цена контракта в валюте", str(current_purchase.InitialMaxContractPriceInCurrency))
-        self.add_row_to_table("Валюта контракта", current_purchase.ContractCurrency)
-        self.add_row_to_table("Классификация ОКДП", current_purchase.OKDPClassification)
-        self.add_row_to_table("Классификация ОКПД", current_purchase.OKPDClassification)
-        self.add_row_to_table("Классификация ОКПД2", current_purchase.OKPD2Classification)
-        self.add_row_to_table("Код позиции", current_purchase.PositionCode)
-        self.add_row_to_table("Наименование заказчика", current_purchase.CustomerName)
-        self.add_row_to_table("Организация закупки", current_purchase.ProcurementOrganization)
-        self.add_row_to_table("Дата размещения", str(current_purchase.PlacementDate))
-        self.add_row_to_table("Дата обновления", str(current_purchase.UpdateDate))
-        self.add_row_to_table("Этап закупки", current_purchase.ProcurementStage)
-        self.add_row_to_table("Особенности закупки", current_purchase.ProcurementFeatures)
-        self.add_row_to_table("Дата начала заявки", str(current_purchase.ApplicationStartDate))
-        self.add_row_to_table("Дата окончания заявки", str(current_purchase.ApplicationEndDate))
-        self.add_row_to_table("Дата аукциона", str(current_purchase.AuctionDate))
-        self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount))
-        self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount))
-        self.add_row_to_table("Среднее значение цены", str(current_purchase.AveragePrice))
-        self.add_row_to_table("Минимальная цена", str(current_purchase.MinPrice))
-        self.add_row_to_table("Максимальная цена", str(current_purchase.MaxPrice))
-        self.add_row_to_table("Среднее квадратичное отклонение", str(current_purchase.StandardDeviation))
-        self.add_row_to_table("Коэффициент вариации", str(current_purchase.CoefficientOfVariation))
-        self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
-        self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
-       
+            # Добавляем данные в виде "название поля - значение поля"
+            self.add_row_to_table("Идентификатор", str(current_purchase.Id))
+            self.add_row_to_table("Закон", current_purchase.PurchaseOrder)
+            self.add_row_to_table("Реестровый номер", current_purchase.RegistryNumber)
+            self.add_row_to_table("Метод закупки", current_purchase.ProcurementMethod)
+            self.add_row_to_table("Наименование закупки", current_purchase.PurchaseName)
+            self.add_row_to_table("Предмет аукциона", current_purchase.AuctionSubject)
+            self.add_row_to_table("Код идентификации закупки", current_purchase.PurchaseIdentificationCode)
+            self.add_row_to_table("Номер лота", str(current_purchase.LotNumber))
+            self.add_row_to_table("Наименование лота", current_purchase.LotName)
+            self.add_row_to_table("Начальная максимальная цена контракта", str(current_purchase.InitialMaxContractPrice))
+            self.add_row_to_table("Валюта", current_purchase.Currency)
+            self.add_row_to_table("Начальная максимальная цена контракта в валюте", str(current_purchase.InitialMaxContractPriceInCurrency))
+            self.add_row_to_table("Валюта контракта", current_purchase.ContractCurrency)
+            self.add_row_to_table("Классификация ОКДП", current_purchase.OKDPClassification)
+            self.add_row_to_table("Классификация ОКПД", current_purchase.OKPDClassification)
+            self.add_row_to_table("Классификация ОКПД2", current_purchase.OKPD2Classification)
+            self.add_row_to_table("Код позиции", current_purchase.PositionCode)
+            self.add_row_to_table("Наименование заказчика", current_purchase.CustomerName)
+            self.add_row_to_table("Организация закупки", current_purchase.ProcurementOrganization)
+            self.add_row_to_table("Дата размещения", str(current_purchase.PlacementDate))
+            self.add_row_to_table("Дата обновления", str(current_purchase.UpdateDate))
+            self.add_row_to_table("Этап закупки", current_purchase.ProcurementStage)
+            self.add_row_to_table("Особенности закупки", current_purchase.ProcurementFeatures)
+            self.add_row_to_table("Дата начала заявки", str(current_purchase.ApplicationStartDate))
+            self.add_row_to_table("Дата окончания заявки", str(current_purchase.ApplicationEndDate))
+            self.add_row_to_table("Дата аукциона", str(current_purchase.AuctionDate))
+            self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount))
+            self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount))
+            self.add_row_to_table("Среднее значение цены", str(current_purchase.AveragePrice))
+            self.add_row_to_table("Минимальная цена", str(current_purchase.MinPrice))
+            self.add_row_to_table("Максимальная цена", str(current_purchase.MaxPrice))
+            self.add_row_to_table("Среднее квадратичное отклонение", str(current_purchase.StandardDeviation))
+            self.add_row_to_table("Коэффициент вариации", str(current_purchase.CoefficientOfVariation))
+            self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
+            self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
+        else:
+            self.label.setText("Нет записей")
 
     def add_row_to_table(self, label_text, value_text):
         row_position = self.table.rowCount()
@@ -348,8 +349,8 @@ class PurchasesWidget(QWidget):
         
         
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    csv_loader_widget = PurchasesWidget()
+    csv_loader_widget.show()
+    sys.exit(app.exec())
