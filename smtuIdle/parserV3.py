@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import django
 import sqlite3
+from models import Purchase
 # hostname = "localhost"
 # # hostname = "db"
 # username = "postgres"
@@ -714,27 +715,43 @@ def count_total_records():
 # Пример использования
 
 # print(count_total_records())
-        
-
 def delete_records_by_id(record_ids):
     try:
+        # Подключение к базе данных
         connection = connector()
-        cursor = connection.cursor()
-
+         
         # SQL-запрос для удаления записей по Id
-        sql = """
-            DELETE FROM public."SBDsmtu_purchase"
-            WHERE "Id" IN %s
-        """
+        query = Purchase.delete().where(Purchase.Id.in_(record_ids))
+        query.execute()
 
-        cursor.execute(sql, (tuple(record_ids),))
-
-        # Закрытие соединения и сохранение изменений
-        connection.commit()
+        # Закрытие соединения
         connection.close()
 
         return True
 
     except Exception as e:
         print("Ошибка при удалении записей по Id:", e)
-        return False
+        return False     
+# delete_records_by_id([3])
+# def delete_records_by_id(record_ids):
+#     try:
+#         connection = connector()
+#         cursor = connection.cursor()
+
+#         # SQL-запрос для удаления записей по Id
+#         sql = """
+#             DELETE FROM public."SBDsmtu_purchase"
+#             WHERE "Id" IN %s
+#         """
+
+#         cursor.execute(sql, (tuple(record_ids),))
+
+#         # Закрытие соединения и сохранение изменений
+#         connection.commit()
+#         connection.close()
+
+#         return True
+
+#     except Exception as e:
+#         print("Ошибка при удалении записей по Id:", e)
+#         return False
