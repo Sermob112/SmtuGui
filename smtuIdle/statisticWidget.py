@@ -5,7 +5,7 @@ from peewee import *
 import pandas as pd
 from models import Purchase
 
-class PurchasesWidget(QWidget):
+class StatisticWidget(QWidget):
     def __init__(self):
         super().__init__()
 
@@ -13,13 +13,20 @@ class PurchasesWidget(QWidget):
 
     def init_ui(self):
         # Создаем лейбл
-        label_text = "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП"
-        label = QLabel(label_text)
+        self.label_text = "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП"
+        self.label = QLabel(self.label_text)
          # Создаем кнопки "Назад" и "Вперед"
         btn_back = QPushButton("Назад", self)
         btn_forward = QPushButton("Вперед", self)
-        btn_analysis = QPushButton("Анализ", self)
-        btn_analysis.clicked.connect(self.analis)
+        # btn_analysis = QPushButton("Анализ", self)
+
+        btn_back.clicked.connect(self.show_previous_data)
+        btn_forward.clicked.connect(self.show_next_data)
+
+        # Инициализация переменной для отслеживания текущего индекса данных
+        self.current_data_index = 0
+
+        # btn_analysis.clicked.connect(self.analisMAxPrice)
         # Создаем таблицу
         self.table = QTableWidget(self)
         self.table.setColumnCount(4)
@@ -31,38 +38,72 @@ class PurchasesWidget(QWidget):
 
         # Размещаем виджеты в компоновке
         layout = QVBoxLayout(self)
-        layout.addWidget(label)
+        layout.addWidget(self.label)
         layout.addWidget( self.table)
         layout.addWidget(btn_back)
         layout.addWidget(btn_forward)
-        layout.addWidget(btn_analysis)
+        # layout.addWidget(btn_analysis)
+
+          # Список для хранения всех данных, которые вы хотите отобразить в таблице
+        self.all_data = [self.analis(), self.analisMAxPrice()]
+
+        self.label_texts = [
+            "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП",
+            "Уровень цены контракта, заключенного по результатам конкурса"
+        ]
+
+        # Первоначальное отображение данных
+        self.show_current_data()
 
 
         self.setLayout(layout)
 
     def analis(self):
+        #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
         purchases = Purchase.select()
         df = pd.DataFrame([(purchase.ProcurementMethod, purchase.PurchaseOrder) for purchase in purchases], columns=['ProcurementMethod', 'PurchaseOrder'])
         pivot_table = df.pivot_table(index='ProcurementMethod', columns='PurchaseOrder', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
-
+        
         row_totals = pivot_table.sum(axis=1)
         pivot_table['Общий итог'] = row_totals
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
-        print(pivot_table['Общий итог'])
+        # print(total_purchase_counts)
 
-        # Очищаем таблицу перед обновлением
-    #     self.clear_table()
+        return pivot_table, column_sums 
+        # Заполняем таблицу данными
+        # self.populate_table(pivot_table, column_sums)
 
-    #     # Заполняем таблицу данными
-        self.populate_table(pivot_table, column_sums, row_totals)
+        # Уровень цены контракта, заключенного по результатам конкурса
+
+
+    def analisMAxPrice(self):
+        purchases = Purchase.select(Purchase.PurchaseOrder, Purchase.InitialMaxContractPrice)
+
+        # Создаем DataFrame
+        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.InitialMaxContractPrice) for purchase in purchases],
+                        columns=['PurchaseOrder', 'InitialMaxContractPrice'])
+        df['PriceRange'] = df.apply(self.determine_price_range, axis=1)
+        pivot_table = df.pivot_table(index='PriceRange', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        column_sums = pivot_table.sum()
+        row_totals = pivot_table.sum(axis=1)
+        pivot_table['Общий итог'] = row_totals
+        column_sums2 = pivot_table.sum()
+        column_means2 = pivot_table.mean()
+        total_purchase_counts2 = column_sums2.sum()
+        column_sums2['Суммы'] = total_purchase_counts2
+        return pivot_table, column_sums2 
+        # self.populate_table(pivot_table, column_sums2)
+
+
+
 
     def clear_table(self):
         # Очищаем все строки в таблице
         self.table.setRowCount(0)
 
-    def populate_table(self, data, sums, row_totals):
+    def populate_table(self, data, sums):
         # Очищаем таблицу перед обновлением
         self.clear_table()
 
@@ -108,12 +149,36 @@ class PurchasesWidget(QWidget):
             return 'Цена контракта 100 000 - 200 000 тыс.руб.'
         else:
             return 'Менее 100 тыс.руб'
+        
+    def show_current_data(self):
+        # Очистка таблицы перед обновлением
+        self.clear_table()
 
-if __name__ == "__main__":
-    from PySide6.QtWidgets import QApplication
-    import sys
+        # Получение текущих данных
+        current_data = self.all_data[self.current_data_index]
 
-    app = QApplication(sys.argv)
-    window = PurchasesWidget()
-    window.show()
-    sys.exit(app.exec())
+        # Отображение данных в таблице
+        self.populate_table(current_data[0], current_data[1])
+
+    def show_previous_data(self):
+        # Уменьшаем индекс данных, если это возможно
+        if self.current_data_index > 0:
+            self.current_data_index -= 1
+            self.show_current_data()
+            self.label.setText(self.label_texts[self.current_data_index])
+
+    def show_next_data(self):
+        # Увеличиваем индекс данных, если это возможно
+        if self.current_data_index < len(self.all_data) - 1:
+            self.current_data_index += 1
+            self.show_current_data()
+            self.label.setText(self.label_texts[self.current_data_index])
+
+# if __name__ == "__main__":
+#     from PySide6.QtWidgets import QApplication
+#     import sys
+
+#     app = QApplication(sys.argv)
+#     window = StatisticWidget()
+#     window.show()
+#     sys.exit(app.exec())
