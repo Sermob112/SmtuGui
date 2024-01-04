@@ -107,7 +107,7 @@ class UserRole(Model):
 
 db.connect()
 db.create_tables([Purchase])
-
+db.create_tables([Contract])
 # tkp_data = [
 #     {"ТКП1": 12000},
 #     {"ТКП2": 13000},
