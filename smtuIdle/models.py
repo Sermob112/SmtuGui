@@ -105,9 +105,9 @@ class UserRole(Model):
         database = db
 
 
-db.connect()
-db.create_tables([Purchase])
-db.create_tables([Contract])
+# db.connect()
+# db.create_tables([Purchase])
+# db.create_tables([Contract])
 # tkp_data = [
 #     {"ТКП1": 12000},
 #     {"ТКП2": 13000},
@@ -159,4 +159,4 @@ db.create_tables([Contract])
 # add_test_data()
 
 # Close the database connection
-db.close()
+# db.close()
