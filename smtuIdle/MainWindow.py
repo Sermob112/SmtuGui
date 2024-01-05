@@ -6,7 +6,7 @@ from PySide6.QtWidgets import *
 from PySide6 import QtCore
 from DBtest import PurchasesWidget
 from LoadCsv import CsvLoaderWidget
-from InsertWidget import InsertWidget
+from InsertWidgetNMCK import InsertWidgetNMCK
 from statisticWidget import StatisticWidget
 
 
@@ -126,7 +126,7 @@ class Ui_MainWindow(object):
         layout.addWidget(self.loadCsv)
         
         #Загрузка виджета ввод данных
-        self.Insert = InsertWidget()
+        self.Insert = InsertWidgetNMCK()
         layout = QVBoxLayout(self.page4)
         layout.addWidget(self.Insert)
           #Загрузка виджета статистического анализа
@@ -165,11 +165,11 @@ class Ui_MainWindow(object):
         self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
 
 
-# if __name__ == "__main__":
-#     import sys
-#     app = QtWidgets.QApplication(sys.argv)
-#     MainWindow = QtWidgets.QMainWindow()
-#     ui = Ui_MainWindow()
-#     ui.setupUi(MainWindow)
-#     MainWindow.show()
-#     sys.exit(app.exec())
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec())
