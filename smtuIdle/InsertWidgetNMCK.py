@@ -10,7 +10,7 @@ import statistics
 import pandas as pd
 db = SqliteDatabase('test.db')
 
-class InsertWidget(QWidget):
+class InsertWidgetNMCK(QWidget):
     def __init__(self):
         super().__init__()
         self.tkp_data = {}
@@ -19,6 +19,7 @@ class InsertWidget(QWidget):
         label2 = QLabel("Количество запросов ТКП:")
         label3 = QLabel("Количество ответов ТКП:")
         label4 = QLabel("Лимит финансирования, руб.:")
+
 
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
@@ -29,13 +30,6 @@ class InsertWidget(QWidget):
         self.edit3 = QLineEdit(self)
         self.edit3.setValidator(QIntValidator())
 
-      
-        
-        # Создаем кнопку "Добавить ТКП"
-      
-        # self.add_tkp_button.clicked.connect(self.update_fields)
-
-        # Создаем горизонтальные контейнеры для каждой строки
         layout1 = QVBoxLayout(self)
         layout2 = QHBoxLayout(self)
         layout3 = QHBoxLayout(self)
@@ -60,11 +54,6 @@ class InsertWidget(QWidget):
         layout1.addLayout(layout3)
         layout1.addLayout(layout4)
 
-        # Добавляем кнопку в отдельный контейнер и добавляем его в основной контейнер
-        # layout5.addWidget(self.add_tkp_button)
-        # layout1.addLayout(layout5)
-
-        # Создаем форму для будущих полей ввода
         self.form_layout = QFormLayout()
         layout1.addLayout(self.form_layout)
 
@@ -121,6 +110,7 @@ class InsertWidget(QWidget):
                             MaxPrice = max_tkp if max_tkp else 0,
                             StandardDeviation = standard_deviation if standard_deviation else 0,
                             CoefficientOfVariation = cv if cv else 0,
+                            NMCKMarket = avg_tkp if avg_tkp else 0,
                             )
         try:
             # Попытка сохранения данных
@@ -142,7 +132,7 @@ class InsertWidget(QWidget):
 
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
-#     window = MyWidget()
+#     window = InsertWidgetNMCK()
 #     window.show()
 #     sys.exit(app.exec())
         
