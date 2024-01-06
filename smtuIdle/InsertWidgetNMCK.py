@@ -11,9 +11,11 @@ import pandas as pd
 db = SqliteDatabase('test.db')
 
 class InsertWidgetNMCK(QWidget):
-    def __init__(self):
+    def __init__(self,purchase_id):
+        
         super().__init__()
         self.tkp_data = {}
+        self.purchase_id = purchase_id
         # Создаем лейблы
         label1 = QLabel("1. Ввод данных - Метод сопоставимых рыночных цен (анализ рынка)")
         label2 = QLabel("Количество запросов ТКП:")
@@ -54,7 +56,7 @@ class InsertWidgetNMCK(QWidget):
         layout1.addLayout(layout3)
         layout1.addLayout(layout4)
 
-        self.form_layout = QFormLayout()
+        self.form_layout = QVBoxLayout()
         layout1.addLayout(self.form_layout)
 
         self.setLayout(layout1)
@@ -63,20 +65,19 @@ class InsertWidgetNMCK(QWidget):
         num_fields = int(self.edit1.text())
 
         # Удаляем все существующие поля ввода из формы
-        for i in reversed(range(self.form_layout.count())):
-            item = self.form_layout.itemAt(i)
-            item.widget().setParent(None)
+        self.clear_layout(self.form_layout)
 
         # Создаем и добавляем новые поля ввода в форму
         for i in range(num_fields):
-            label = QLabel(f"ТКП {i + 1}:")
+            label = QLabel(f"Ценовое предложение №{i + 1}:")
             edit = QLineEdit(self)
             edit.setValidator(QIntValidator())
-            self.form_layout.addRow(label, edit)
+            self.form_layout.addWidget(label)
+            self.form_layout.addWidget(edit)
             # key = f"ТКП {i + 1}"
             # self.tkp_data[key] = int(edit.text()) if edit.text() else 0
         self.add_tkp_button = QPushButton("Добавить ТКП")
-        self.form_layout.addRow(self.add_tkp_button)
+        self.form_layout.addWidget(self.add_tkp_button)
         self.add_tkp_button.clicked.connect(self.save_tkp_data)
         self.update()
     def save_tkp_data(self):
@@ -85,9 +86,9 @@ class InsertWidgetNMCK(QWidget):
         self.tkp_data = {}
 
         # Заполняем словарь данными из динамических полей
-        for i in range(self.form_layout.rowCount() - 1):  # -1, чтобы не включать кнопку
-            key = f"ТКП {i + 1}"
-            edit = self.form_layout.itemAt(i, QFormLayout.FieldRole).widget()
+        for i in range(0,self.form_layout.count() - 1,2):  # -1, чтобы не включать кнопку
+            key = f"ТКП {i}"
+            edit = self.form_layout.itemAt(i+1).widget()
             self.tkp_data[key] = int(edit.text()) if edit.text() else 0
 
         tkp_json = json.dumps(self.tkp_data,ensure_ascii=False)
@@ -101,7 +102,8 @@ class InsertWidgetNMCK(QWidget):
                 cv = (standard_deviation / avg_tkp) * 100
      
         
-        purchase = Purchase(TKPData=tkp_json,
+        purchase = Purchase.update(
+                            TKPData=tkp_json,
                             QueryCount=int(self.edit1.text()) if self.edit1.text() else 0,
                             ResponseCount=int(self.edit2.text()) if self.edit2.text() else 0,
                             FinancingLimit=int(self.edit3.text()) if self.edit3.text() else 0,
@@ -111,10 +113,11 @@ class InsertWidgetNMCK(QWidget):
                             StandardDeviation = standard_deviation if standard_deviation else 0,
                             CoefficientOfVariation = cv if cv else 0,
                             NMCKMarket = avg_tkp if avg_tkp else 0,
-                            )
+                            ).where(Purchase.Id == self.purchase_id)
         try:
             # Попытка сохранения данных
-            purchase.save()
+            purchase.execute()
+        
             db.close()
 
             # Выводим сообщение об успешном сохранении
@@ -124,6 +127,13 @@ class InsertWidgetNMCK(QWidget):
             # Выводим сообщение об ошибке
             self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
         # print("ТКПData сохранены:", tkp_json)
+    def clear_layout(self,layout):
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
     def show_message(self, title, message):
         msg_box = QMessageBox()
         msg_box.setWindowTitle(title)

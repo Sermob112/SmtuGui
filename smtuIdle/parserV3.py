@@ -722,6 +722,9 @@ def delete_records_by_id(record_ids):
          
         # SQL-запрос для удаления записей по Id
         query = Purchase.delete().where(Purchase.Id.in_(record_ids))
+        for record_id in record_ids:
+            purchase = Purchase.get(Purchase.Id == record_id)
+            purchase.delete_instance(recursive=True)
         query.execute()
 
         # Закрытие соединения

@@ -11,9 +11,10 @@ import pandas as pd
 db = SqliteDatabase('test.db')
 
 class InsertWidgetContract(QWidget):
-    def __init__(self):
+    def __init__(self, purchase_id):
         super().__init__()
         self.tkp_data = {}
+        self.purchase_id = purchase_id
         # Создаем лейблы
         label1 = QLabel("Ввод данных по заявкам")
         label2 = QLabel("Количество заявок на участие в закупке:")
@@ -123,7 +124,12 @@ class InsertWidgetContract(QWidget):
         price_proposal_json = json.dumps(self.price_proposal,ensure_ascii=False)
         applicant_json = json.dumps(self.applicant,ensure_ascii=False)
         status_json = json.dumps(self.status,ensure_ascii=False)
-        contract = Contract(PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
+        contract = Contract(purchase=self.purchase_id,
+                            TotalApplications=int(self.edit1.text()) if self.edit1.text() else 0,
+                            AdmittedApplications=int(self.edit2.text()) if self.edit2.text() else 0,
+                            RejectedApplications=int(self.edit3.text()) if self.edit3.text() else 0,
+                            
+                            PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
        
         try:
             # Попытка сохранения данных
@@ -143,9 +149,9 @@ class InsertWidgetContract(QWidget):
         msg_box.setText(message)
         msg_box.exec()
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = InsertWidgetContract()
-    window.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     window = InsertWidgetContract()
+#     window.show()
+#     sys.exit(app.exec())
         
