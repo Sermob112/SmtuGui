@@ -16,11 +16,25 @@ class InsertWidgetContract(QWidget):
         self.tkp_data = {}
         self.purchase_id = purchase_id
         # Создаем лейблы
+
+        
         label1 = QLabel("Ввод данных по заявкам")
         label2 = QLabel("Количество заявок на участие в закупке:")
         label3 = QLabel("Количество допущенных заявок на участие в закупке:")
         label4 = QLabel("Количество отклоненных заявок на участие в закупке:")
-      
+        label5 = QLabel("Победитель-исполнитель контракта:")
+        label6 = QLabel("Заказчик по контракту:")
+        label7 = QLabel("Идентификатор договора:")
+        label8 = QLabel("Реестровый номер договора:")
+        label9 = QLabel("№ договора:")
+        label10 = QLabel("Дата начала/подписания:")
+        label11 = QLabel("Дата окончания/исполнения:")
+        label12 = QLabel("Цена договора, руб.:")
+        label13 = QLabel("Размер авансирования, руб./(%)")
+        label14 = QLabel("Снижение НМЦК, руб.:")
+        label15 = QLabel("Снижение НМЦК, %:")
+        label16 = QLabel("Протоколы определения поставщика (выписка):")
+        label17 = QLabel("Договор:")
 
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
@@ -30,12 +44,43 @@ class InsertWidgetContract(QWidget):
         self.edit2.setValidator(QIntValidator())
         self.edit3 = QLineEdit(self)
         self.edit3.setValidator(QIntValidator())
+        self.WinnerExecutor = QLineEdit(self)
+        self.ContractingAuthority = QLineEdit(self)
+        self.ContractIdentifier = QLineEdit(self)
+        self.RegistryNumber = QLineEdit(self)
+        self.ContractNumber = QLineEdit(self)
+        self.StartDate = QDateEdit(self)
+        self.EndDate = QDateEdit(self)
+        self.ContractPrice = QLineEdit(self)
+        self.ContractPrice.setValidator(QIntValidator())
+        self.AdvancePayment = QLineEdit(self)
+        self.AdvancePayment.setValidator(QDoubleValidator())
+        self.ReductionNMC = QLineEdit(self)
+        self.ReductionNMC.setValidator(QIntValidator())
+        self.ReductionNMCPercent = QLineEdit(self)
+        self.ReductionNMCPercent.setValidator(QDoubleValidator())
+        self.SupplierProtocol = QLineEdit(self)
+        self.ContractFile = QLineEdit(self)
+      
 
         self.layout1 = QVBoxLayout(self)
         layout2 = QHBoxLayout(self)
         layout3 = QHBoxLayout(self)
         layout4 = QHBoxLayout(self)
-    
+        layout5 = QHBoxLayout(self)
+        layout6 = QHBoxLayout(self)
+        layout7 = QHBoxLayout(self)
+        layout8 = QHBoxLayout(self)
+        layout9 = QHBoxLayout(self)
+        layout10 = QHBoxLayout(self)
+        layout11 = QHBoxLayout(self)
+        layout12 = QHBoxLayout(self)
+        layout13 = QHBoxLayout(self)
+        layout14 = QHBoxLayout(self)
+        layout15 = QHBoxLayout(self)
+        layout16 = QHBoxLayout(self)
+        layout17 = QHBoxLayout(self)
+
         layout2.addWidget(label2)
         layout2.addWidget(self.edit1)
         
@@ -47,11 +92,65 @@ class InsertWidgetContract(QWidget):
         layout4.addWidget(label4)
         layout4.addWidget(self.edit3)
 
+        layout5.addWidget(label5)
+        layout5.addWidget(self.WinnerExecutor)
+
+        layout6.addWidget(label6)
+        layout6.addWidget(self.ContractingAuthority)
+
+        layout7.addWidget(label7)
+        layout7.addWidget(self.ContractIdentifier)
+
+        layout7.addWidget(label8)
+        layout7.addWidget(self.RegistryNumber)
+
+        layout8.addWidget(label9)
+        layout8.addWidget(self.ContractNumber)
+        
+        layout9.addWidget(label10)
+        layout9.addWidget(self.StartDate)
+
+        layout11.addWidget(label11)
+        layout11.addWidget(self.EndDate)
+
+        layout12.addWidget(label12)
+        layout12.addWidget(self.ContractPrice)
+
+        layout13.addWidget(label13)
+        layout13.addWidget(self.AdvancePayment)
+
+        layout14.addWidget(label14)
+        layout14.addWidget(self.ReductionNMC)
+
+        layout15.addWidget(label15)
+        layout15.addWidget(self.ReductionNMCPercent)
+
+        layout16.addWidget(label16)
+        layout16.addWidget(self.SupplierProtocol)
+
+        layout17.addWidget(label17)
+        layout17.addWidget(self.ContractFile)
+
         # Добавляем все строки в вертикальный контейнер
         self.layout1.addWidget(label1)
         self.layout1.addLayout(layout2)
         self.layout1.addLayout(layout3)
         self.layout1.addLayout(layout4)
+
+        self.layout1.addLayout(layout5)
+        self.layout1.addLayout(layout6)
+        self.layout1.addLayout(layout7)
+        self.layout1.addLayout(layout8)
+        self.layout1.addLayout(layout9)
+        self.layout1.addLayout(layout10)
+        self.layout1.addLayout(layout11)
+        self.layout1.addLayout(layout12)
+        self.layout1.addLayout(layout13)
+        self.layout1.addLayout(layout14)
+        self.layout1.addLayout(layout15)
+        self.layout1.addLayout(layout16)
+        self.layout1.addLayout(layout17)
+       
        
         self.form_layout = QVBoxLayout ()
         self.layout1.addLayout(self.form_layout)
@@ -128,7 +227,19 @@ class InsertWidgetContract(QWidget):
                             TotalApplications=int(self.edit1.text()) if self.edit1.text() else 0,
                             AdmittedApplications=int(self.edit2.text()) if self.edit2.text() else 0,
                             RejectedApplications=int(self.edit3.text()) if self.edit3.text() else 0,
-                            
+                            WinnerExecutor=self.WinnerExecutor.text() if self.WinnerExecutor.text() else 0,
+                            ContractingAuthority=self.ContractingAuthority.text() if self.ContractingAuthority.text() else 0,
+                            ContractIdentifier=self.ContractIdentifier.text() if self.ContractIdentifier.text() else 0,
+                            RegistryNumber=self.RegistryNumber.text() if self.RegistryNumber.text() else 0,
+                            ContractNumber=self.ContractNumber.text() if self.ContractNumber.text() else 0,
+                            StartDate=self.StartDate.text() if self.StartDate.text() else 0,
+                            EndDate=self.EndDate.text() if self.EndDate.text() else 0,
+                            ContractPrice=int(self.ContractPrice.text()) if self.ContractPrice.text() else 0,
+                            AdvancePayment=float(self.AdvancePayment.text()) if self.AdvancePayment.text() else 0,
+                            ReductionNMC=int(self.ReductionNMC.text()) if self.ReductionNMC.text() else 0,
+                            ReductionNMCPercent=float(self.ReductionNMCPercent.text()) if self.ReductionNMCPercent.text() else 0,
+                            SupplierProtocol=self.SupplierProtocol.text() if self.SupplierProtocol.text() else 0,
+                            ContractFile=self.ContractFile.text() if self.ContractFile.text() else 0,
                             PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
        
         try:
@@ -149,9 +260,9 @@ class InsertWidgetContract(QWidget):
         msg_box.setText(message)
         msg_box.exec()
 
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     window = InsertWidgetContract()
-#     window.show()
-#     sys.exit(app.exec())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = InsertWidgetContract(3)
+    window.show()
+    sys.exit(app.exec())
         
