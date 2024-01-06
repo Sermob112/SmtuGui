@@ -47,7 +47,10 @@ class Purchase(BaseModel):
     CoefficientOfVariation = FloatField(null=True,  default="Нет данных", verbose_name="Коэффициент вариации")
     NMCKMarket = FloatField(null=True,  default="Нет данных", verbose_name="НМЦК рыночная")
     FinancingLimit = FloatField(null=True, default="Нет данных", verbose_name="Лимит финансирования")
-
+    def delete_instance(self, *args, **kwargs):
+        # Добавьте каскадное удаление перед вызовом delete_instance
+        Contract.delete().where(Contract.purchase == self).execute()
+        super(Purchase, self).delete_instance(*args, **kwargs)
 
 
 class Contract(Model):
@@ -72,7 +75,7 @@ class Contract(Model):
     ReductionNMCPercent = FloatField(verbose_name="Снижение НМЦК, %", null=True)
     SupplierProtocol = CharField(verbose_name="Протоколы определения поставщика (выписка)", max_length=255, null=True)
     ContractFile = CharField(verbose_name="Договор", max_length=255, null=True)
-
+    purchase = ForeignKeyField(Purchase,on_delete='CASCADE', verbose_name="Закупка")
     class Meta:
         database = db  
 

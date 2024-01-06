@@ -1,12 +1,13 @@
-from PySide6.QtWidgets import QApplication, QCompleter,QMainWindow,QLabel,QLineEdit,QComboBox, QTableWidget,QHBoxLayout, QTableWidgetItem, QVBoxLayout, QWidget,QPushButton,QHeaderView
+from PySide6.QtWidgets import QApplication, QMessageBox, QCompleter,QMainWindow,QLabel,QLineEdit,QComboBox, QTableWidget,QHBoxLayout, QTableWidgetItem, QVBoxLayout, QWidget,QPushButton,QHeaderView
 from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
 from datetime import date
-from models import Purchase
-from PySide6.QtCore import Qt, QStringListModel
-import sys
-
-
+from models import Purchase, Contract
+from PySide6.QtCore import Qt, QStringListModel,Signal
+import sys, json
+from InsertWidgetContract import InsertWidgetContract
+from InsertWidgetNMCK import InsertWidgetNMCK
+from parserV3 import delete_records_by_id
 from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
@@ -22,6 +23,7 @@ cursor = db.cursor()
 class PurchasesWidget(QWidget):
     def __init__(self):
         super().__init__()
+        remove_success_signal = Signal()
         self.selected_text = None
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
@@ -73,24 +75,22 @@ class PurchasesWidget(QWidget):
 
         completer.activated.connect(self.handleActivated)
         self.search_input.setCompleter(completer)
-
-
-        
-        # Создаем макет и добавляем элементы
-     
-  
-       
-
         # Устанавливаем автозавершение для поля ввода
         self.search_input.setCompleter(completer)
-       
-
-        # Создаем автозавершение
-     
         # Создаем кнопки для навигации
         self.prev_button = QPushButton("Назад", self)
         self.next_button = QPushButton("Вперед", self)
 
+
+        # Создаем кнопки для навигации
+        self.addButtonContract = QPushButton("Добавить итог закупки", self)
+        self.addButtonTKP = QPushButton("Добавить ТКП", self)
+        self.removeButton = QPushButton("Удалить", self)
+
+         # Устанавливаем обработчики событий для кнопок
+        self.addButtonContract.clicked.connect(self.add_button_contract_clicked)
+        self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
+        self.removeButton.clicked.connect(self.remove_button_clicked)
          # Создаем метку
         self.label = QLabel("Текущая запись:", self)
         # Устанавливаем обработчики событий для кнопок
@@ -107,6 +107,13 @@ class PurchasesWidget(QWidget):
         button_layout.addWidget(self.prev_button)
         button_layout.addWidget(self.label)
         button_layout.addWidget(self.next_button)
+
+        # Создаем горизонтальный макет и добавляем элементы
+        button_layout2 = QHBoxLayout()
+    
+        button_layout2.addWidget(self.addButtonContract)
+        button_layout2.addWidget(self.addButtonTKP)
+        button_layout2.addWidget(self.removeButton)
 
        # Создаем горизонтальный макет и добавляем элементы
         layout = QVBoxLayout(self)
@@ -137,7 +144,7 @@ class PurchasesWidget(QWidget):
         # Добавляем таблицу и остальные элементы в макет
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
-
+        layout.addLayout(button_layout2)
         # Получаем данные из базы данных и отображаем первую запись
         purchases = Purchase.select()
         self.purchases_list = list(purchases)
@@ -156,7 +163,7 @@ class PurchasesWidget(QWidget):
         self.table.setRowCount(0)
         if len(self.purchases_list) != 0:
             # Получаем текущую запись
-            current_purchase = self.purchases_list[self.current_position]
+            self.current_purchase = self.purchases_list[self.current_position]
 
             # Добавляем данные в виде "название поля - значение поля"
             self.add_row_to_table("Идентификатор", str(current_purchase.Id))
@@ -194,6 +201,16 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Коэффициент вариации", str(current_purchase.CoefficientOfVariation))
             self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
             self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
+
+            # Получаем связанные записи из модели Contract
+            contracts = Contract.select().where(Contract.purchase == current_purchase)
+            for contract in contracts:
+                self.add_row_to_table("Общее количество заявок", str(contract.TotalApplications))
+                self.add_row_to_table("Общее количество допущенных заявок", str(contract.AdmittedApplications))
+                self.add_row_to_table("Общее количество отклоненных заявок", str(contract.RejectedApplications))
+                price_proposal_dict = json.loads(contract.PriceProposal)
+                for key, value in price_proposal_dict.items():
+                    self.add_row_to_table(key, str(value))
         else:
             self.label.setText("Нет записей")
 
@@ -346,11 +363,49 @@ class PurchasesWidget(QWidget):
         self.purchases_list = list(purchases_query_combined)
         self.show_current_purchase()
 
+    def add_button_contract_clicked(self):
+        
+        if len(self.purchases_list) != 0:
+            self.current_purchase = self.purchases_list[self.current_position]
+            purchase_id = self.current_purchase.Id
+            self.insert_cont = InsertWidgetContract(purchase_id)
+            self.insert_cont.show()
+        print(purchase_id)
+
+    def add_button_tkp_clicked(self):
+        if len(self.purchases_list) != 0:
+            self.current_purchase = self.purchases_list[self.current_position]
+            purchase_id = self.current_purchase.Id
+            self.insert_cont = InsertWidgetNMCK(purchase_id)
+            self.insert_cont.show()
+            
+     
+
+    def remove_button_clicked(self):
+        reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            if self.current_purchase.Id:
+                success = delete_records_by_id([self.current_purchase.Id])
+                if success:
+                    QMessageBox.information(self, "Успех", "Вы успешно удалили запись!")
+                    self.resetFilters()
+                else:
+                    QMessageBox.information(self,"Ошибка", "Ошибка при удалении записей")
+                    
+                  
+        else:
+            pass
+      
+           
         
         
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec())
+        
+        
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    csv_loader_widget = PurchasesWidget()
+    csv_loader_widget.show()
+    sys.exit(app.exec())
