@@ -234,11 +234,11 @@ class StatisticWidget(QWidget):
         pivot_table_max_price, column_sums_max_price = self.analisMAxPrice()
         self.save_to_excel_combined(pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, 'путь_к_вашему_файлу_комбинированный.xlsx')
 
-if __name__ == "__main__":
-    from PySide6.QtWidgets import QApplication
-    import sys
+# if __name__ == "__main__":
+#     from PySide6.QtWidgets import QApplication
+#     import sys
 
-    app = QApplication(sys.argv)
-    window = StatisticWidget()
-    window.show()
-    sys.exit(app.exec())
+#     app = QApplication(sys.argv)
+#     window = StatisticWidget()
+#     window.show()
+#     sys.exit(app.exec())
