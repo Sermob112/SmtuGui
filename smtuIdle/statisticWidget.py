@@ -5,6 +5,7 @@ from peewee import *
 import pandas as pd
 from models import Purchase
 
+
 class StatisticWidget(QWidget):
     def __init__(self):
         super().__init__()
@@ -18,10 +19,12 @@ class StatisticWidget(QWidget):
          # Создаем кнопки "Назад" и "Вперед"
         btn_back = QPushButton("Назад", self)
         btn_forward = QPushButton("Вперед", self)
+        self.toExcel = QPushButton("Экспорт в Excel", self)
         # btn_analysis = QPushButton("Анализ", self)
 
         btn_back.clicked.connect(self.show_previous_data)
         btn_forward.clicked.connect(self.show_next_data)
+        self.toExcel.clicked.connect(self.export_to_excel_clicked)
 
         # Инициализация переменной для отслеживания текущего индекса данных
         self.current_data_index = 0
@@ -38,10 +41,15 @@ class StatisticWidget(QWidget):
 
         # Размещаем виджеты в компоновке
         layout = QVBoxLayout(self)
+        button_layout = QHBoxLayout(self)
+        button_layout2 = QHBoxLayout(self)
         layout.addWidget(self.label)
         layout.addWidget( self.table)
-        layout.addWidget(btn_back)
-        layout.addWidget(btn_forward)
+        button_layout.addWidget(btn_back)
+        button_layout.addWidget(btn_forward)
+        button_layout2.addWidget(self.toExcel )
+        layout.addLayout(button_layout)
+        layout.addLayout(button_layout2)
         # layout.addWidget(btn_analysis)
 
           # Список для хранения всех данных, которые вы хотите отобразить в таблице
@@ -69,14 +77,9 @@ class StatisticWidget(QWidget):
         pivot_table['Общий итог'] = row_totals
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
-        # print(total_purchase_counts)
 
         return pivot_table, column_sums 
-        # Заполняем таблицу данными
-        # self.populate_table(pivot_table, column_sums)
-
-        # Уровень цены контракта, заключенного по результатам конкурса
-
+      
 
     def analisMAxPrice(self):
         purchases = Purchase.select(Purchase.PurchaseOrder, Purchase.InitialMaxContractPrice)
@@ -97,7 +100,59 @@ class StatisticWidget(QWidget):
         # self.populate_table(pivot_table, column_sums2)
 
 
+    def save_to_excel(self, pivot_table, column_sums, output_excel_path):
+        excel_df = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table.columns) + ['Суммы'])
 
+        for method, row in pivot_table.iterrows():
+            excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
+
+        excel_df = pd.concat([excel_df, pd.DataFrame([['Суммы'] + list(column_sums) + [column_sums['Суммы']]], columns=excel_df.columns)])
+
+        data_to_export = {'Методы закупок': excel_df}
+
+        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+            for sheet_name, df in data_to_export.items():
+                df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    def save_to_excel_max_price(self, pivot_table, column_sums, output_excel_path):
+        excel_df = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table.columns) + ['Суммы'])
+
+        for method, row in pivot_table.iterrows():
+            excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
+
+        # Ensure that the number of columns matches
+        column_sums_row = ['Суммы'] + list(column_sums) + [column_sums['Суммы']]
+        if len(column_sums_row) == len(excel_df.columns):
+            excel_df = pd.concat([excel_df, pd.DataFrame([column_sums_row], columns=excel_df.columns)])
+
+        data_to_export = {'Уровень цены контракта': excel_df}
+
+        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+            for sheet_name, df in data_to_export.items():
+                df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    def save_to_excel_combined(self, pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, output_excel_path):
+        excel_df_purchase = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table_purchase.columns) + ['Суммы'])
+
+        for method, row in pivot_table_purchase.iterrows():
+            excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_purchase.columns)])
+
+        excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([['Суммы'] + list(column_sums_purchase) + [column_sums_purchase['Суммы']]], columns=excel_df_purchase.columns)])
+
+        excel_df_max_price = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table_max_price.columns) + ['Суммы'])
+
+        for method, row in pivot_table_max_price.iterrows():
+            excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_max_price.columns)])
+
+        column_sums_max_price_row = ['Суммы'] + list(column_sums_max_price) + [column_sums_max_price['Суммы']]
+        if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
+            excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
+
+        data_to_export = {'Методы закупок': excel_df_purchase, 'Уровень цены контракта': excel_df_max_price}
+
+        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+            for sheet_name, df in data_to_export.items():
+                df.to_excel(writer, sheet_name=sheet_name, index=False)
 
     def clear_table(self):
         # Очищаем все строки в таблице
@@ -174,11 +229,16 @@ class StatisticWidget(QWidget):
             self.show_current_data()
             self.label.setText(self.label_texts[self.current_data_index])
 
-# if __name__ == "__main__":
-#     from PySide6.QtWidgets import QApplication
-#     import sys
+    def export_to_excel_clicked(self ):
+        pivot_table_purchase, column_sums_purchase = self.analis()
+        pivot_table_max_price, column_sums_max_price = self.analisMAxPrice()
+        self.save_to_excel_combined(pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, 'путь_к_вашему_файлу_комбинированный.xlsx')
 
-#     app = QApplication(sys.argv)
-#     window = StatisticWidget()
-#     window.show()
-#     sys.exit(app.exec())
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QApplication
+    import sys
+
+    app = QApplication(sys.argv)
+    window = StatisticWidget()
+    window.show()
+    sys.exit(app.exec())
