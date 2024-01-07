@@ -563,7 +563,7 @@ def export_to_excel(data, output_excel_path, filters):
         # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
         filter_df.fillna('', inplace=True)
         # Создайте DataFrame с данными
-        data_df = pd.DataFrame(data, columns=[
+        data_df = pd.DataFrame(data, columns=["Id",
              "PurchaseOrder", "RegistryNumber", "ProcurementMethod", "PurchaseName",
                  "AuctionSubject", "PurchaseIdentificationCode", "LotNumber", "LotName",
                  "InitialMaxContractPrice", "Currency", "InitialMaxContractPriceInCurrency", 
@@ -571,11 +571,13 @@ def export_to_excel(data, output_excel_path, filters):
                  "OKPD2Classification", "PositionCode", "CustomerName", "ProcurementOrganization",
                  "PlacementDate", "UpdateDate", "ProcurementStage", "ProcurementFeatures",
                 "ApplicationStartDate", "ApplicationEndDate", "AuctionDate","QueryCount","ResponseCount",
-                "AveragePrice","MinPrice","MaxPrice","StandardDeviation","CoefficientOfVariation","additional_info",
+                "AveragePrice","MinPrice","MaxPrice","StandardDeviation","CoefficientOfVariation","TKPData","NMCKMarket",
+                "FinancingLimit",
         ])
 
         # Создайте словарь для перевода названий столбцов
         column_translation = {
+            "Id":"Номер",
         "PurchaseOrder": "Закон",
         "RegistryNumber": "Реестровый Номер",
         "ProcurementMethod": "Метод Закупки",
@@ -608,8 +610,9 @@ def export_to_excel(data, output_excel_path, filters):
         "MaxPrice":"Максимальная цена",
         "StandardDeviation":"Среднее квадратичное отклонение",
         "CoefficientOfVariation":"Коэффициент вариации",
-        'additional_info':"ТКП",
-
+        "TKPData":"ТКП",
+        "NMCKMarket":"Цена рыночная",
+        "FinancingLimit":"Лимит финансирования",
     }
 
         filter_df.rename(columns=filter_column_translation, inplace=True)
