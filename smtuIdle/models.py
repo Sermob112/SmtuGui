@@ -74,7 +74,8 @@ class Contract(Model):
     ReductionNMCPercent = FloatField(verbose_name="Снижение НМЦК, %", null=True)
     SupplierProtocol = CharField(verbose_name="Протоколы определения поставщика (выписка)", max_length=255, null=True)
     ContractFile = CharField(verbose_name="Договор", max_length=255, null=True)
-    purchase = ForeignKeyField(Purchase,on_delete='CASCADE', verbose_name="Закупка")
+    purchase = ForeignKeyField(Purchase,on_delete='CASCADE',  backref='contract', unique=True, verbose_name="Закупка")
+    # purchase = ForeignKeyField(Purchase,on_delete='CASCADE', verbose_name="Закупка")
     class Meta:
         database = db  
 

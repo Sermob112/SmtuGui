@@ -126,9 +126,9 @@ class Ui_MainWindow(object):
         layout.addWidget(self.loadCsv)
         
         #Загрузка виджета ввод данных
-        self.Insert = InsertWidgetNMCK()
-        layout = QVBoxLayout(self.page4)
-        layout.addWidget(self.Insert)
+        # self.Insert = InsertWidgetNMCK()
+        # layout = QVBoxLayout(self.page4)
+        # layout.addWidget(self.Insert)
           #Загрузка виджета статистического анализа
         self.Statistic = StatisticWidget()
         layout = QVBoxLayout(self.page5)
