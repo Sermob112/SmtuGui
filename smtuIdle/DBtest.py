@@ -151,12 +151,12 @@ class PurchasesWidget(QWidget):
         layout.addLayout(button_layout2)
         layout.addLayout(button_layout3)
         # Получаем данные из базы данных и отображаем первую запись
-        # self.purchases = Purchase.select()
-        self.purchases = (Purchase
-                .select()
-                .join(Contract, JOIN.LEFT_OUTER)
-                  # Уточните условия, если нужно
-                )
+        self.purchases = Purchase.select()
+        # self.purchases = (Purchase
+        #         .select()
+        #         .join(Contract, JOIN.LEFT_OUTER)
+        #           # Уточните условия, если нужно
+        #         )
         # combined_list = (Purchase
         #         .select()
         #         .join(Contract, JOIN.LEFT_OUTER)
@@ -313,79 +313,12 @@ class PurchasesWidget(QWidget):
         
         self.purchases = purchases_query_combined.order_by(order_by)
  
-        self.purchases = (self.purchases 
-                        .select()
-                        .join(Contract, JOIN.LEFT_OUTER))
 
         self.purchases_list = list(self.purchases)
        
         self.show_current_purchase()
 
-    # def apply_filter(self):
-    #     self.selected_option = self.sort_options.currentText()
-
-    #     if  self.selected_option == "Сортировать по возрастанию цены":
-    #         order_by = Purchase.InitialMaxContractPrice
-    #     elif  self.selected_option == "Сортировать по убыванию цены":
-    #         order_by = Purchase.InitialMaxContractPrice.desc()
-    #     elif  self.selected_option == "Сортировать по Дате (Убывание)":
-    #         order_by = Purchase.PlacementDate.desc()
-    #     elif  self.selected_option == "Сортировать по Дате (возростание)":
-    #         order_by = Purchase.PlacementDate
   
-
-    #     # Получаем минимальную и максимальную цены из полей ввода
-    #     self.min_price = float(self.min_price_input.text()) if self.min_price_input.text() else float('-inf')
-    #     self.max_price = float(self.max_price_input.text()) if self.max_price_input.text() else float('inf')
-
-    #     min_date_str = self.min_data_input.text()
-    #     max_date_str = self.max_data_input.text()
-
-    #     self.min_date = datetime.strptime(min_date_str, '%d-%m-%Y').date() if min_date_str else None
-    #     self.max_date = datetime.strptime(max_date_str, '%d-%m-%Y').date() if max_date_str else None
-        
-    #     # Выполняем запрос с фильтрацией по диапазону цен и сортировкой
-    #     # Фильтр по цене
-    #     purchases = Purchase.select().where(
-    #         (Purchase.InitialMaxContractPrice.between(self.min_price, self.max_price))
-    #     ).order_by(order_by)
-    #     # Фильтр по дате
-    #     if  self.min_date and  self.max_date:
-    #         purchases = purchases.where(
-    #             (Purchase.PlacementDate.between( self.min_date,  self.max_date))
-    #         )
-
-    #     # Фильтр по цене и дате
-    #     purchases_query_combined = Purchase.select().where(
-    #         (Purchase.InitialMaxContractPrice.between(self.min_price, self.max_price)) &
-    #         (Purchase.PlacementDate.between( self.min_date,  self.max_date) if  self.min_date and  self.max_date else True)
-    #     )
-    #     # Фильтр по законам
-       
-    #     self.selected_order = self.sort_by_putch_order.currentText()
-    #     if  self.selected_order != "Сортировать по Закону":
-    #         purchases_query_combined = purchases_query_combined.where(
-    #             Purchase.PurchaseOrder ==  self.selected_order
-    #         )
-       
-    #     keyword = self.selected_text
-
-    # # Добавляем фильтр по ключевому слову (RegistryNumber)
-    #     if keyword:
-    #         purchases_query_combined = purchases_query_combined.where(
-    #             (Purchase.RegistryNumber.contains(keyword)) |
-    #             (Purchase.ProcurementOrganization.contains(keyword)) |
-    #                  (Purchase.RegistryNumber.contains(keyword)) |
-    #                  (Purchase.CustomerName.contains(keyword))
-    #         )
-        
-    #     self.purchases = purchases_query_combined.order_by(order_by)
-
-
-
-    #     self.purchases_list = list(self.purchases)
-       
-    #     self.show_current_purchase()
 
 
 
@@ -505,11 +438,18 @@ class PurchasesWidget(QWidget):
         #         .join(Contract, JOIN.LEFT_OUTER).execute())
         # lister = list(self.purchases)
         # print(list(self.purchases))
-        query = Purchase.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER)
-        for purchase in query:
-            print("Purchase Order:", purchase.PurchaseOrder)
-            print("Contract Total Applications:", purchase.contract.TotalApplications)
-       
+        
+        # query = Purchase.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER)
+        # for purchase in query:
+        #     print("Purchase Order:", purchase.PurchaseOrder)
+        #     print("Contract Total Applications:", purchase.contract.TotalApplications)
+        query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+
+        # Теперь вы можете использовать этот запрос для получения объединенных данных
+        # for result in query:
+        #     print("Purchase Order:", result.PurchaseOrder)
+        #     tk = result.contract.TotalApplications if result.contract.TotalApplications is not None else None
+        #     print("Contract Total Applications:",tk)
 
         
 
@@ -523,7 +463,7 @@ class PurchasesWidget(QWidget):
         # self.dataContract = list(self.contracts.tuples()) 
         # self.data = [purchase.tuples() for purchase in self.purchases]
         # self.data = list(self.purchases.dicts())
-        self.data = list(self.purchases.tuples())
+        self.data = list(query.tuples())
         # combined_data = [(*purchase_data, *contract_data) for purchase_data, contract_data in zip(self.data, self.dataContract)]
     
         export_to_excel( self.data ,"путь_к_вашему_файлу.xlsx",filters=filters )

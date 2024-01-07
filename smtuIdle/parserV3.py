@@ -562,8 +562,9 @@ def export_to_excel(data, output_excel_path, filters):
 }
         # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
         filter_df.fillna('', inplace=True)
+        selected_data = [tuple[:56] for tuple in data]
         # Создайте DataFrame с данными
-        data_df = pd.DataFrame(data, columns=["Id",
+        data_df = pd.DataFrame(selected_data, columns=["Id",
              "PurchaseOrder", "RegistryNumber", "ProcurementMethod", "PurchaseName",
                  "AuctionSubject", "PurchaseIdentificationCode", "LotNumber", "LotName",
                  "InitialMaxContractPrice", "Currency", "InitialMaxContractPriceInCurrency", 
@@ -572,7 +573,12 @@ def export_to_excel(data, output_excel_path, filters):
                  "PlacementDate", "UpdateDate", "ProcurementStage", "ProcurementFeatures",
                 "ApplicationStartDate", "ApplicationEndDate", "AuctionDate","QueryCount","ResponseCount",
                 "AveragePrice","MinPrice","MaxPrice","StandardDeviation","CoefficientOfVariation","TKPData","NMCKMarket",
-                "FinancingLimit",
+                "FinancingLimit","conId",
+                 "TotalApplications", "AdmittedApplications", "RejectedApplications",
+                "PriceProposal", "Applicant", "Applicant_satatus", "WinnerExecutor",
+                "ContractingAuthority", "ContractIdentifier", "RegistryNumber_contract",
+                "ContractNumber", "StartDate", "EndDate", "ContractPrice", "AdvancePayment",
+                "ReductionNMC", "ReductionNMCPercent", "SupplierProtocol", "ContractFile",
         ])
 
         # Создайте словарь для перевода названий столбцов
@@ -613,6 +619,26 @@ def export_to_excel(data, output_excel_path, filters):
         "TKPData":"ТКП",
         "NMCKMarket":"Цена рыночная",
         "FinancingLimit":"Лимит финансирования",
+        "TotalApplications": "Общее количество заявок",
+        "conId":"Номер контракта",
+        "AdmittedApplications": "Общее количество допущенных заявок",
+        "RejectedApplications": "Общее количество отклоненных заявок",
+        "PriceProposal": "Ценовое предложение",
+        "Applicant": "Заявитель",
+        "Applicant_status": "Статус заявителя",
+        "WinnerExecutor": "Победитель-исполнитель контракта",
+        "ContractingAuthority": "Заказчик по контракту",
+        "ContractIdentifier": "Идентификатор договора",
+        "RegistryNumber_contract": "Реестровый номер договора",
+        "ContractNumber": "№ договора",
+        "StartDate": "Дата начала/подписания",
+        "EndDate": "Дата окончания/исполнения",
+        "ContractPrice": "Цена договора, руб.",
+        "AdvancePayment": "Размер авансирования, руб./(%)",
+        "ReductionNMC": "Снижение НМЦК, руб.",
+        "ReductionNMCPercent": "Снижение НМЦК, %",
+        "SupplierProtocol": "Протоколы определения поставщика (выписка)",
+        "ContractFile": "Договор",
     }
 
         filter_df.rename(columns=filter_column_translation, inplace=True)
