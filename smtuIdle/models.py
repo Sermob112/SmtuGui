@@ -47,6 +47,7 @@ class Purchase(BaseModel):
     CoefficientOfVariation = FloatField(null=True,  default="Нет данных", verbose_name="Коэффициент вариации")
     NMCKMarket = FloatField(null=True,  default="Нет данных", verbose_name="НМЦК рыночная")
     FinancingLimit = FloatField(null=True, default="Нет данных", verbose_name="Лимит финансирования")
+    PurchaseStatus = CharField(null=True, max_length=500, default="[]", verbose_name="Статус закупки")
     def delete_instance(self, *args, **kwargs):
         # Добавьте каскадное удаление перед вызовом delete_instance
         Contract.delete().where(Contract.purchase == self).execute()
