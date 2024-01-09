@@ -53,12 +53,18 @@ class StatisticWidget(QWidget):
         # layout.addWidget(btn_analysis)
 
           # Список для хранения всех данных, которые вы хотите отобразить в таблице
-        self.all_data = [self.analis(), self.analisMAxPrice(),self.analisCoeffVar()]
+        self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
+                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),self.analisNMCKReduce()]
 
         self.label_texts = [
             "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП",
+            "Анализ формулировок, применяемых государственными заказчиками, при объявлении закупки",
             "Уровень цены контракта, заключенного по результатам конкурса",
             "Диапазон значений коэффициента вариации при определении НМЦК и ЦКЕП",
+            "Количество заявок на участие в закупке",
+            "Количество допущенных заявок на участие в закупке",
+            "Количество отклоненных заявок на участие в закупке",
+            "Соотношение НМЦК и ЦКЕП и цены контракта, заключенного по результатам конкурса",
         ]
 
         # Первоначальное отображение данных
@@ -66,6 +72,7 @@ class StatisticWidget(QWidget):
 
 
         self.setLayout(layout)
+        self.analisQueryCount()
         # self.analisPriceCount()
         
 
@@ -122,6 +129,19 @@ class StatisticWidget(QWidget):
         column_sums['Суммы'] = total_purchase_counts
 
         return pivot_table, column_sums 
+    def analisNMSK(self):
+        #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
+        purchases = Purchase.select()
+        df = pd.DataFrame([(purchase.AuctionSubject, purchase.PurchaseOrder) for purchase in purchases], columns=['AuctionSubject', 'PurchaseOrder'])
+        pivot_table = df.pivot_table(index='AuctionSubject', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        column_sums = pivot_table.sum()
+        
+        row_totals = pivot_table.sum(axis=1)
+        pivot_table['Общий итог'] = row_totals
+        total_purchase_counts = column_sums.sum()
+        column_sums['Суммы'] = total_purchase_counts
+
+        return pivot_table, column_sums
       
 
     def analisMAxPrice(self):
@@ -180,8 +200,79 @@ class StatisticWidget(QWidget):
         column_means2 = pivot_table.mean()
         total_purchase_counts2 = column_sums2.sum()
         column_sums2['Суммы'] = total_purchase_counts2
-       
         return pivot_table, column_sums2 
+    
+    def analisNMCKReduce(self):
+       
+        coeff_range_order = [
+        'Цена контракта совпадает с НМЦК и ЦКЕП',
+        'Цена контракта ниже НМЦК и ЦКЕП на 0-1%',
+        'Цена контракта ниже НМЦК и ЦКЕП на 1-5%',
+        'Цена контракта ниже НМЦК и ЦКЕП на 5-10%',
+        'Цена контракта ниже НМЦК и ЦКЕП на 10-20%',
+        'Цена контракта ниже НМЦК и ЦКЕП более 20%',
+
+    ]
+        # Создаем DataFrame
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.ReductionNMC).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.ReductionNMC.is_null(False))
+        t = list(query)
+        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.ReductionNMC) for purchase in t], columns=['PurchaseOrder', 'ReductionNMC'])
+        df['ReductionNMC'] = df.apply(self.determine_NMCK_range, axis=1)
+        df['ReductionNMC'] = pd.Categorical(df['ReductionNMC'], categories=coeff_range_order, ordered=True)
+        df = df.sort_values('ReductionNMC')
+        pivot_table = df.pivot_table(index='ReductionNMC', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        column_sums = pivot_table.sum()
+        row_totals = pivot_table.sum(axis=1)
+        pivot_table['Общий итог'] = row_totals
+        column_sums2 = pivot_table.sum()
+        column_means2 = pivot_table.mean()
+        total_purchase_counts2 = column_sums2.sum()
+        column_sums2['Суммы'] = total_purchase_counts2
+        return pivot_table, column_sums2
+    
+    def analisQueryCount(self):
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.TotalApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+        t = list(query)
+        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.TotalApplications) for purchase in t], columns=['PurchaseOrder', 'TotalApplications'])
+        pivot_table = df.pivot_table(index='TotalApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        column_sums = pivot_table.sum()
+        
+        row_totals = pivot_table.sum(axis=1)
+        pivot_table['Общий итог'] = row_totals
+        total_purchase_counts = column_sums.sum()
+        column_sums['Суммы'] = total_purchase_counts
+        # print(pivot_table)
+        return pivot_table, column_sums
+
+    def analisQueryCountAccept(self):
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.AdmittedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+        t = list(query)
+        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.AdmittedApplications) for purchase in t], columns=['PurchaseOrder', 'AdmittedApplications'])
+        pivot_table = df.pivot_table(index='AdmittedApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        column_sums = pivot_table.sum()
+        
+        row_totals = pivot_table.sum(axis=1)
+        pivot_table['Общий итог'] = row_totals
+        total_purchase_counts = column_sums.sum()
+        column_sums['Суммы'] = total_purchase_counts
+        # print(pivot_table)
+        return pivot_table, column_sums
+
+    def analisQueryCountDecline(self):
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.RejectedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+        t = list(query)
+        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.RejectedApplications) for purchase in t], columns=['PurchaseOrder', 'RejectedApplications'])
+        pivot_table = df.pivot_table(index='RejectedApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        column_sums = pivot_table.sum()
+        
+        row_totals = pivot_table.sum(axis=1)
+        pivot_table['Общий итог'] = row_totals
+        total_purchase_counts = column_sums.sum()
+        column_sums['Суммы'] = total_purchase_counts
+        # print(pivot_table)
+        return pivot_table, column_sums
+
+
 
 
     def save_to_excel(self, pivot_table, column_sums, output_excel_path):
@@ -272,6 +363,20 @@ class StatisticWidget(QWidget):
         sum_value_total = sums.get('№223-ФЗ', 0) + sums.get('№44-ФЗ', 0)
         self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
 
+    def determine_NMCK_range(self,row):
+    
+        if row['ReductionNMC'] * 100 == 0:
+            return 'Цена контракта совпадает с НМЦК и ЦКЕП'
+        elif 0 <= row['ReductionNMC'] * 100 <= 1:
+            return 'Цена контракта ниже НМЦК и ЦКЕП на 0-1%'
+        elif 1 <= row['ReductionNMC'] * 100 <= 5:
+            return 'Цена контракта ниже НМЦК и ЦКЕП на 1-5%'
+        elif 5 <= row['ReductionNMC'] * 100<= 10:
+            return 'Цена контракта ниже НМЦК и ЦКЕП на 5-10%'
+        elif 10 <= row['ReductionNMC'] * 100<= 20:
+            return 'Цена контракта ниже НМЦК и ЦКЕП на 10-20%'
+        else:
+            return 'Цена контракта ниже НМЦК и ЦКЕП более 20%'
         
     def determine_var_range(self,row):
         if row['CoefficientOfVariation'] * 100 == 0:
