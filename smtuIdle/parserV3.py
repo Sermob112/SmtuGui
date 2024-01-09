@@ -237,9 +237,10 @@ def insert_in_table_full(csv_file_path):
                 FinancingLimit = float(row[30]) if row[30] else 0
                 PurchaseStatus = row[31][:max_length] if row[31] else 'Нет данных'
                 ############## CONTRACTS###############
-                TotalApplications = int(row[32]) if row[32] else 0
-                AdmittedApplications = int(row[33]) if row[33] else 0
-                RejectedApplications = int(row[34]) if row[34] else 0
+                TotalApplications = row[32] if row[32] else 0
+                AdmittedApplications = row[33] if row[33] else 0
+                RejectedApplications = row[34] if row[34] else 0
+               
                 
 
                 price_proposal_dict = {}
@@ -279,7 +280,7 @@ def insert_in_table_full(csv_file_path):
                 ContractIdentifier = row[55] if row[55] else 0
                 RegistryNumber = row[56] if row[56] else 0
                 ContractNumber = row[57] if row[57] else 0
-                ContractPrice = int(row[58]) if row[58] else 0
+                ContractPrice = row[58] if row[58] else 0
                  
                 StartDate = row[59]
                 try:
@@ -294,7 +295,7 @@ def insert_in_table_full(csv_file_path):
                     endDate = None
                 AdvancePayment = float(row[61]) if row[61] else 0
                 ReductionNMCPercent = float(row[62]) if row[62] else 0
-                
+                ReductionNMC  = float(row[68]) if row[68]  else None
               # Вставка данных в таблицу purchase
                 sql = """
      
@@ -334,16 +335,16 @@ def insert_in_table_full(csv_file_path):
                            TotalApplications,AdmittedApplications,RejectedApplications,PriceProposal,Applicant,
                            Applicant_satatus,purchase_id,ContractingAuthority,WinnerExecutor,
                            ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,StartDate,
-                            EndDate,AdvancePayment,ReductionNMCPercent
+                            EndDate,AdvancePayment,ReductionNMCPercent,ReductionNMC
                     )
-                    VALUES (?, ?, ?, ?, ?, ?,? , ?, ?, ?, ?, ?, ?,?, ?, ?, ? )
+                    VALUES (?, ?, ?, ?, ?, ?,? , ?, ?, ?, ?, ?, ?,?, ?, ?, ? ,?)
             """
                 
                 dataContracts = (
                     TotalApplications,AdmittedApplications,RejectedApplications,price_proposal_json,applicant_json,
                            applicant_status_json,purchase_id,ContractingAuthority,WinnerExecutor,
                            ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,startDate,
-                            endDate,AdvancePayment,ReductionNMCPercent
+                            endDate,AdvancePayment,ReductionNMCPercent,ReductionNMC
 
                      )
                 cursor.execute(sql, data)
