@@ -54,7 +54,8 @@ class StatisticWidget(QWidget):
 
           # Список для хранения всех данных, которые вы хотите отобразить в таблице
         self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
-                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),self.analisNMCKReduce()]
+                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),
+                         self.analisNMCKReduce(),self.analyze_price_count()]
 
         self.label_texts = [
             "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП",
@@ -65,6 +66,7 @@ class StatisticWidget(QWidget):
             "Количество допущенных заявок на участие в закупке",
             "Количество отклоненных заявок на участие в закупке",
             "Соотношение НМЦК и ЦКЕП и цены контракта, заключенного по результатам конкурса",
+            "Анализ количества ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка"
         ]
 
         # Первоначальное отображение данных
@@ -74,46 +76,107 @@ class StatisticWidget(QWidget):
         self.setLayout(layout)
         self.analisQueryCount()
         # self.analisPriceCount()
+        # self.analyze_price_count()
         
+    def analyze_price_count(self):
+        coeff_range_order = [
+            'Ценовое предложение №1',
+            'Ценовое предложение №2',
+            'Ценовое предложение №3',
+            'Ценовое предложение №4',
+            'Ценовое предложение №5',
+            'Ценовое предложение №6',
+        ]
 
-
-    def analisPriceCount(self):
-        #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
         query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-        t = list(query)
-        # print(len(t))
-        price_proposals_dict = {}
-        i = 0
-        for purchase in t:  # Используйте t, а не query
+        data = list(query)
+        df_data = []
+
+        for purchase in data:
+            try:
+                price_proposal_dict = json.loads(purchase.contract.PriceProposal)
+            except json.JSONDecodeError:
+                continue  # Пропустить запись, если JSON не может быть разобран
+
+            row_data = [purchase.PurchaseOrder]
+            for key in coeff_range_order:
+                value = price_proposal_dict.get(key, "")
+                row_data.append(self.count_non_empty_values({key: value}))
+
+            df_data.append(row_data)
+
+        df_columns = ['PurchaseOrder'] + coeff_range_order
+        df = pd.DataFrame(df_data, columns=df_columns)
+
+        # Создание сводной таблицы
+        pivot_table = df.pivot_table(index='PurchaseOrder', aggfunc='sum', fill_value=0)
+        # Суммы по строкам и столбцам
+        transposed_table = pivot_table.T
+        row_totals = transposed_table.sum(axis=1)
+        transposed_table['Общий итог'] = row_totals
+        column_sums = transposed_table.sum()
+        total_counts = column_sums.sum()
+        column_sums['Суммы'] = total_counts
+
+        return transposed_table,column_sums
+    def count_non_empty_values(self, dictionary):
+        count = 0
+        for key, value in dictionary.items():
+            if value != "":
+                count += 1
+        return count
+    # def analisPriceCount(self):
+    #     #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
+    #     query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+    #     t = list(query)
+    #     # print(len(t))
+    #     price_proposals_dict = {}
+    #     i = 0
+    #     for purchase in t:  # Используйте t, а не query
             
-            # Извлекаем данные из результата запроса
-            price_proposal = purchase.contract.PriceProposal
+    #         # Извлекаем данные из результата запроса
+    #         price_proposal = purchase.contract.PriceProposal
 
-            # Парсим значение PriceProposal (пример, предполагая, что это JSON-строка)
-            price_proposal_dict = json.loads(price_proposal)
+    #         # Парсим значение PriceProposal (пример, предполагая, что это JSON-строка)
+    #         price_proposal_dict = json.loads(price_proposal)
 
-            # Добавляем данные в общий словарь
-            price_proposals_dict[i] = price_proposal_dict
-            i = i + 1
-        # print(price_proposals_dict)
-        # Создаем DataFrame из результатов запроса
+    #         # Добавляем данные в общий словарь
+    #         price_proposals_dict[i] = price_proposal_dict
+    #         i = i + 1
        
-        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.PriceProposal) for purchase in t], columns=['PurchaseOrder', 'PriceProposal'])
+       
+    #     coeff_range_order = [
+    #     'по 1-му предложению поставщиков',
+    #     'по 2-м предложениям поставщиков',
+    #     'по 3-м предложениям поставщиков',
+    #     'по 4-м предложениям поставщиков',
+    #     'по 5-ти предложениям поставщиков',
+    #     'по 6-ти предложениям поставщиков',
 
-         # Парсим столбец PriceProposal
-        df['PriceProposal'] = df['PriceProposal'].apply(lambda x: json.loads(x) if x else None)
-
-        # Создаем столбец с количеством не пустых значений в PriceProposal
-        df['NonEmptyCount'] = df['PriceProposal'].apply(self.count_non_empty_values)
-
-        # Создаем сводную таблицу
-        pivot_table = pd.pivot_table(df, values='NonEmptyCount', index='PurchaseOrder', aggfunc='sum', fill_value=0, margins=True, margins_name='Всего')
+    # ]
+    #     # Создаем DataFrame
+    #     query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+    #     t = list(query)
+    #     df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.PriceProposal) for purchase in t], columns=['PurchaseOrder', 'PriceProposal'])
+    #     # df['PriceProposal'] = df.apply(self.determine_price_range, axis=1)
+    #     df['PriceProposal'] = pd.Categorical(df['PriceProposal'], categories=coeff_range_order, ordered=True)
+    #     df = df.sort_values('PriceProposal')
+    #     pivot_table = df.pivot_table(index='PriceProposal', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+    #     column_sums = pivot_table.sum()
+    #     row_totals = pivot_table.sum(axis=1)
+    #     pivot_table['Общий итог'] = row_totals
+    #     column_sums2 = pivot_table.sum()
+    #     column_means2 = pivot_table.mean()
+    #     total_purchase_counts2 = column_sums2.sum()
+    #     column_sums2['Суммы'] = total_purchase_counts2
+    #     print(pivot_table)
 
     
-        # print(pivot_table)
-        return pivot_table
-    def count_non_empty_values(self, price_proposal):
-        return sum(1 for value in price_proposal.values() if value)
+    #     # print(pivot_table)
+    #     return pivot_table
+    
+
+  
       
       
     def analis(self):
@@ -362,6 +425,11 @@ class StatisticWidget(QWidget):
         last_col_index = self.table.columnCount() - 1
         sum_value_total = sums.get('№223-ФЗ', 0) + sums.get('№44-ФЗ', 0)
         self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
+
+    def determine_price_range(self,row):
+    
+       pass
+
 
     def determine_NMCK_range(self,row):
     
