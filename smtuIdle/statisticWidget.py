@@ -3,8 +3,8 @@ from PySide6.QtWidgets import *
 import statistics
 from peewee import *
 import pandas as pd
-from models import Purchase
-
+from models import Purchase, Contract
+import json
 
 class StatisticWidget(QWidget):
     def __init__(self):
@@ -33,7 +33,7 @@ class StatisticWidget(QWidget):
         # Создаем таблицу
         self.table = QTableWidget(self)
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Метод", "223-ФЗ","44-ФЗ","Общий итог"])
+        self.table.setHorizontalHeaderLabels(["Метод", "№223-ФЗ","№44-ФЗ","Общий итог"])
         
         # Устанавливаем политику расширения таблицы
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -53,11 +53,12 @@ class StatisticWidget(QWidget):
         # layout.addWidget(btn_analysis)
 
           # Список для хранения всех данных, которые вы хотите отобразить в таблице
-        self.all_data = [self.analis(), self.analisMAxPrice()]
+        self.all_data = [self.analis(), self.analisMAxPrice(),self.analisCoeffVar()]
 
         self.label_texts = [
             "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП",
-            "Уровень цены контракта, заключенного по результатам конкурса"
+            "Уровень цены контракта, заключенного по результатам конкурса",
+            "Диапазон значений коэффициента вариации при определении НМЦК и ЦКЕП",
         ]
 
         # Первоначальное отображение данных
@@ -65,7 +66,49 @@ class StatisticWidget(QWidget):
 
 
         self.setLayout(layout)
+        # self.analisPriceCount()
+        
 
+
+    def analisPriceCount(self):
+        #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+        t = list(query)
+        # print(len(t))
+        price_proposals_dict = {}
+        i = 0
+        for purchase in t:  # Используйте t, а не query
+            
+            # Извлекаем данные из результата запроса
+            price_proposal = purchase.contract.PriceProposal
+
+            # Парсим значение PriceProposal (пример, предполагая, что это JSON-строка)
+            price_proposal_dict = json.loads(price_proposal)
+
+            # Добавляем данные в общий словарь
+            price_proposals_dict[i] = price_proposal_dict
+            i = i + 1
+        # print(price_proposals_dict)
+        # Создаем DataFrame из результатов запроса
+       
+        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.PriceProposal) for purchase in t], columns=['PurchaseOrder', 'PriceProposal'])
+
+         # Парсим столбец PriceProposal
+        df['PriceProposal'] = df['PriceProposal'].apply(lambda x: json.loads(x) if x else None)
+
+        # Создаем столбец с количеством не пустых значений в PriceProposal
+        df['NonEmptyCount'] = df['PriceProposal'].apply(self.count_non_empty_values)
+
+        # Создаем сводную таблицу
+        pivot_table = pd.pivot_table(df, values='NonEmptyCount', index='PurchaseOrder', aggfunc='sum', fill_value=0, margins=True, margins_name='Всего')
+
+    
+        # print(pivot_table)
+        return pivot_table
+    def count_non_empty_values(self, price_proposal):
+        return sum(1 for value in price_proposal.values() if value)
+      
+      
     def analis(self):
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
         purchases = Purchase.select()
@@ -83,11 +126,21 @@ class StatisticWidget(QWidget):
 
     def analisMAxPrice(self):
         purchases = Purchase.select(Purchase.PurchaseOrder, Purchase.InitialMaxContractPrice)
-
+        price_range_order = [
+            'Цена контракта более 100 000 000 тыс.руб.',
+            'Цена контракта 5 000 000 - 10 000 000 тыс.руб.',
+            'Цена контракта 1 000 000 - 5 000 000 тыс.руб.',
+            'Цена контракта 500 000-  1 000 000 тыс.руб.',
+            'Цена контракта 200 000 - 500 000 тыс.руб.',
+            'Цена контракта 100 000 - 200 000 тыс.руб.',
+            'Менее 100 тыс.руб'
+        ]
         # Создаем DataFrame
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.InitialMaxContractPrice) for purchase in purchases],
                         columns=['PurchaseOrder', 'InitialMaxContractPrice'])
         df['PriceRange'] = df.apply(self.determine_price_range, axis=1)
+        df['PriceRange'] = pd.Categorical(df['PriceRange'], categories=price_range_order, ordered=True)
+        df = df.sort_values('PriceRange')
         pivot_table = df.pivot_table(index='PriceRange', columns='PurchaseOrder', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
         row_totals = pivot_table.sum(axis=1)
@@ -96,8 +149,39 @@ class StatisticWidget(QWidget):
         column_means2 = pivot_table.mean()
         total_purchase_counts2 = column_sums2.sum()
         column_sums2['Суммы'] = total_purchase_counts2
+     
+        # Определите порядок категорий
+       
+
         return pivot_table, column_sums2 
-        # self.populate_table(pivot_table, column_sums2)
+    def analisCoeffVar(self):
+        purchases = Purchase.select(Purchase.PurchaseOrder, Purchase.CoefficientOfVariation)
+        coeff_range_order = [
+        'Значение коэффициента вариации 0%',
+        'значение коэффициента вариации 0-1%',
+        'значение коэффициента вариации 1-2%',
+        'значение коэффициента вариации 2-5%',
+        'значение коэффициента вариации 5-10%',
+        'значение коэффициента вариации 10-20%',
+        'значение коэффициента вариации 20-33%',
+        'более 33%'
+    ]
+        # Создаем DataFrame
+        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.CoefficientOfVariation) for purchase in purchases],
+                        columns=['PurchaseOrder', 'CoefficientOfVariation'])
+        df['CoeffRange'] = df.apply(self.determine_var_range, axis=1)
+        df['CoeffRange'] = pd.Categorical(df['CoeffRange'], categories=coeff_range_order, ordered=True)
+        df = df.sort_values('CoeffRange')
+        pivot_table = df.pivot_table(index='CoeffRange', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        column_sums = pivot_table.sum()
+        row_totals = pivot_table.sum(axis=1)
+        pivot_table['Общий итог'] = row_totals
+        column_sums2 = pivot_table.sum()
+        column_means2 = pivot_table.mean()
+        total_purchase_counts2 = column_sums2.sum()
+        column_sums2['Суммы'] = total_purchase_counts2
+       
+        return pivot_table, column_sums2 
 
 
     def save_to_excel(self, pivot_table, column_sums, output_excel_path):
@@ -161,7 +245,7 @@ class StatisticWidget(QWidget):
     def populate_table(self, data, sums):
         # Очищаем таблицу перед обновлением
         self.clear_table()
-
+       
         # Добавляем строки в таблицу
         for index, row in data.iterrows():
             row_position = self.table.rowCount()
@@ -185,9 +269,27 @@ class StatisticWidget(QWidget):
 
         # Добавляем сумму значений '223-ФЗ' и '44-ФЗ' в последний столбец 'Общий итог'
         last_col_index = self.table.columnCount() - 1
-        sum_value_total = sums.get('223-ФЗ', 0) + sums.get('44-ФЗ', 0)
+        sum_value_total = sums.get('№223-ФЗ', 0) + sums.get('№44-ФЗ', 0)
         self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
 
+        
+    def determine_var_range(self,row):
+        if row['CoefficientOfVariation'] * 100 == 0:
+            return 'Значение коэффициента вариации 0%'
+        elif 0 <= row['CoefficientOfVariation'] * 100 <= 1:
+            return 'значение коэффициента вариации 0-1%'
+        elif 1 <= row['CoefficientOfVariation'] * 100 <= 2:
+            return 'значение коэффициента вариации 1-2%'
+        elif 2 <= row['CoefficientOfVariation'] * 100<= 5:
+            return 'значение коэффициента вариации 2-5%'
+        elif 5 <= row['CoefficientOfVariation'] * 100<= 10:
+            return 'значение коэффициента вариации 5-10%'
+        elif 10 <= row['CoefficientOfVariation']* 100 <= 20:
+            return 'значение коэффициента вариации 10-20%'
+        elif 20 <= row['CoefficientOfVariation']* 100 <= 33:
+            return 'значение коэффициента вариации 10-20%'
+        else:
+            return 'более 33%'
         
     def determine_price_range(self,row):
         if row['InitialMaxContractPrice'] > 100000000:
@@ -234,11 +336,11 @@ class StatisticWidget(QWidget):
         pivot_table_max_price, column_sums_max_price = self.analisMAxPrice()
         self.save_to_excel_combined(pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, 'путь_к_вашему_файлу_комбинированный.xlsx')
 
-# if __name__ == "__main__":
-#     from PySide6.QtWidgets import QApplication
-#     import sys
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QApplication
+    import sys
 
-#     app = QApplication(sys.argv)
-#     window = StatisticWidget()
-#     window.show()
-#     sys.exit(app.exec())
+    app = QApplication(sys.argv)
+    window = StatisticWidget()
+    window.show()
+    sys.exit(app.exec())
