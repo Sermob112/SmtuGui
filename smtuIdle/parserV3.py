@@ -151,7 +151,7 @@ def insert_in_table_full(csv_file_path):
         with open(csv_file_path, 'r', encoding='windows-1251') as csv_file:
             csv_reader = csv.reader(csv_file, delimiter = ';')
             next(csv_reader)  # Пропустите заголовок, если он есть
-            j = 0
+            j = 1
             for row in csv_reader:
                 
                 # Обрезка слишком длинных строк
