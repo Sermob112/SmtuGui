@@ -20,12 +20,13 @@ class StatisticWidget(QWidget):
         btn_back = QPushButton("Назад", self)
         btn_forward = QPushButton("Вперед", self)
         self.toExcel = QPushButton("Экспорт в Excel", self)
+        self.Update = QPushButton("Обновить", self)
         # btn_analysis = QPushButton("Анализ", self)
 
         btn_back.clicked.connect(self.show_previous_data)
         btn_forward.clicked.connect(self.show_next_data)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
-
+        self.Update.clicked.connect(self.update_data)
         # Инициализация переменной для отслеживания текущего индекса данных
         self.current_data_index = 0
 
@@ -33,7 +34,7 @@ class StatisticWidget(QWidget):
         # Создаем таблицу
         self.table = QTableWidget(self)
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Метод", "№223-ФЗ","№44-ФЗ","Общий итог"])
+        self.table.setHorizontalHeaderLabels(["Метод", "223-ФЗ","44-ФЗ","Общий итог"])
         
         # Устанавливаем политику расширения таблицы
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -48,6 +49,7 @@ class StatisticWidget(QWidget):
         button_layout.addWidget(btn_back)
         button_layout.addWidget(btn_forward)
         button_layout2.addWidget(self.toExcel )
+        button_layout2.addWidget(self.Update)
         layout.addLayout(button_layout)
         layout.addLayout(button_layout2)
         # layout.addWidget(btn_analysis)
@@ -74,10 +76,17 @@ class StatisticWidget(QWidget):
 
 
         self.setLayout(layout)
-        self.analisQueryCount()
+        # self.analisQueryCount()
         # self.analisPriceCount()
         # self.analyze_price_count()
-        
+    
+
+    def update_data(self):
+        self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
+                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),
+                         self.analisNMCKReduce(),self.analyze_price_count()]
+        self.show_current_data()
+
     def analyze_price_count(self):
         coeff_range_order = [
             'Ценовое предложение №1',
@@ -88,7 +97,7 @@ class StatisticWidget(QWidget):
             'Ценовое предложение №6',
         ]
 
-        query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.PriceProposal.is_null(False))
         data = list(query)
         df_data = []
 
@@ -208,7 +217,7 @@ class StatisticWidget(QWidget):
       
 
     def analisMAxPrice(self):
-        purchases = Purchase.select(Purchase.PurchaseOrder, Purchase.InitialMaxContractPrice)
+        purchases = Purchase.select(Purchase.PurchaseOrder, Purchase.InitialMaxContractPrice).where(Purchase.InitialMaxContractPrice.is_null(False))
         price_range_order = [
             'Цена контракта более 100 000 000 тыс.руб.',
             'Цена контракта 5 000 000 - 10 000 000 тыс.руб.',
@@ -238,7 +247,7 @@ class StatisticWidget(QWidget):
 
         return pivot_table, column_sums2 
     def analisCoeffVar(self):
-        purchases = Purchase.select(Purchase.PurchaseOrder, Purchase.CoefficientOfVariation)
+        purchases = Purchase.select(Purchase.PurchaseOrder, Purchase.CoefficientOfVariation).where(Purchase.CoefficientOfVariation.is_null(False))
         coeff_range_order = [
         'Значение коэффициента вариации 0%',
         'значение коэффициента вариации 0-1%',
@@ -294,7 +303,7 @@ class StatisticWidget(QWidget):
         return pivot_table, column_sums2
     
     def analisQueryCount(self):
-        query = Purchase.select(Purchase.PurchaseOrder, Contract.TotalApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.TotalApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.TotalApplications.is_null(False))
         t = list(query)
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.TotalApplications) for purchase in t], columns=['PurchaseOrder', 'TotalApplications'])
         pivot_table = df.pivot_table(index='TotalApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
@@ -308,7 +317,7 @@ class StatisticWidget(QWidget):
         return pivot_table, column_sums
 
     def analisQueryCountAccept(self):
-        query = Purchase.select(Purchase.PurchaseOrder, Contract.AdmittedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.AdmittedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.AdmittedApplications.is_null(False))
         t = list(query)
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.AdmittedApplications) for purchase in t], columns=['PurchaseOrder', 'AdmittedApplications'])
         pivot_table = df.pivot_table(index='AdmittedApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
@@ -322,7 +331,7 @@ class StatisticWidget(QWidget):
         return pivot_table, column_sums
 
     def analisQueryCountDecline(self):
-        query = Purchase.select(Purchase.PurchaseOrder, Contract.RejectedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+        query = Purchase.select(Purchase.PurchaseOrder, Contract.RejectedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.RejectedApplications.is_null(False))
         t = list(query)
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.RejectedApplications) for purchase in t], columns=['PurchaseOrder', 'RejectedApplications'])
         pivot_table = df.pivot_table(index='RejectedApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
@@ -422,7 +431,6 @@ class StatisticWidget(QWidget):
             for sheet_name, df in data_to_export.items():
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
     def clear_table(self):
-        # Очищаем все строки в таблице
         self.table.setRowCount(0)
 
     def populate_table(self, data, sums):
@@ -452,7 +460,7 @@ class StatisticWidget(QWidget):
 
         # Добавляем сумму значений '223-ФЗ' и '44-ФЗ' в последний столбец 'Общий итог'
         last_col_index = self.table.columnCount() - 1
-        sum_value_total = sums.get('№223-ФЗ', 0) + sums.get('№44-ФЗ', 0)
+        sum_value_total = sums.get('223-ФЗ', 0) + sums.get('44-ФЗ', 0)
         self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
 
     def determine_price_range(self,row):
@@ -461,37 +469,42 @@ class StatisticWidget(QWidget):
 
 
     def determine_NMCK_range(self,row):
-    
-        if row['ReductionNMC'] * 100 == 0:
-            return 'Цена контракта совпадает с НМЦК и ЦКЕП'
-        elif 0 <= row['ReductionNMC'] * 100 <= 1:
-            return 'Цена контракта ниже НМЦК и ЦКЕП на 0-1%'
-        elif 1 <= row['ReductionNMC'] * 100 <= 5:
-            return 'Цена контракта ниже НМЦК и ЦКЕП на 1-5%'
-        elif 5 <= row['ReductionNMC'] * 100<= 10:
-            return 'Цена контракта ниже НМЦК и ЦКЕП на 5-10%'
-        elif 10 <= row['ReductionNMC'] * 100<= 20:
-            return 'Цена контракта ниже НМЦК и ЦКЕП на 10-20%'
-        else:
-            return 'Цена контракта ниже НМЦК и ЦКЕП более 20%'
+        try:
+            if row['ReductionNMC'] * 100 == 0:
+                return 'Цена контракта совпадает с НМЦК и ЦКЕП'
+            elif 0 <= row['ReductionNMC'] * 100 <= 1:
+                return 'Цена контракта ниже НМЦК и ЦКЕП на 0-1%'
+            elif 1 <= row['ReductionNMC'] * 100 <= 5:
+                return 'Цена контракта ниже НМЦК и ЦКЕП на 1-5%'
+            elif 5 <= row['ReductionNMC'] * 100<= 10:
+                return 'Цена контракта ниже НМЦК и ЦКЕП на 5-10%'
+            elif 10 <= row['ReductionNMC'] * 100<= 20:
+                return 'Цена контракта ниже НМЦК и ЦКЕП на 10-20%'
+            else:
+                return 'Цена контракта ниже НМЦК и ЦКЕП более 20%'
+        except:
+            pass
         
     def determine_var_range(self,row):
-        if row['CoefficientOfVariation'] * 100 == 0:
-            return 'Значение коэффициента вариации 0%'
-        elif 0 <= row['CoefficientOfVariation'] * 100 <= 1:
-            return 'значение коэффициента вариации 0-1%'
-        elif 1 <= row['CoefficientOfVariation'] * 100 <= 2:
-            return 'значение коэффициента вариации 1-2%'
-        elif 2 <= row['CoefficientOfVariation'] * 100<= 5:
-            return 'значение коэффициента вариации 2-5%'
-        elif 5 <= row['CoefficientOfVariation'] * 100<= 10:
-            return 'значение коэффициента вариации 5-10%'
-        elif 10 <= row['CoefficientOfVariation']* 100 <= 20:
-            return 'значение коэффициента вариации 10-20%'
-        elif 20 <= row['CoefficientOfVariation']* 100 <= 33:
-            return 'значение коэффициента вариации 10-20%'
-        else:
-            return 'более 33%'
+        try:
+            if row['CoefficientOfVariation'] * 100 == 0:
+                return 'Значение коэффициента вариации 0%'
+            elif 0 <= row['CoefficientOfVariation'] * 100 <= 1:
+                return 'значение коэффициента вариации 0-1%'
+            elif 1 <= row['CoefficientOfVariation'] * 100 <= 2:
+                return 'значение коэффициента вариации 1-2%'
+            elif 2 <= row['CoefficientOfVariation'] * 100<= 5:
+                return 'значение коэффициента вариации 2-5%'
+            elif 5 <= row['CoefficientOfVariation'] * 100<= 10:
+                return 'значение коэффициента вариации 5-10%'
+            elif 10 <= row['CoefficientOfVariation']* 100 <= 20:
+                return 'значение коэффициента вариации 10-20%'
+            elif 20 <= row['CoefficientOfVariation']* 100 <= 33:
+                return 'значение коэффициента вариации 10-20%'
+            else:
+                return 'более 33%'
+        except:
+            pass
         
     def determine_price_range(self,row):
         if row['InitialMaxContractPrice'] > 100000000:
@@ -551,11 +564,11 @@ class StatisticWidget(QWidget):
         'путь_к_вашему_файлу_комбинированный.xlsx'
     )
 
-if __name__ == "__main__":
-    from PySide6.QtWidgets import QApplication
-    import sys
+# if __name__ == "__main__":
+#     from PySide6.QtWidgets import QApplication
+#     import sys
 
-    app = QApplication(sys.argv)
-    window = StatisticWidget()
-    window.show()
-    sys.exit(app.exec())
+#     app = QApplication(sys.argv)
+#     window = StatisticWidget()
+#     window.show()
+#     sys.exit(app.exec())

@@ -1,7 +1,8 @@
 import sys
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt
-
+from DBtest import PurchasesWidget
+from statisticWidget import StatisticWidget
 from parserV3 import *
 
 class CsvLoaderWidget(QWidget):
@@ -46,7 +47,7 @@ class CsvLoaderWidget(QWidget):
         # Вторая таблица
         self.second_table = QTableWidget(self)
         self.second_table.setColumnCount(8)
-        self.second_table.setHorizontalHeaderLabels(['Id', 'RegistryNumber', 'AuctionDate', 'ApplicationStartDate', 'ApplicationEndDate', 'UpdateDate', 'PlacementDate', 'LotNumber'])
+        self.second_table.setHorizontalHeaderLabels(['Id', 'Реестровый номер', 'Дата аукциона', 'Дата начала заявки', 'Дата окончания заявки', 'Дата обновления', 'Дата размещения', 'Номер лота'])
         self.second_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.second_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.second_table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -74,6 +75,7 @@ class CsvLoaderWidget(QWidget):
             self.inserted_rows_count, insert_errors = insert_in_table(selected_file)
             
             if not insert_errors:
+  
                 self.update_table()
                 
              
@@ -138,7 +140,7 @@ class CsvLoaderWidget(QWidget):
                 if success:
                     print("Успешно удалены записи с Id:", self.selected_ids)
                     self.second_table.clearContents()
-                    self.second_table.setRowCount(0)
+                    # self.second_table.setRowCount(0)
                     self.selected_ids = []
                     self.update_second_table()
                 else:
