@@ -338,60 +338,89 @@ class StatisticWidget(QWidget):
 
 
 
-    def save_to_excel(self, pivot_table, column_sums, output_excel_path):
-        excel_df = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table.columns) + ['Суммы'])
+    # def save_to_excel(self, pivot_table, column_sums, output_excel_path):
+    #     excel_df = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table.columns) + ['Суммы'])
 
-        for method, row in pivot_table.iterrows():
-            excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
+    #     for method, row in pivot_table.iterrows():
+    #         excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
 
-        excel_df = pd.concat([excel_df, pd.DataFrame([['Суммы'] + list(column_sums) + [column_sums['Суммы']]], columns=excel_df.columns)])
+    #     excel_df = pd.concat([excel_df, pd.DataFrame([['Суммы'] + list(column_sums) + [column_sums['Суммы']]], columns=excel_df.columns)])
 
-        data_to_export = {'Методы закупок': excel_df}
+    #     data_to_export = {'Методы закупок': excel_df}
+
+    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+    #         for sheet_name, df in data_to_export.items():
+    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    # def save_to_excel_max_price(self, pivot_table, column_sums, output_excel_path):
+    #     excel_df = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table.columns) + ['Суммы'])
+
+    #     for method, row in pivot_table.iterrows():
+    #         excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
+
+    #     # Ensure that the number of columns matches
+    #     column_sums_row = ['Суммы'] + list(column_sums) + [column_sums['Суммы']]
+    #     if len(column_sums_row) == len(excel_df.columns):
+    #         excel_df = pd.concat([excel_df, pd.DataFrame([column_sums_row], columns=excel_df.columns)])
+
+    #     data_to_export = {'Уровень цены контракта': excel_df}
+
+    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+    #         for sheet_name, df in data_to_export.items():
+    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    # def save_to_excel_combined(self, pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, output_excel_path):
+    #     excel_df_purchase = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table_purchase.columns) + ['Суммы'])
+
+    #     for method, row in pivot_table_purchase.iterrows():
+    #         excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_purchase.columns)])
+
+    #     excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([['Суммы'] + list(column_sums_purchase) + [column_sums_purchase['Суммы']]], columns=excel_df_purchase.columns)])
+
+    #     excel_df_max_price = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table_max_price.columns) + ['Суммы'])
+
+    #     for method, row in pivot_table_max_price.iterrows():
+    #         excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_max_price.columns)])
+
+    #     column_sums_max_price_row = ['Суммы'] + list(column_sums_max_price) + [column_sums_max_price['Суммы']]
+    #     if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
+    #         excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
+
+    #     data_to_export = {'Методы закупок': excel_df_purchase, 'Уровень цены контракта': excel_df_max_price}
+
+    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+    #         for sheet_name, df in data_to_export.items():
+    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
+    def save_to_excel_combined(self, pivot_tables_purchase, column_sums_purchase, pivot_tables_max_price, column_sums_max_price, output_excel_path):
+        data_to_export = {}
+
+        for idx, (pivot_table_purchase, column_sum_purchase) in enumerate(zip(pivot_tables_purchase, column_sums_purchase)):
+            excel_df_purchase = pd.DataFrame(columns=['Метод'] + list(pivot_table_purchase.columns) + ['Суммы'])
+
+            for method, row in pivot_table_purchase.iterrows():
+                excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_purchase.columns)])
+
+            column_sums_purchase_row = ['Суммы'] + list(column_sum_purchase) + [column_sum_purchase['Суммы']]
+            if len(column_sums_purchase_row) == len(excel_df_purchase.columns):
+                excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([column_sums_purchase_row], columns=excel_df_purchase.columns)])
+
+            data_to_export[f'Методы {idx}'] = excel_df_purchase
+
+        for idx, (pivot_table_max_price, column_sum_max_price) in enumerate(zip(pivot_tables_max_price, column_sums_max_price)):
+            excel_df_max_price = pd.DataFrame(columns=['Метод'] + list(pivot_table_max_price.columns) + ['Суммы'])
+
+            for method, row in pivot_table_max_price.iterrows():
+                excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_max_price.columns)])
+
+            column_sums_max_price_row = ['Суммы'] + list(column_sum_max_price) + [column_sum_max_price['Суммы']]
+            if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
+                excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
+
+            data_to_export[f'Метод_{idx}'] = excel_df_max_price
 
         with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
             for sheet_name, df in data_to_export.items():
                 df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-    def save_to_excel_max_price(self, pivot_table, column_sums, output_excel_path):
-        excel_df = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table.columns) + ['Суммы'])
-
-        for method, row in pivot_table.iterrows():
-            excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
-
-        # Ensure that the number of columns matches
-        column_sums_row = ['Суммы'] + list(column_sums) + [column_sums['Суммы']]
-        if len(column_sums_row) == len(excel_df.columns):
-            excel_df = pd.concat([excel_df, pd.DataFrame([column_sums_row], columns=excel_df.columns)])
-
-        data_to_export = {'Уровень цены контракта': excel_df}
-
-        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-            for sheet_name, df in data_to_export.items():
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-    def save_to_excel_combined(self, pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, output_excel_path):
-        excel_df_purchase = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table_purchase.columns) + ['Суммы'])
-
-        for method, row in pivot_table_purchase.iterrows():
-            excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_purchase.columns)])
-
-        excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([['Суммы'] + list(column_sums_purchase) + [column_sums_purchase['Суммы']]], columns=excel_df_purchase.columns)])
-
-        excel_df_max_price = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table_max_price.columns) + ['Суммы'])
-
-        for method, row in pivot_table_max_price.iterrows():
-            excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_max_price.columns)])
-
-        column_sums_max_price_row = ['Суммы'] + list(column_sums_max_price) + [column_sums_max_price['Суммы']]
-        if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
-            excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
-
-        data_to_export = {'Методы закупок': excel_df_purchase, 'Уровень цены контракта': excel_df_max_price}
-
-        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-            for sheet_name, df in data_to_export.items():
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
-
     def clear_table(self):
         # Очищаем все строки в таблице
         self.table.setRowCount(0)
@@ -505,9 +534,22 @@ class StatisticWidget(QWidget):
             self.label.setText(self.label_texts[self.current_data_index])
 
     def export_to_excel_clicked(self ):
-        pivot_table_purchase, column_sums_purchase = self.analis()
-        pivot_table_max_price, column_sums_max_price = self.analisMAxPrice()
-        self.save_to_excel_combined(pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, 'путь_к_вашему_файлу_комбинированный.xlsx')
+        pivot_tables_purchase1, column_sums_purchase1 = self.analisQueryCountDecline()
+        pivot_tables_purchase2, column_sums_purchase2 = self.analisNMSK()
+        pivot_tables_purchase3, column_sums_purchase3 = self.analisQueryCount()
+        pivot_tables_purchase4, column_sums_purchase4 = self.analisQueryCountAccept()
+        pivot_tables_purchase5, column_sums_purchase5 = self.analisQueryCountDecline()
+        pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
+        pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
+        pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
+        pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
+        self.save_to_excel_combined(
+        [pivot_tables_purchase1, pivot_tables_purchase2, pivot_tables_purchase3, pivot_tables_purchase4, pivot_tables_purchase5],
+        [column_sums_purchase1, column_sums_purchase2, column_sums_purchase3, column_sums_purchase4, column_sums_purchase5],
+        [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4],
+        [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4],
+        'путь_к_вашему_файлу_комбинированный.xlsx'
+    )
 
 if __name__ == "__main__":
     from PySide6.QtWidgets import QApplication
