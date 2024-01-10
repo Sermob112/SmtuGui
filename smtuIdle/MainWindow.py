@@ -8,7 +8,7 @@ from DBtest import PurchasesWidget
 from LoadCsv import CsvLoaderWidget
 from InsertWidgetNMCK import InsertWidgetNMCK
 from statisticWidget import StatisticWidget
-
+from debugWindow import DebugWidget
 
 class Ui_MainWindow(object):
     def __init__(self):
@@ -78,7 +78,7 @@ class Ui_MainWindow(object):
         self.leftPanelLayout.addWidget(self.pushButton4)
 
         self.pushButton5 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton5.setObjectName("pushButton4")
+        self.pushButton5.setObjectName("pushButton5")
         self.leftPanelLayout.addWidget(self.pushButton5)
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
@@ -124,6 +124,10 @@ class Ui_MainWindow(object):
         self.loadCsv = CsvLoaderWidget()
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.loadCsv)
+
+        self.Debug = DebugWidget()
+        layout = QVBoxLayout(self.page1)
+        layout.addWidget(self.Debug)
         
         #Загрузка виджета ввод данных
         # self.Insert = InsertWidgetNMCK()
@@ -152,11 +156,11 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.pushButton1.setText(_translate("MainWindow", "Кнопка 1"))
-        self.pushButton2.setText(_translate("MainWindow", "Кнопка 2"))
-        self.pushButton3.setText(_translate("MainWindow", "Кнопка 3"))
-        self.pushButton4.setText(_translate("MainWindow", "Кнопка 4"))
-        self.pushButton5.setText(_translate("MainWindow", "Кнопка 5"))
+        self.pushButton1.setText(_translate("MainWindow", "Отладка"))
+        self.pushButton2.setText(_translate("MainWindow", "Просмотр БД"))
+        self.pushButton3.setText(_translate("MainWindow", "Ввод Закупок"))
+        self.pushButton4.setText(_translate("MainWindow", "Заглушка"))
+        self.pushButton5.setText(_translate("MainWindow", "Статистический анализ"))
 
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
