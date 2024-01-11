@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from DBtest import PurchasesWidget
 from statisticWidget import StatisticWidget
 from parserV3 import *
-
+from PySide6.QtWidgets import QStyleFactory
 class CsvLoaderWidget(QWidget):
     def __init__(self):
         super(CsvLoaderWidget, self).__init__()
@@ -18,13 +18,22 @@ class CsvLoaderWidget(QWidget):
 
     def init_ui(self):
         layout = QVBoxLayout()
-        
+        h_layout = QHBoxLayout()
+        h_layout.addStretch()
+
+     
+
         # Создаем кнопку
         btn_load_csv = QPushButton('Загрузить CSV файл', self)
         btn_load_csv.clicked.connect(self.show_file_dialog)
+        btn_load_csv.setMaximumWidth(200)
+        btn_load_csv.setMinimumWidth(200)
+        h_layout.addWidget(btn_load_csv)
 
+        # Пространство справа от кнопки
+        h_layout.addStretch()
         # Добавляем кнопку на виджет
-        layout.addWidget(btn_load_csv)
+        layout.addLayout(h_layout)
 
         # Добавляем надпись
         lbl_info = QLabel('Информация о дублировании или загрузке новых закупок', self)
@@ -54,9 +63,15 @@ class CsvLoaderWidget(QWidget):
         self.second_table.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         layout.addWidget(self.second_table)
         # Добавляем кнопку "Удалить выбранные записи"
+        h_layout2 = QHBoxLayout()
+        h_layout2.addStretch()
         btn_delete_selected = QPushButton('Удалить выбранные записи', self)
         btn_delete_selected.clicked.connect(self.delete_selected_records)
-        layout.addWidget(btn_delete_selected)
+        btn_delete_selected.setMaximumWidth(250)
+        btn_delete_selected.setMinimumWidth(250)
+        h_layout2.addWidget(btn_delete_selected)
+        h_layout2.addStretch()
+        layout.addLayout(h_layout2)
 
         # Добавляем обработчик события для клика по ячейке
         self.second_table.cellClicked.connect(self.handle_table_click)
@@ -151,8 +166,8 @@ class CsvLoaderWidget(QWidget):
             pass
         
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = CsvLoaderWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec_())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    csv_loader_widget = CsvLoaderWidget()
+    csv_loader_widget.show()
+    sys.exit(app.exec_())
