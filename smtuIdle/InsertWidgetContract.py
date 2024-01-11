@@ -151,12 +151,19 @@ class InsertWidgetContract(QWidget):
         self.layout1.addLayout(layout16)
         self.layout1.addLayout(layout17)
 
-
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_widget = QWidget()
+        scroll_widget.setLayout(self.layout1)
+        scroll_area.setWidget(scroll_widget)
       
         self.form_layout = QVBoxLayout ()
         self.layout1.addLayout(self.form_layout)
 
-        self.setLayout(self.layout1)
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(scroll_area)
+
+        self.setLayout(main_layout)
     
     def update_fields(self):
          # Очищаем форму от предыдущих полей
