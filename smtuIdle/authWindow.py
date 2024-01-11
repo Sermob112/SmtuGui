@@ -1,8 +1,8 @@
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
+from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 from auth import *
 from initialize_db import initialize_database
 from MainWindow import Ui_MainWindow
-
+from PySide6.QtCore import Qt
 class AuthWindow(QWidget):
     def __init__(self):
         super(AuthWindow, self).__init__()
@@ -10,28 +10,72 @@ class AuthWindow(QWidget):
         self.setWindowTitle("Окно авторизации")
         self.setGeometry(100, 100, 400, 200)
         self.auth = AuthManager()
-       
+
         initialize_database()
-        layout = QVBoxLayout()
+
+        main_layout = QVBoxLayout()
+
+        # Создайте макет для формы
+        form_layout = QFormLayout()
 
         self.username_label = QLabel("Имя пользователя:")
         self.username_edit = QLineEdit()
+        self.username_edit.setPlaceholderText("Введите ваше имя пользователя")
+        self.username_edit.setMaximumWidth(200)  # Установите максимальную ширину
 
         self.password_label = QLabel("Пароль:")
         self.password_edit = QLineEdit()
         self.password_edit.setEchoMode(QLineEdit.Password)
+        self.password_edit.setPlaceholderText("Введите ваш пароль")
+        self.password_edit.setMaximumWidth(200)  # Установите максимальную ширину
 
         self.login_button = QPushButton("Войти")
         self.login_button.clicked.connect(self.authenticate)
 
-        layout.addWidget(self.username_label)
-        layout.addWidget(self.username_edit)
-        layout.addWidget(self.password_label)
-        layout.addWidget(self.password_edit)
-        layout.addWidget(self.login_button)
+        form_layout.addRow(self.username_label, self.username_edit)
+        form_layout.addRow(self.password_label, self.password_edit)
+        form_layout.addRow(self.login_button)
 
-        self.setLayout(layout)
-        # Создайте атрибут класса для сохранения ссылки на Ui_MainWindow
+        # Добавьте макет формы в центральный макет
+        main_layout.addLayout(form_layout)
+
+        # Выровняйте форму по центру окна
+        main_layout.setAlignment(Qt.AlignCenter)
+
+        # Установите центральный макет
+        self.setLayout(main_layout)
+
+        # Добавьте стили для улучшения внешнего вида
+        style = """
+            QWidget {
+                background-color: #f0f0f0;
+            }
+            QLabel {
+                font-size: 14px;
+            }
+            QLineEdit {
+                padding: 5px;
+                font-size: 14px;
+                border: 1px solid #ccc;
+                border-radius: 3px;
+            }
+            QPushButton {
+                padding: 5px;
+                font-size: 14px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 3px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """
+
+        self.setStyleSheet(style)
+
+        
+         # Убрать рамку окна для более современного вида
         self.main_window = QMainWindow()
 
     def authenticate(self):

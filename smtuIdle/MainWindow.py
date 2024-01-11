@@ -15,9 +15,11 @@ class Ui_MainWindow(object):
         super(Ui_MainWindow, self).__init__()
         
     def setupUi(self, MainWindow):
-        
+        style = QStyleFactory.create('Fusion')
+        app = QApplication.instance()
+        app.setStyle(style)
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(1680, 960)
 
         # Главный макет
         self.centralwidget = QtWidgets.QWidget(MainWindow)
