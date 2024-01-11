@@ -166,8 +166,8 @@ class CsvLoaderWidget(QWidget):
             pass
         
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    csv_loader_widget = CsvLoaderWidget()
-    csv_loader_widget.show()
-    sys.exit(app.exec_())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     csv_loader_widget = CsvLoaderWidget()
+#     csv_loader_widget.show()
+#     sys.exit(app.exec_())

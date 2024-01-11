@@ -597,7 +597,7 @@ def export_to_excel(data, output_excel_path, filters):
         with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
             filter_df.to_excel(writer, index=False)
             data_df.to_excel(writer, startrow=2, header=True, index=False)
-
+        return True
     except Exception as e:
         print("Ошибка при экспорте данных в Excel:", e)
 

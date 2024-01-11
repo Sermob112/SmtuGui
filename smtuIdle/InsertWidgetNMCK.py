@@ -63,6 +63,10 @@ class InsertWidgetNMCK(QWidget):
 
     def update_fields(self):
         num_fields = int(self.edit1.text())
+        if num_fields > 10:
+            num_fields = 10
+        elif num_fields < 0:
+            num_fields = 1
 
         # Удаляем все существующие поля ввода из формы
         self.clear_layout(self.form_layout)
