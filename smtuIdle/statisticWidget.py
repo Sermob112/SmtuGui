@@ -427,9 +427,25 @@ class StatisticWidget(QWidget):
 
             data_to_export[f'Метод_{idx}'] = excel_df_max_price
 
-        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-            for sheet_name, df in data_to_export.items():
-                df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(QFileDialog.Directory)
+
+        if file_dialog.exec_():
+            selected_file = file_dialog.selectedFiles()[0]
+            selected_file = selected_file if selected_file else None
+            if selected_file:
+                with pd.ExcelWriter(f'{selected_file}/{output_excel_path}', engine='openpyxl') as writer:
+                    for sheet_name, df in data_to_export.items():
+                        df.to_excel(writer, sheet_name=sheet_name, index=False)
+                QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
+                
+            else:
+                QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
+
+        # with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+        #     for sheet_name, df in data_to_export.items():
+        #         df.to_excel(writer, sheet_name=sheet_name, index=False)
     def clear_table(self):
         self.table.setRowCount(0)
 
@@ -561,7 +577,7 @@ class StatisticWidget(QWidget):
         [column_sums_purchase1, column_sums_purchase2, column_sums_purchase3, column_sums_purchase4, column_sums_purchase5],
         [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4],
         [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4],
-        'путь_к_вашему_файлу_комбинированный.xlsx'
+        'ДАнные статистики.xlsx'
     )
 
 # if __name__ == "__main__":

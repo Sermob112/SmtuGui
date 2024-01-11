@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication, QMessageBox, QCompleter,QMainWindow,QLabel,QLineEdit,QComboBox, QTableWidget,QHBoxLayout, QTableWidgetItem, QVBoxLayout, QWidget,QPushButton,QHeaderView
+from PySide6.QtWidgets import QApplication,QFileDialog, QMessageBox, QCompleter,QMainWindow,QLabel,QLineEdit,QComboBox, QTableWidget,QHBoxLayout, QTableWidgetItem, QVBoxLayout, QWidget,QPushButton,QHeaderView
 from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
 from datetime import date
@@ -228,6 +228,22 @@ class PurchasesWidget(QWidget):
                 price_proposal_dict = json.loads(contract.PriceProposal)
                 for key, value in price_proposal_dict.items():
                     self.add_row_to_table(key, str(value))
+                self.add_row_to_table("Заявитель", contract.Applicant)
+                self.add_row_to_table("Статус заявителя", contract.Applicant_satatus)
+                self.add_row_to_table("Победитель-исполнитель контракта", contract.WinnerExecutor)
+                self.add_row_to_table("Заказчик по контракту", contract.ContractingAuthority)
+                self.add_row_to_table("Идентификатор договора", contract.ContractIdentifier)
+                self.add_row_to_table("Реестровый номер договора", contract.RegistryNumber)
+                self.add_row_to_table("№ договора", contract.ContractNumber)
+                self.add_row_to_table("Дата начала/подписания", str(contract.StartDate))
+                self.add_row_to_table("Дата окончания/исполнения", str(contract.EndDate))
+                self.add_row_to_table("Цена договора, руб.", str(contract.ContractPrice))
+                self.add_row_to_table("Размер авансирования, руб./(%)", str(contract.AdvancePayment))
+                self.add_row_to_table("Снижение НМЦК, руб.", str(contract.ReductionNMC))
+                self.add_row_to_table("Снижение НМЦК, %", str(contract.ReductionNMCPercent))
+                self.add_row_to_table("Протоколы определения поставщика (выписка)", contract.SupplierProtocol)
+                self.add_row_to_table("Договор", contract.ContractFile)
+            
         else:
             self.label.setText("Нет записей")
 
@@ -428,45 +444,23 @@ class PurchasesWidget(QWidget):
         'min_price': min_price,
         'max_price': max_price,
         
-    }
-        
-        # self.purchases = Purchase.select()
-        # print(type(self.purchases))
-        
-        # self.purchases = (Purchase
-        #         .select()
-        #         .join(Contract, JOIN.LEFT_OUTER).execute())
-        # lister = list(self.purchases)
-        # print(list(self.purchases))
-        
-        # query = Purchase.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER)
-        # for purchase in query:
-        #     print("Purchase Order:", purchase.PurchaseOrder)
-        #     print("Contract Total Applications:", purchase.contract.TotalApplications)
-        query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+    }   
+         
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(QFileDialog.Directory)
 
-        # Теперь вы можете использовать этот запрос для получения объединенных данных
-        # for result in query:
-        #     print("Purchase Order:", result.PurchaseOrder)
-        #     tk = result.contract.TotalApplications if result.contract.TotalApplications is not None else None
-        #     print("Contract Total Applications:",tk)
-
-        
-
-    
-
-            
-        print("\n")
-        # results = list(query)
-        # print(results)
-        # print(type(self.purchases))
-        # self.dataContract = list(self.contracts.tuples()) 
-        # self.data = [purchase.tuples() for purchase in self.purchases]
-        # self.data = list(self.purchases.dicts())
-        self.data = list(query.tuples())
-        # combined_data = [(*purchase_data, *contract_data) for purchase_data, contract_data in zip(self.data, self.dataContract)]
-    
-        export_to_excel( self.data ,"путь_к_вашему_файлу.xlsx",filters=filters )
+        if file_dialog.exec_():
+            selected_file = file_dialog.selectedFiles()[0]
+            selected_file = selected_file if selected_file else None
+            if selected_file:
+                query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                self.data = list(query.tuples())
+                if export_to_excel(self.data ,f'{selected_file}/Все данные.xlsx',filters=filters ) == True:
+                    QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
+                else:
+                    QMessageBox.warning(self, "Ошибка", "Ошибка записи")
+            else:
+                QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
            
         
         
@@ -474,8 +468,8 @@ class PurchasesWidget(QWidget):
         
         
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    csv_loader_widget = PurchasesWidget()
-    csv_loader_widget.show()
-    sys.exit(app.exec())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     csv_loader_widget = PurchasesWidget()
+#     csv_loader_widget.show()
+#     sys.exit(app.exec())

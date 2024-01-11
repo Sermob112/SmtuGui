@@ -47,8 +47,8 @@ class DebugWidget(QWidget):
             else:
                 QMessageBox.information(self,"Ошибка", "Ошибка при удалении данных")
         pass
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    csv_loader_widget = DebugWidget()
-    csv_loader_widget.show()
-    sys.exit(app.exec_())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     csv_loader_widget = DebugWidget()
+#     csv_loader_widget.show()
+#     sys.exit(app.exec_())

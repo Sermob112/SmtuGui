@@ -38,7 +38,7 @@ class InsertWidgetContract(QWidget):
 
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
-        self.edit1.setValidator(QIntValidator())
+        self.edit1.setValidator(QIntValidator(QIntValidator(1, 1, self)))
         self.edit1.textChanged.connect(self.update_fields)
         self.edit2 = QLineEdit(self)
         self.edit2.setValidator(QIntValidator())
@@ -150,8 +150,9 @@ class InsertWidgetContract(QWidget):
         self.layout1.addLayout(layout15)
         self.layout1.addLayout(layout16)
         self.layout1.addLayout(layout17)
-       
-       
+
+
+      
         self.form_layout = QVBoxLayout ()
         self.layout1.addLayout(self.form_layout)
 
@@ -163,6 +164,10 @@ class InsertWidgetContract(QWidget):
       
      
         num_fields = int(self.edit1.text())
+        if num_fields > 10:
+            num_fields = 10
+        elif num_fields < 0:
+            num_fields = 1
         
         #Создаем и добавляем новые поля ввода в форму
         for i in range(num_fields ):
@@ -184,6 +189,7 @@ class InsertWidgetContract(QWidget):
         print(self.form_layout.count())
         self.add_tkp_button = QPushButton("Добавить Данные")
         self.form_layout.addWidget(self.add_tkp_button)
+
         self.add_tkp_button.clicked.connect(self.save_tkp_data)
         self.update()
     def clear_layout(self,layout):
