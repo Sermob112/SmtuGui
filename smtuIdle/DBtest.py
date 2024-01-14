@@ -285,7 +285,7 @@ class PurchasesWidget(QWidget):
 
         section_item = QTableWidgetItem(section_text)
         section_item.setFlags(section_item.flags() & ~Qt.ItemIsEditable)  # Заголовок не редактируемый
-        section_item.setBackground(QColor(200, 200, 200))  # Цвет фона заголовка
+        # section_item.setBackground(QColor(200, 200, 200))  # Цвет фона заголовка
         section_item.setTextAlignment(Qt.AlignCenter)
 
         self.table.setItem(row_position, 0, section_item)
@@ -513,8 +513,8 @@ class PurchasesWidget(QWidget):
         
         
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    csv_loader_widget = PurchasesWidget()
-    csv_loader_widget.show()
-    sys.exit(app.exec())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     csv_loader_widget = PurchasesWidget()
+#     csv_loader_widget.show()
+#     sys.exit(app.exec())
