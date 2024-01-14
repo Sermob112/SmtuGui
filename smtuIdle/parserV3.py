@@ -512,7 +512,7 @@ def export_to_excel(data, output_excel_path, filters):
 }
         # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
         filter_df.fillna('', inplace=True)
-        selected_data = [tuple[:56] for tuple in data]
+        selected_data = [tuple[:65] for tuple in data]
         # Создайте DataFrame с данными
         data_df = pd.DataFrame(selected_data, columns=["Id",
              "PurchaseOrder", "RegistryNumber", "ProcurementMethod", "PurchaseName",
@@ -529,6 +529,9 @@ def export_to_excel(data, output_excel_path, filters):
                 "ContractingAuthority", "ContractIdentifier", "RegistryNumber_contract",
                 "ContractNumber", "StartDate", "EndDate", "ContractPrice", "AdvancePayment",
                 "ReductionNMC", "ReductionNMCPercent", "SupplierProtocol", "ContractFile",
+
+                "RequestMethod","PublicInformationMethod","NMCObtainedMethods","CostMethodNMC",
+                "ComparablePrice","NMCMethodsTwo","CEIComparablePrices","CEICostMethod","CEIMethodsTwo"
         ])
 
         # Создайте словарь для перевода названий столбцов
@@ -589,6 +592,16 @@ def export_to_excel(data, output_excel_path, filters):
         "ReductionNMCPercent": "Снижение НМЦК, %",
         "SupplierProtocol": "Протоколы определения поставщика (выписка)",
         "ContractFile": "Договор",
+        "RequestMethod":"Способ направления запросов о предоставлении ценовой информации",
+        "PublicInformationMethod": "Способ использования общедоступной информации",
+        "NMCObtainedMethods": "НМЦК, полученная различными способами", 
+        "CostMethodNMC": "НМЦК на основе затратного метода, руб. (в случае его применения)",
+        "ComparablePrice": "Цена сравнимой продукции",
+        "NMCMethodsTwo": "НМЦК, полученная с применением двух методов",
+        "CEIComparablePrices": "ЦКЕИ на основе метода сопоставимых рыночных цен",
+        "CEICostMethod": "ЦКЕИ на основе затратного метода, руб. (в случае его применения)",
+        "CEIMethodsTwo":"ЦКЕИ, полученная с применением двух методов",
+
     }
 
         filter_df.rename(columns=filter_column_translation, inplace=True)

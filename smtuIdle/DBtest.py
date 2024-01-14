@@ -492,7 +492,13 @@ class PurchasesWidget(QWidget):
             selected_file = file_dialog.selectedFiles()[0]
             selected_file = selected_file if selected_file else None
             if selected_file:
-                query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                # query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                query = (
+                self.purchases
+                .select(Purchase, Contract, FinalDetermination)
+                .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
+)       
                 self.data = list(query.tuples())
                 if export_to_excel(self.data ,f'{selected_file}/Все данные.xlsx',filters=filters ) == True:
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
@@ -507,8 +513,8 @@ class PurchasesWidget(QWidget):
         
         
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    csv_loader_widget = PurchasesWidget()
+    csv_loader_widget.show()
+    sys.exit(app.exec())
