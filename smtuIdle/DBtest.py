@@ -2,12 +2,14 @@ from PySide6.QtWidgets import QApplication,QFileDialog, QMessageBox, QCompleter,
 from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
 from datetime import date
-from models import Purchase, Contract
+from models import Purchase, Contract, FinalDetermination
 from PySide6.QtCore import Qt, QStringListModel,Signal
+from PySide6.QtGui import QColor
 import sys, json
 from peewee import JOIN
 from InsertWidgetContract import InsertWidgetContract
 from InsertWidgetNMCK import InsertWidgetNMCK
+from InsertWidgetCEIA import InsertWidgetCEIA
 from parserV3 import delete_records_by_id, export_to_excel
 from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
@@ -86,11 +88,13 @@ class PurchasesWidget(QWidget):
         # Создаем кнопки для навигации
         self.addButtonContract = QPushButton("Добавить итог закупки", self)
         self.addButtonTKP = QPushButton("Добавить ТКП", self)
+        self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
         self.removeButton = QPushButton("Удалить", self)
         self.toExcel = QPushButton("Экспорт в Excel", self)
          # Устанавливаем обработчики событий для кнопок
         self.addButtonContract.clicked.connect(self.add_button_contract_clicked)
         self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
+        self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
         self.removeButton.clicked.connect(self.remove_button_clicked)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
          # Создаем метку
@@ -115,7 +119,9 @@ class PurchasesWidget(QWidget):
     
         button_layout2.addWidget(self.addButtonContract)
         button_layout2.addWidget(self.addButtonTKP)
+        button_layout2.addWidget(self.addButtonCIA)
         button_layout2.addWidget(self.removeButton)
+      
 
         button_layout3 = QHBoxLayout()
         button_layout3.addWidget(self.toExcel)
@@ -209,6 +215,7 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Дата начала заявки", str(current_purchase.ApplicationStartDate))
             self.add_row_to_table("Дата окончания заявки", str(current_purchase.ApplicationEndDate))
             self.add_row_to_table("Дата аукциона", str(current_purchase.AuctionDate))
+            self.add_section_to_table("Определение НМЦК и ЦКЕИ")
             self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount))
             self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount))
             self.add_row_to_table("Среднее значение цены", str(current_purchase.AveragePrice))
@@ -218,7 +225,7 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Коэффициент вариации", str(current_purchase.CoefficientOfVariation))
             self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
             self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
-
+             
             # Получаем связанные записи из модели Contract
             self.contracts = Contract.select().where(Contract.purchase == current_purchase)
             for contract in self.contracts:
@@ -243,7 +250,22 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("Снижение НМЦК, %", str(contract.ReductionNMCPercent))
                 self.add_row_to_table("Протоколы определения поставщика (выписка)", contract.SupplierProtocol)
                 self.add_row_to_table("Договор", contract.ContractFile)
-            
+
+            self.finalDetermination = FinalDetermination.select().where(FinalDetermination.purchase == current_purchase)
+            for det in self.finalDetermination:
+                self.add_section_to_table("Итоговое определение НМЦК с использованием нескольких методов. НМЦК с учетом метода и способа расчета")
+                self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации", str(det.RequestMethod))
+                self.add_row_to_table("Способ использования общедоступной информации", str(det.PublicInformationMethod))
+                self.add_row_to_table("НМЦК, полученная различными способами", str(det.NMCObtainedMethods))
+                self.add_section_to_table("НМЦК, полученная различными способами в рамках метода сопоставимых рыночных цен (анализа рынка), руб. (при применении нескольких способов)")
+                self.add_row_to_table("НМЦК на основе затратного метода, руб. (в случае его применения)", str(det.CostMethodNMC))
+                self.add_row_to_table("Цена сравнимой продукции, приведенная в соответствие к условиям закупки судна, НМЦК которого определяется, руб. (при наличии)", str(det.ComparablePrice))
+                self.add_row_to_table("НМЦК, полученная с применением двух методов", str(det.NMCMethodsTwo))
+                self.add_section_to_table("Итоговое определение ЦКЕИ с использованием нескольких методов ЦКЕИ с учетом метода расчета")
+                self.add_row_to_table("ЦКЕИ на основе метода сопоставимых рыночных цен )", str(det.CEICostMethod))
+                self.add_row_to_table("ЦКЕИ, полученная с применением двух методов: метода сопоставимых рыночных цен (анализа рынка) и затратного метода", str(det.CEIMethodsTwo))
+          
+
         else:
             self.label.setText("Нет записей")
 
@@ -257,7 +279,17 @@ class PurchasesWidget(QWidget):
         self.table.setItem(row_position, 0, label_item)
         self.table.setItem(row_position, 1, value_item)
 
-    
+    def add_section_to_table(self, section_text):
+        row_position = self.table.rowCount()
+        self.table.insertRow(row_position)
+
+        section_item = QTableWidgetItem(section_text)
+        section_item.setFlags(section_item.flags() & ~Qt.ItemIsEditable)  # Заголовок не редактируемый
+        section_item.setBackground(QColor(200, 200, 200))  # Цвет фона заголовка
+        section_item.setTextAlignment(Qt.AlignCenter)
+
+        self.table.setItem(row_position, 0, section_item)
+        self.table.setSpan(row_position, 0, 1, 2)  # Занимаем два столбца
 
     def show_previous(self):
         if self.current_position > 0:
@@ -405,8 +437,15 @@ class PurchasesWidget(QWidget):
         if len(self.purchases_list) != 0:
             self.current_purchase = self.purchases_list[self.current_position]
             purchase_id = self.current_purchase.Id
-            self.insert_cont = InsertWidgetNMCK(purchase_id)
-            self.insert_cont.show()
+            self.tkp_shower = InsertWidgetNMCK(purchase_id)
+            self.tkp_shower.show()
+    
+    def add_button_cia_clicked(self):
+        if len(self.purchases_list) != 0:
+            self.current_purchase = self.purchases_list[self.current_position]
+            purchase_id = self.current_purchase.Id
+            self.cia_shower = InsertWidgetCEIA(purchase_id)
+            self.cia_shower.show()
             
      
 

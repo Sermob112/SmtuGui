@@ -1,5 +1,5 @@
 from PySide6 import QtCore, QtGui, QtWidgets
-
+from PySide6.QtCore import QFile,QTextStream
 from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
 from PySide6.QtWidgets import *
@@ -20,6 +20,11 @@ class Ui_MainWindow(object):
         app.setStyle(style)
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1680, 960)
+        # Установка каскадной таблицы стилей (CSS) для всего приложения
+        # file = QFile(":/qdarkstyle/style.qss")
+        # file.open(QFile.ReadOnly | QFile.Text)
+        # stream = QTextStream(file)
+        # app.setStyleSheet(stream.readAll())
 
         # Главный макет
         self.centralwidget = QtWidgets.QWidget(MainWindow)

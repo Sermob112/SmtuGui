@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 from auth import *
+from PySide6.QtWidgets import *
 from initialize_db import initialize_database
 from MainWindow import Ui_MainWindow
 from PySide6.QtCore import Qt
@@ -10,7 +11,9 @@ class AuthWindow(QWidget):
         self.setWindowTitle("Окно авторизации")
         self.setGeometry(100, 100, 400, 200)
         self.auth = AuthManager()
-
+        style = QStyleFactory.create('Fusion')
+        app = QApplication.instance()
+        app.setStyle(style)
         initialize_database()
 
         main_layout = QVBoxLayout()
@@ -45,34 +48,34 @@ class AuthWindow(QWidget):
         # Установите центральный макет
         self.setLayout(main_layout)
 
-        # Добавьте стили для улучшения внешнего вида
-        style = """
-            QWidget {
-                background-color: #f0f0f0;
-            }
-            QLabel {
-                font-size: 14px;
-            }
-            QLineEdit {
-                padding: 5px;
-                font-size: 14px;
-                border: 1px solid #ccc;
-                border-radius: 3px;
-            }
-            QPushButton {
-                padding: 5px;
-                font-size: 14px;
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 3px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-        """
+        # # Добавьте стили для улучшения внешнего вида
+        # style = """
+        #     QWidget {
+        #         background-color: #f0f0f0;
+        #     }
+        #     QLabel {
+        #         font-size: 14px;
+        #     }
+        #     QLineEdit {
+        #         padding: 5px;
+        #         font-size: 14px;
+        #         border: 1px solid #ccc;
+        #         border-radius: 3px;
+        #     }
+        #     QPushButton {
+        #         padding: 5px;
+        #         font-size: 14px;
+        #         background-color: #4CAF50;
+        #         color: white;
+        #         border: none;
+        #         border-radius: 3px;
+        #     }
+        #     QPushButton:hover {
+        #         background-color: #45a049;
+        #     }
+        # """
 
-        self.setStyleSheet(style)
+        # self.setStyleSheet(style)
 
         
          # Убрать рамку окна для более современного вида

@@ -273,9 +273,9 @@ class InsertWidgetContract(QWidget):
         msg_box.setText(message)
         msg_box.exec()
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = InsertWidgetContract(3)
-    window.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     window = InsertWidgetContract(3)
+#     window.show()
+#     sys.exit(app.exec())
         

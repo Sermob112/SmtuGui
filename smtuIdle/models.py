@@ -54,6 +54,8 @@ class Purchase(BaseModel):
         super(Purchase, self).delete_instance(*args, **kwargs)
 
 
+
+
 class Contract(Model):
     Id = AutoField(primary_key=True, verbose_name="Идентификатор")
     TotalApplications = CharField(verbose_name="Общее количество заявок", null=True)
@@ -79,6 +81,21 @@ class Contract(Model):
     # purchase = ForeignKeyField(Purchase,on_delete='CASCADE', verbose_name="Закупка")
     class Meta:
         database = db  
+
+class FinalDetermination(Model):
+    Id = AutoField(primary_key=True, verbose_name="Идентификатор")
+    RequestMethod = CharField(verbose_name="Способ направления запросов о предоставлении ценовой информации", null=True)
+    PublicInformationMethod = CharField(verbose_name="Способ использования общедоступной информации", null=True)
+    NMCObtainedMethods = CharField(verbose_name="НМЦК, полученная различными способами", null=True)
+    CostMethodNMC = CharField(verbose_name="НМЦК на основе затратного метода, руб. (в случае его применения)", null=True)
+    ComparablePrice = CharField(verbose_name="Цена сравнимой продукции", null=True)
+    NMCMethodsTwo = CharField(verbose_name="НМЦК, полученная с применением двух методов", null=True)
+    CEIComparablePrices = CharField(verbose_name="ЦКЕИ на основе метода сопоставимых рыночных цен", null=True)
+    CEICostMethod = CharField(verbose_name="ЦКЕИ на основе затратного метода, руб. (в случае его применения)", null=True)
+    CEIMethodsTwo = CharField(verbose_name="ЦКЕИ, полученная с применением двух методов", null=True)
+    purchase = ForeignKeyField(Purchase,on_delete='CASCADE',  backref='contract', unique=True, verbose_name="Закупка")
+    class Meta:
+        database = db
 
 class User(Model):
     id = AutoField(primary_key=True, verbose_name="Идентификатор")
