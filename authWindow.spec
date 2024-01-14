@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['ваш_скрипт.py'],
+    ['authWindow.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='ваш_скрипт',
+    name='authWindow',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
