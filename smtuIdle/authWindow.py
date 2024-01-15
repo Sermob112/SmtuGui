@@ -89,7 +89,7 @@ class AuthWindow(QWidget):
             QMessageBox.information(self, "Успех", "Вы успешно авторизировались!")
             
 
-
+            
             ui = Ui_MainWindow()
             ui.setupUi(self.main_window)
             self.main_window.show()
