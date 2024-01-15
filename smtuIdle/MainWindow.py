@@ -4,16 +4,18 @@ from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, Fl
 from playhouse.shortcuts import model_to_dict
 from PySide6.QtWidgets import *
 from PySide6 import QtCore
+from PySide6 import QtWidgets
 from DBtest import PurchasesWidget
 from LoadCsv import CsvLoaderWidget
 from InsertWidgetNMCK import InsertWidgetNMCK
 from statisticWidget import StatisticWidget
 from debugWindow import DebugWidget
+# from Module_start import AuthManager
 
 class Ui_MainWindow(object):
     def __init__(self):
         super(Ui_MainWindow, self).__init__()
-        
+        self.auth_window = None  
     def setupUi(self, MainWindow):
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
@@ -29,8 +31,10 @@ class Ui_MainWindow(object):
         # Главный макет
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-
-        # Общий макет
+        self.logoutButton = QPushButton("Выйти")
+        self.logoutButton.setFixedWidth(150)
+        self.logoutButton.clicked.connect(self.exit)
+                # Общий макет
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
 
         # Верхний макет
@@ -53,12 +57,14 @@ class Ui_MainWindow(object):
         # Статический виджет в правой части
         self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
         self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
+        self.rightTopLayout.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
         self.userLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.userLabel.setText("Пользователь: Заглушка")
         self.rightTopLayout.addWidget(self.userLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.purchaseLabel.setText("Закупок в БД: _______. Дата: _______")
         self.rightTopLayout.addWidget(self.purchaseLabel)
+
         # Добавление виджета в верхний макет
         self.topLayout.addWidget(self.rightTopWidget)
         self.verticalLayout.addLayout(self.topLayout)
@@ -174,13 +180,23 @@ class Ui_MainWindow(object):
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
         self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
+    def exit(self):
+        # MainWindow.close()
+
+        from authWindow import AuthWindow
+        self.auth_window = AuthWindow()
+        self.auth_window.show()
+     
+        MainWindow.close()
 
 
-# if __name__ == "__main__":
-#     import sys
-#     app = QtWidgets.QApplication(sys.argv)
-#     MainWindow = QtWidgets.QMainWindow()
-#     ui = Ui_MainWindow()
-#     ui.setupUi(MainWindow)
-#     MainWindow.show()
-#     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec())
