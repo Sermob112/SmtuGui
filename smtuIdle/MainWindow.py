@@ -10,6 +10,8 @@ from LoadCsv import CsvLoaderWidget
 from InsertWidgetNMCK import InsertWidgetNMCK
 from statisticWidget import StatisticWidget
 from debugWindow import DebugWidget
+from parserV3 import count_total_records
+from datetime import datetime
 # from Module_start import AuthManager
 
 class Ui_MainWindow(object):
@@ -62,7 +64,9 @@ class Ui_MainWindow(object):
         self.userLabel.setText("Пользователь: Заглушка")
         self.rightTopLayout.addWidget(self.userLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
-        self.purchaseLabel.setText("Закупок в БД: _______. Дата: _______")
+        current_date = datetime.now()
+        formatted_date = current_date.strftime("%d-%m-%Y")
+        self.purchaseLabel.setText(f"Закупок в БД: {count_total_records()}. Дата: {formatted_date}")
         self.rightTopLayout.addWidget(self.purchaseLabel)
 
         # Добавление виджета в верхний макет

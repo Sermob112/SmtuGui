@@ -431,7 +431,7 @@ class PurchasesWidget(QWidget):
             purchase_id = self.current_purchase.Id
             self.insert_cont = InsertWidgetContract(purchase_id)
             self.insert_cont.show()
-        print(purchase_id)
+    
 
     def add_button_tkp_clicked(self):
         if len(self.purchases_list) != 0:

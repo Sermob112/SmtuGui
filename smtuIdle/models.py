@@ -1,4 +1,4 @@
-from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, FloatField, DateField, ForeignKeyField, ManyToManyField
+from peewee import Model, SqliteDatabase, BooleanField, AutoField, CharField, IntegerField, FloatField, DateField, ForeignKeyField, ManyToManyField
 from datetime import date
 from random import randint, uniform
 import sqlite3
@@ -48,6 +48,7 @@ class Purchase(BaseModel):
     NMCKMarket = FloatField(null=True,  default="Нет данных", verbose_name="НМЦК рыночная")
     FinancingLimit = FloatField(null=True, default="Нет данных", verbose_name="Лимит финансирования")
     PurchaseStatus = CharField(null=True, max_length=500, default="[]", verbose_name="Статус закупки")
+    isChanged = BooleanField(null=True, verbose_name="Был изменен")
     def delete_instance(self, *args, **kwargs):
         # Добавьте каскадное удаление перед вызовом delete_instance
         Contract.delete().where(Contract.purchase == self).execute()
@@ -96,7 +97,17 @@ class FinalDetermination(Model):
     purchase = ForeignKeyField(Purchase,on_delete='CASCADE',  backref='contract', unique=True, verbose_name="Закупка")
     class Meta:
         database = db
-
+        
+class CurrencyRate(Model):
+    Id = AutoField(primary_key=True, verbose_name="Идентификатор")
+    CurrencyValue = FloatField(verbose_name="Значение валюты")
+    CurrentCurrency = CharField(max_length=255, verbose_name="Текущая валюта")
+    DateValueChanged = DateField(verbose_name="Дата изменения значения валюты")
+    CurrencyRateDate = DateField(verbose_name="Дата курса валюты")
+    PreviousCurrency = CharField(max_length=255, verbose_name="Предыдущая валюта")
+    purchase = ForeignKeyField(Purchase,on_delete='CASCADE',  backref='contract', unique=True, verbose_name="Закупка")
+    class Meta:
+        database = db
 class User(Model):
     id = AutoField(primary_key=True, verbose_name="Идентификатор")
     username = CharField(max_length=100, unique=True)

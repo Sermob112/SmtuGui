@@ -8,7 +8,7 @@ def initialize_database():
     # Проверяем, существует ли файл маркера
     if not os.path.exists('database_initialized.marker'):
         db.connect()
-        db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination ])
+        db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate ])
         admin_user = User.create(username='admin', password='sa')
         regular_user = User.create(username='user', password='sa')
         admin_role = Role.create(name='Администратор')
