@@ -5,6 +5,7 @@ from DBtest import PurchasesWidget
 from statisticWidget import StatisticWidget
 from parserV3 import *
 from PySide6.QtWidgets import QStyleFactory
+from CurrencyWindow import CurrencyWidget
 class CsvLoaderWidget(QWidget):
     def __init__(self):
         super(CsvLoaderWidget, self).__init__()
@@ -90,8 +91,22 @@ class CsvLoaderWidget(QWidget):
             self.inserted_rows_count, insert_errors = insert_in_table(selected_file)
             
             if not insert_errors:
-  
+                QMessageBox.information(self, "Успех", "Данные успешно загружены")
                 self.update_table()
+                purchases = Purchase.select().where((Purchase.Currency != 'RUB'))
+                if purchases:
+                    reply = QMessageBox.question(self, "Внимание", "Найдены записи с валютами не в рублях. Изменить валюту?", 
+                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    
+                    if reply == QMessageBox.Yes:
+                        self.cur = CurrencyWidget()
+                        self.cur.show()
+                    
+                    else:
+                       pass
+
+                
+                
                 
              
     def populate_table(self, table):
