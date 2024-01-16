@@ -37,6 +37,7 @@ class CurrencyWidget(QWidget):
         self.setLayout(layout)
 
     def populate_table(self):
+        self.table.setRowCount(0)
         purchases = Purchase.select().where((Purchase.Currency != 'RUB') & (Purchase.Currency.is_null(False)) &(Purchase.Currency != 'Нет данных') )
         for purchase in purchases:
             currency_value = purchase.Currency or "Нет данных"
@@ -71,16 +72,8 @@ class CurrencyWidget(QWidget):
             self.currency_shower.closed_signal.connect(self.handle_currency_shower_closed)
     def handle_currency_shower_closed(self):
         # Получите индекс текущей выбранной строки в таблице
-        selected_row = self.get_selected_row()
-        if selected_row is not None:
-            # Удалите строку из таблицы
-            self.table.removeRow(selected_row)
-    def get_selected_row(self):
-        # Получите индекс текущей выбранной строки в таблице
-        selected_items = self.table.selectedItems()
-        if selected_items:
-            return selected_items[0].row()
-        return None
+        self.populate_table()
+
   
 
 if __name__ == "__main__":
