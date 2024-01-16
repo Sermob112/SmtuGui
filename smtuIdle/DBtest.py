@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QApplication,QFileDialog, QMessageBox, QCompleter,
 from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
 from datetime import date
-from models import Purchase, Contract, FinalDetermination
+from models import Purchase, Contract, FinalDetermination,CurrencyRate
 from PySide6.QtCore import Qt, QStringListModel,Signal
 from PySide6.QtGui import QColor
 import sys, json
@@ -225,7 +225,18 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Коэффициент вариации", str(current_purchase.CoefficientOfVariation))
             self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
             self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
-             
+            
+            if current_purchase.isChanged == True:
+                self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
+                for curr in self.currency:
+                    self.add_section_to_table("Изминения валюты")
+                    self.add_row_to_table("Значение валюты", str(curr.CurrencyValue))
+                    self.add_row_to_table("Текущая валюта", str(curr.CurrentCurrency))
+                    self.add_row_to_table("Дата изменения значения валюты", str(curr.DateValueChanged))
+                    self.add_row_to_table("Дата курса валюты", str(curr.CurrencyRateDate))
+                    self.add_row_to_table("Предыдущая валюта", str(curr.PreviousCurrency))
+
+
             # Получаем связанные записи из модели Contract
             self.contracts = Contract.select().where(Contract.purchase == current_purchase)
             for contract in self.contracts:
