@@ -16,7 +16,8 @@ class InsertWidgetContract(QWidget):
         self.tkp_data = {}
         self.purchase_id = purchase_id
         # Создаем лейблы
-
+        self.setWindowTitle("Окно ввода даных Контрактов")
+        self.setGeometry(100, 100, 600, 400)
         
         label1 = QLabel("Ввод данных по заявкам")
         label2 = QLabel("Количество заявок на участие в закупке:")

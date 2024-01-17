@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import *
 import statistics
-from models import Contract
+from models import *
 from peewee import *
 import pandas as pd
 from parserV3 import *
@@ -42,7 +42,7 @@ class DebugWidget(QWidget):
         reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
-            if  Contract.delete().execute() & Purchase.delete().execute():
+            if  Contract.delete().execute() & Purchase.delete().execute() & CurrencyRate.delete().execute() & FinalDetermination.delete().execute(): 
                 QMessageBox.information(self, "Успех", "Вы успешно удалили данные!")
             else:
                 QMessageBox.information(self,"Ошибка", "Ошибка при удалении данных")

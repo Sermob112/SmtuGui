@@ -18,7 +18,8 @@ cursor = db.cursor()
 class CurrencyWidget(QWidget):
     def __init__(self):
         super().__init__()
-
+        self.setWindowTitle("Окно ввода даных валюты")
+        self.setGeometry(100, 100, 600, 400)
         self.selected_text = None
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)

@@ -512,9 +512,9 @@ def export_to_excel(data, output_excel_path, filters):
 }
         # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
         filter_df.fillna('', inplace=True)
-        selected_data = [tuple[:65] for tuple in data]
-        # Создайте DataFrame с данными
-        data_df = pd.DataFrame(selected_data, columns=["Id",
+        # selected_data = [tuple[:69] for tuple in data]
+       
+        selected_columns = ["Id",
              "PurchaseOrder", "RegistryNumber", "ProcurementMethod", "PurchaseName",
                  "AuctionSubject", "PurchaseIdentificationCode", "LotNumber", "LotName",
                  "InitialMaxContractPrice", "Currency", "InitialMaxContractPriceInCurrency", 
@@ -523,16 +523,21 @@ def export_to_excel(data, output_excel_path, filters):
                  "PlacementDate", "UpdateDate", "ProcurementStage", "ProcurementFeatures",
                 "ApplicationStartDate", "ApplicationEndDate", "AuctionDate","QueryCount","ResponseCount",
                 "AveragePrice","MinPrice","MaxPrice","StandardDeviation","CoefficientOfVariation","TKPData","NMCKMarket",
-                "FinancingLimit","conId",
-                 "TotalApplications", "AdmittedApplications", "RejectedApplications",
+                "FinancingLimit", 
+                "TotalApplications", "AdmittedApplications", "RejectedApplications",
                 "PriceProposal", "Applicant", "Applicant_satatus", "WinnerExecutor",
                 "ContractingAuthority", "ContractIdentifier", "RegistryNumber_contract",
                 "ContractNumber", "StartDate", "EndDate", "ContractPrice", "AdvancePayment",
                 "ReductionNMC", "ReductionNMCPercent", "SupplierProtocol", "ContractFile",
 
                 "RequestMethod","PublicInformationMethod","NMCObtainedMethods","CostMethodNMC",
-                "ComparablePrice","NMCMethodsTwo","CEIComparablePrices","CEICostMethod","CEIMethodsTwo"
-        ])
+                "ComparablePrice","NMCMethodsTwo","CEIComparablePrices","CEICostMethod","CEIMethodsTwo",
+                
+                "CurrencyValue","CurrentCurrency","DateValueChanged","CurrencyRateDate","PreviousCurrency", ]
+        selected_data = [[t[selected_columns.index(col)] for col in selected_columns] for t in data]
+        # print(selected_data[0])
+        # Создайте DataFrame с данными
+        data_df = pd.DataFrame(selected_data, columns=selected_columns)
 
         # Создайте словарь для перевода названий столбцов
         column_translation = {
@@ -573,12 +578,11 @@ def export_to_excel(data, output_excel_path, filters):
         "NMCKMarket":"Цена рыночная",
         "FinancingLimit":"Лимит финансирования",
         "TotalApplications": "Общее количество заявок",
-        "conId":"Номер контракта",
         "AdmittedApplications": "Общее количество допущенных заявок",
         "RejectedApplications": "Общее количество отклоненных заявок",
         "PriceProposal": "Ценовое предложение",
         "Applicant": "Заявитель",
-        "Applicant_status": "Статус заявителя",
+        "Applicant_satatus": "Статус заявителя",
         "WinnerExecutor": "Победитель-исполнитель контракта",
         "ContractingAuthority": "Заказчик по контракту",
         "ContractIdentifier": "Идентификатор договора",
@@ -601,6 +605,11 @@ def export_to_excel(data, output_excel_path, filters):
         "CEIComparablePrices": "ЦКЕИ на основе метода сопоставимых рыночных цен",
         "CEICostMethod": "ЦКЕИ на основе затратного метода, руб. (в случае его применения)",
         "CEIMethodsTwo":"ЦКЕИ, полученная с применением двух методов",
+        "CurrencyValue" :"Значение валюты",
+        "CurrentCurrency" :"Текущая валюта",
+        "DateValueChanged" :"Дата изменения значения валюты",
+        "CurrencyRateDate" :"Дата курса валюты",
+        "PreviousCurrency" :"Предыдущая валюта",
 
     }
 

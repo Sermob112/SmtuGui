@@ -10,6 +10,7 @@ from peewee import JOIN
 from InsertWidgetContract import InsertWidgetContract
 from InsertWidgetNMCK import InsertWidgetNMCK
 from InsertWidgetCEIA import InsertWidgetCEIA
+from InsertWidgetCurrency import InsertWidgetCurrency
 from parserV3 import delete_records_by_id, export_to_excel
 from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
@@ -83,19 +84,34 @@ class PurchasesWidget(QWidget):
         # Создаем кнопки для навигации
         self.prev_button = QPushButton("Назад", self)
         self.next_button = QPushButton("Вперед", self)
-
+        style = (
+            "QPushButton {"
+            "   background-color: red;"
+            "   border-radius: 5px;"  
+            "   color: lightgray;"     
+        
+            "   font-size: 14px;"     
+            "}"
+            "QPushButton:hover {"
+            "   background-color: darkred;"  # Цвет при наведении
+            "}"
+        )
 
         # Создаем кнопки для навигации
         self.addButtonContract = QPushButton("Добавить итог закупки", self)
         self.addButtonTKP = QPushButton("Добавить ТКП", self)
         self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
+        self.addButtonCurrency= QPushButton("Изменить Валюту", self)
         self.removeButton = QPushButton("Удалить", self)
+        self.removeButton.setFixedSize(100, 20)
+        self.removeButton.setStyleSheet(style)
         self.toExcel = QPushButton("Экспорт в Excel", self)
          # Устанавливаем обработчики событий для кнопок
         self.addButtonContract.clicked.connect(self.add_button_contract_clicked)
         self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
         self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
         self.removeButton.clicked.connect(self.remove_button_clicked)
+        self.addButtonCurrency.clicked.connect(self.update_currency)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
          # Создаем метку
         self.label = QLabel("Текущая запись:", self)
@@ -113,15 +129,16 @@ class PurchasesWidget(QWidget):
         button_layout.addWidget(self.prev_button)
         button_layout.addWidget(self.label)
         button_layout.addWidget(self.next_button)
-
+        self.label.setAlignment(Qt.AlignHCenter)
         # Создаем горизонтальный макет и добавляем элементы
         button_layout2 = QHBoxLayout()
-    
+        button_layout3 = QHBoxLayout()
         button_layout2.addWidget(self.addButtonContract)
         button_layout2.addWidget(self.addButtonTKP)
         button_layout2.addWidget(self.addButtonCIA)
+        button_layout2.addWidget(self.addButtonCurrency)
         button_layout2.addWidget(self.removeButton)
-      
+        
 
         button_layout3 = QHBoxLayout()
         button_layout3.addWidget(self.toExcel)
@@ -226,15 +243,7 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
             self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
             
-            if current_purchase.isChanged == True:
-                self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
-                for curr in self.currency:
-                    self.add_section_to_table("Изминения валюты")
-                    self.add_row_to_table("Значение валюты", str(curr.CurrencyValue))
-                    self.add_row_to_table("Текущая валюта", str(curr.CurrentCurrency))
-                    self.add_row_to_table("Дата изменения значения валюты", str(curr.DateValueChanged))
-                    self.add_row_to_table("Дата курса валюты", str(curr.CurrencyRateDate))
-                    self.add_row_to_table("Предыдущая валюта", str(curr.PreviousCurrency))
+           
 
 
             # Получаем связанные записи из модели Contract
@@ -246,8 +255,12 @@ class PurchasesWidget(QWidget):
                 price_proposal_dict = json.loads(contract.PriceProposal)
                 for key, value in price_proposal_dict.items():
                     self.add_row_to_table(key, str(value))
-                self.add_row_to_table("Заявитель", contract.Applicant)
-                self.add_row_to_table("Статус заявителя", contract.Applicant_satatus)
+                Applicant_dict = json.loads( contract.Applicant)
+                for key, value in Applicant_dict.items():
+                    self.add_row_to_table(key, str(value))
+                Applicant_satatus = json.loads(contract.Applicant_satatus)
+                for key, value in Applicant_satatus.items():
+                    self.add_row_to_table(key, str(value))
                 self.add_row_to_table("Победитель-исполнитель контракта", contract.WinnerExecutor)
                 self.add_row_to_table("Заказчик по контракту", contract.ContractingAuthority)
                 self.add_row_to_table("Идентификатор договора", contract.ContractIdentifier)
@@ -276,7 +289,15 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("ЦКЕИ на основе метода сопоставимых рыночных цен )", str(det.CEICostMethod))
                 self.add_row_to_table("ЦКЕИ, полученная с применением двух методов: метода сопоставимых рыночных цен (анализа рынка) и затратного метода", str(det.CEIMethodsTwo))
           
-
+            if current_purchase.isChanged == True:
+                self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
+                for curr in self.currency:
+                    self.add_section_to_table("Изминения валюты")
+                    self.add_row_to_table("Значение валюты", str(curr.CurrencyValue))
+                    self.add_row_to_table("Текущая валюта", str(curr.CurrentCurrency))
+                    self.add_row_to_table("Дата изменения значения валюты", str(curr.DateValueChanged))
+                    self.add_row_to_table("Дата курса валюты", str(curr.CurrencyRateDate))
+                    self.add_row_to_table("Предыдущая валюта", str(curr.PreviousCurrency))
         else:
             self.label.setText("Нет записей")
 
@@ -475,11 +496,16 @@ class PurchasesWidget(QWidget):
                   
         else:
             pass
-    
+    def update_currency(self):
+        if len(self.purchases_list) != 0:
+            self.current_purchase = self.purchases_list[self.current_position]
+            purchase_id = self.current_purchase.Id
+            self.curr_shower = InsertWidgetCurrency(purchase_id)
+            self.curr_shower.show()
     def export_to_excel_clicked(self ):
 
         search_input = self.selected_text if self.selected_text is not None else None
-        sort_options = search_input.currentText() if self.selected_text is not None  else None
+        sort_options = search_input if self.selected_text is not None  else None
         sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.selected_text is not None  else None
         min_date = self.min_date if self.selected_text is not None  else None
         max_date = self.max_date if self.selected_text is not None  else None
@@ -503,14 +529,45 @@ class PurchasesWidget(QWidget):
             selected_file = file_dialog.selectedFiles()[0]
             selected_file = selected_file if selected_file else None
             if selected_file:
+                query1 = self.purchases
                 # query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
                 query = (
-                self.purchases
-                .select(Purchase, Contract, FinalDetermination)
-                .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-                .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
-)       
+                    self.purchases
+                    .select(Purchase.Id, Purchase.PurchaseOrder, Purchase.RegistryNumber, Purchase.ProcurementMethod,
+        Purchase.PurchaseName, Purchase.AuctionSubject, Purchase.PurchaseIdentificationCode,
+        Purchase.LotNumber, Purchase.LotName, Purchase.InitialMaxContractPrice, Purchase.Currency,
+        Purchase.InitialMaxContractPriceInCurrency, Purchase.ContractCurrency,
+        Purchase.OKDPClassification, Purchase.OKPDClassification, Purchase.OKPD2Classification,
+        Purchase.PositionCode, Purchase.CustomerName, Purchase.ProcurementOrganization,
+        Purchase.PlacementDate, Purchase.UpdateDate, Purchase.ProcurementStage,
+        Purchase.ProcurementFeatures, Purchase.ApplicationStartDate, Purchase.ApplicationEndDate,
+        Purchase.AuctionDate, Purchase.QueryCount, Purchase.ResponseCount, Purchase.AveragePrice,
+        Purchase.MinPrice, Purchase.MaxPrice, Purchase.StandardDeviation, Purchase.CoefficientOfVariation,
+        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit,  Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
+        Contract.PriceProposal, Contract.Applicant, Contract.Applicant_satatus, Contract.WinnerExecutor,
+        Contract.ContractingAuthority, Contract.ContractIdentifier, Contract.RegistryNumber,
+        Contract.ContractNumber, Contract.StartDate, Contract.EndDate, Contract.ContractPrice,
+        Contract.AdvancePayment, Contract.ReductionNMC, Contract.ReductionNMCPercent,
+        Contract.SupplierProtocol, Contract.ContractFile, FinalDetermination.RequestMethod, FinalDetermination.PublicInformationMethod,
+        FinalDetermination.NMCObtainedMethods, FinalDetermination.CostMethodNMC,
+        FinalDetermination.ComparablePrice, FinalDetermination.NMCMethodsTwo,
+        FinalDetermination.CEIComparablePrices, FinalDetermination.CEICostMethod,
+        FinalDetermination.CEIMethodsTwo,  CurrencyRate.CurrencyValue, CurrencyRate.CurrentCurrency,
+        CurrencyRate.DateValueChanged, CurrencyRate.CurrencyRateDate, CurrencyRate.PreviousCurrency)
+                    .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                    .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
+                    .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
+                )     
+                
+                # query = (
+                #     self.purchases
+                #     .select(Purchase, Contract, FinalDetermination, CurrencyRate)
+                #     .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                #     .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
+                #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
+                # )     
                 self.data = list(query.tuples())
+                # print(self.data[0])
                 if export_to_excel(self.data ,f'{selected_file}/Все данные.xlsx',filters=filters ) == True:
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
                 else:
@@ -524,8 +581,8 @@ class PurchasesWidget(QWidget):
         
         
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    csv_loader_widget = PurchasesWidget()
+    csv_loader_widget.show()
+    sys.exit(app.exec())
