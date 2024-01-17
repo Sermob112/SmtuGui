@@ -113,7 +113,7 @@ class CsvLoaderWidget(QWidget):
         # Добавляем данные в таблицу
         data = [
             ('В БД НМЦК и ЦК добавлено Закупок:', str(self.inserted_rows_count)),
-            ('В БД НМЦК и ЦК всего размещено Закупок:', str(self.all_count))
+           ('В БД НМЦК и ЦК всего размещено Закупок:', str(self.all_count))
           
         ]
         
@@ -168,21 +168,23 @@ class CsvLoaderWidget(QWidget):
             if self.selected_ids:
                 success = delete_records_by_id(self.selected_ids)
                 if success:
-                    print("Успешно удалены записи с Id:", self.selected_ids)
+                    QMessageBox.information(self, "Успех", f"Успешно удалены записи с номерами:, {self.selected_ids}")
+                    # print("Успешно удалены записи с Id:", self.selected_ids)
                     self.second_table.clearContents()
                     # self.second_table.setRowCount(0)
                     self.selected_ids = []
                     self.update_second_table()
                 else:
-                    print("Ошибка при удалении записей")
+                    QMessageBox.information(self, "Ошибка", "Ошибка при удалении записей")
+                    # print("Ошибка при удалении записей")
         else:
             self.update_second_table()
             # В противном случае, ничего не делаем
             pass
         
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = CsvLoaderWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec_())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    csv_loader_widget = CsvLoaderWidget()
+    csv_loader_widget.show()
+    sys.exit(app.exec_())

@@ -15,14 +15,15 @@ from datetime import datetime
 # from Module_start import AuthManager
 
 class Ui_MainWindow(object):
-    def __init__(self):
-        super(Ui_MainWindow, self).__init__()
+    def __init__(self,username):
+        super(Ui_MainWindow, self, ).__init__()
         self.auth_window = None  
+        self.username = username
     def setupUi(self, MainWindow):
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
         app.setStyle(style)
-        MainWindow.setObjectName("MainWindow")
+        MainWindow.setObjectName("База данных")
         MainWindow.resize(1680, 960)
         # Установка каскадной таблицы стилей (CSS) для всего приложения
         # file = QFile(":/qdarkstyle/style.qss")
@@ -61,7 +62,7 @@ class Ui_MainWindow(object):
         self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
         self.rightTopLayout.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
         self.userLabel = QtWidgets.QLabel(self.rightTopWidget)
-        self.userLabel.setText("Пользователь: Заглушка")
+        self.userLabel.setText(f"Пользователь: {self.username}")
         self.rightTopLayout.addWidget(self.userLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
         current_date = datetime.now()

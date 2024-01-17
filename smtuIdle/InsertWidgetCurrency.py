@@ -8,6 +8,7 @@ from PySide6.QtGui import *
 import sys, json
 import statistics
 import pandas as pd
+from datetime import datetime
 db = SqliteDatabase('test.db')
 
 class InsertWidgetCurrency(QWidget):
@@ -22,13 +23,13 @@ class InsertWidgetCurrency(QWidget):
 
         labelInfo = QLabel(f"Реестровый номер закупки: {self.purchase.RegistryNumber} .Текущая валюта {self.purchase.Currency} ")
         label1 = QLabel("Цифровое значение валюты")
-        label2 = QLabel("Дата изменения значения валюты")
+        # label2 = QLabel("Дата изменения значения валюты")
         label3 = QLabel("Дата курса валюты")
       
 
         # Создаем поля ввода
         self.CurrencyValue = QLineEdit(self)
-        self.DateValueChanged = QDateEdit(self)
+        # self.DateValueChanged = QDateEdit(self)
         self.CurrencyRateDate = QDateEdit(self)
  
    
@@ -43,8 +44,8 @@ class InsertWidgetCurrency(QWidget):
         layout2.addWidget(self.CurrencyValue)
         
         # Добавляем лейбл и поле ввода во вторую строку
-        layout3.addWidget(label2)
-        layout3.addWidget(self.DateValueChanged)
+        # layout3.addWidget(label2)
+        # layout3.addWidget(self.DateValueChanged)
 
         # Добавляем лейбл и поле ввода в третью строку
         layout4.addWidget(label3)
@@ -80,16 +81,46 @@ class InsertWidgetCurrency(QWidget):
         self.setLayout(main_layout)
     
     def save_tkp_data(self):
-        
-    
-        currency = CurrencyRate(purchase=self.purchase_id,
+        if self.purchase.isChanged == True:
+            self.update_currency()
+
+        else:
+            currency = CurrencyRate(purchase=self.purchase_id,
+                                CurrentCurrency = "RUB",
+                                CurrencyValue= float(self.CurrencyValue.text()) if self.CurrencyValue.text() else 0,
+                                DateValueChanged=datetime.now().strftime("%d-%m-%Y"),
+                                CurrencyRateDate=self.CurrencyRateDate.text() if self.CurrencyRateDate.text() else 'нет данных',
+                                PreviousCurrency = str(self.purchase.Currency) if self.purchase else 'нет данных'
+                        
+                                )
+            purchaseToAdd = Purchase.update(
+                    Currency = "RUB",
+                    InitialMaxContractPrice = float(self.purchase.InitialMaxContractPrice) * float(self.CurrencyValue.text()),
+                    isChanged = True
+            ).where(Purchase.Id == self.purchase_id)
+            try:
+                # Попытка сохранения данных
+                purchaseToAdd.execute()
+                currency.save()
+                db.close()
+
+                # Выводим сообщение об успешном сохранении
+                self.show_message("Успех", "Данные успешно добавлены")
+                self.close()
+            except Exception as e:
+                # Выводим сообщение об ошибке
+                self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
+            # print("ТКПData сохранены:", tkp_json)
+            
+    def update_currency(self):
+        currency = CurrencyRate.update(
                             CurrentCurrency = "RUB",
                             CurrencyValue= float(self.CurrencyValue.text()) if self.CurrencyValue.text() else 0,
-                            DateValueChanged=self.DateValueChanged.text() if self.DateValueChanged.text() else 'нет данных',
+                            DateValueChanged=datetime.now().strftime("%d-%m-%Y"),
                             CurrencyRateDate=self.CurrencyRateDate.text() if self.CurrencyRateDate.text() else 'нет данных',
                             PreviousCurrency = str(self.purchase.Currency) if self.purchase else 'нет данных'
                     
-                            )
+                            ).where(CurrencyRate.purchase ==self.purchase_id)
         purchaseToAdd = Purchase.update(
                 Currency = "RUB",
                 InitialMaxContractPrice = float(self.purchase.InitialMaxContractPrice) * float(self.CurrencyValue.text()),
@@ -97,8 +128,8 @@ class InsertWidgetCurrency(QWidget):
         ).where(Purchase.Id == self.purchase_id)
         try:
             # Попытка сохранения данных
+            currency.execute()
             purchaseToAdd.execute()
-            currency.save()
             db.close()
 
             # Выводим сообщение об успешном сохранении
@@ -107,7 +138,8 @@ class InsertWidgetCurrency(QWidget):
         except Exception as e:
             # Выводим сообщение об ошибке
             self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
-        # print("ТКПData сохранены:", tkp_json)
+
+
     def show_message(self, title, message):
         msg_box = QMessageBox()
         msg_box.setWindowTitle(title)

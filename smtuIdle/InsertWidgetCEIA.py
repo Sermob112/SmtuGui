@@ -15,6 +15,8 @@ class InsertWidgetCEIA(QWidget):
         super().__init__()
         self.tkp_data = {}
         self.purchase_id = purchase_id
+        self.setWindowTitle("Окно ввода даных ЦКЕИ")
+        self.setGeometry(100, 100, 800, 400)
         # Создаем лейблы
 
         
