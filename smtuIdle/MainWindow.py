@@ -14,17 +14,18 @@ from parserV3 import count_total_records
 from datetime import datetime
 # from Module_start import AuthManager
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QMainWindow):
     def __init__(self,username):
         super(Ui_MainWindow, self, ).__init__()
         self.auth_window = None  
         self.username = username
-    def setupUi(self, MainWindow):
+        self.setupUi()
+    def setupUi(self):
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
         app.setStyle(style)
-        MainWindow.setObjectName("База данных")
-        MainWindow.resize(1680, 960)
+        self.setObjectName("База данных")
+        self.resize(1680, 960)
         # Установка каскадной таблицы стилей (CSS) для всего приложения
         # file = QFile(":/qdarkstyle/style.qss")
         # file.open(QFile.ReadOnly | QFile.Text)
@@ -32,7 +33,7 @@ class Ui_MainWindow(object):
         # app.setStyleSheet(stream.readAll())
 
         # Главный макет
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget = QtWidgets.QWidget(self)
         self.centralwidget.setObjectName("centralwidget")
         self.logoutButton = QPushButton("Выйти")
         self.logoutButton.setFixedWidth(150)
@@ -160,7 +161,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.horizontalLayout)
 
-        MainWindow.setCentralWidget(self.centralwidget)
+        self.setCentralWidget(self.centralwidget)
 
         # Подключение сигналов к слотам
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -168,8 +169,8 @@ class Ui_MainWindow(object):
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
         self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
-        self.retranslateUi(MainWindow)
-        QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.retranslateUi(self)
+        QtCore.QMetaObject.connectSlotsByName(self)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -190,18 +191,18 @@ class Ui_MainWindow(object):
 
         from authWindow import AuthWindow
         self.auth_window = AuthWindow()
+        self.close()
         self.auth_window.show()
-     
-        MainWindow.close()
+        self.close()
 
 
 
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     import sys
+#     app = QtWidgets.QApplication(sys.argv)
+#     MainWindow = QtWidgets.QMainWindow()
+#     ui = Ui_MainWindow()
+#     ui.setupUi(MainWindow)
+#     MainWindow.show()
+#     sys.exit(app.exec())

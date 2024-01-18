@@ -70,7 +70,7 @@ class StatisticWidget(QWidget):
             "Соотношение НМЦК и ЦКЕП и цены контракта, заключенного по результатам конкурса",
             "Анализ количества ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка"
         ]
-
+        
         # Первоначальное отображение данных
         self.show_current_data()
 
@@ -413,7 +413,7 @@ class StatisticWidget(QWidget):
             if len(column_sums_purchase_row) == len(excel_df_purchase.columns):
                 excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([column_sums_purchase_row], columns=excel_df_purchase.columns)])
 
-            data_to_export[f'Методы {idx}'] = excel_df_purchase
+            data_to_export[self.label_texts[idx][:20]] =excel_df_purchase
 
         for idx, (pivot_table_max_price, column_sum_max_price) in enumerate(zip(pivot_tables_max_price, column_sums_max_price)):
             excel_df_max_price = pd.DataFrame(columns=['Метод'] + list(pivot_table_max_price.columns) + ['Суммы'])
@@ -424,8 +424,10 @@ class StatisticWidget(QWidget):
             column_sums_max_price_row = ['Суммы'] + list(column_sum_max_price) + [column_sum_max_price['Суммы']]
             if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
                 excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
-
-            data_to_export[f'Метод_{idx}'] = excel_df_max_price
+            
+            
+            data_to_export[self.label_texts[idx + 5][:20]] = excel_df_max_price
+            # data_to_export[f'Метод_{idx}'] = excel_df_max_price
 
 
         file_dialog = QFileDialog(self)
@@ -577,14 +579,14 @@ class StatisticWidget(QWidget):
         [column_sums_purchase1, column_sums_purchase2, column_sums_purchase3, column_sums_purchase4, column_sums_purchase5],
         [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4],
         [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4],
-        'ДАнные статистики.xlsx'
+        'Данные статистики.xlsx'
     )
 
-# if __name__ == "__main__":
-#     from PySide6.QtWidgets import QApplication
-#     import sys
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QApplication
+    import sys
 
-#     app = QApplication(sys.argv)
-#     window = StatisticWidget()
-#     window.show()
-#     sys.exit(app.exec())
+    app = QApplication(sys.argv)
+    window = StatisticWidget()
+    window.show()
+    sys.exit(app.exec())
