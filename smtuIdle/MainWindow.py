@@ -21,6 +21,7 @@ class Ui_MainWindow(QMainWindow):
         self.username = username
         self.setupUi()
     def setupUi(self):
+        self.setWindowTitle("БД НМЦК")
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
         app.setStyle(style)
@@ -174,7 +175,7 @@ class Ui_MainWindow(QMainWindow):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "БД НМЦК"))
         self.pushButton1.setText(_translate("MainWindow", "Отладка"))
         self.pushButton2.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton3.setText(_translate("MainWindow", "Ввод Закупок"))
@@ -189,7 +190,7 @@ class Ui_MainWindow(QMainWindow):
     def exit(self):
         # MainWindow.close()
 
-        from authWindow import AuthWindow
+        from smtuIdle.start import AuthWindow
         self.auth_window = AuthWindow()
         self.close()
         self.auth_window.show()
