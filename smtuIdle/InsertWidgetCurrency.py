@@ -9,6 +9,7 @@ import sys, json
 import statistics
 import pandas as pd
 from datetime import datetime
+from InsertWidgetCurrencyNMCK import InsertWidgetCurrencyNMCK
 db = SqliteDatabase('test.db')
 
 class InsertWidgetCurrency(QWidget):
@@ -21,16 +22,20 @@ class InsertWidgetCurrency(QWidget):
         self.purchase_id = purchase_id
         self.purchase = Purchase.get(Purchase.Id == self.purchase_id)
 
-        labelInfo = QLabel(f"Реестровый номер закупки: {self.purchase.RegistryNumber} .Текущая валюта {self.purchase.Currency} ")
-        label1 = QLabel("Цифровое значение валюты")
+        labelInfo = QLabel(f"Реестровый номер закупки: {self.purchase.RegistryNumber}")
+        labelInfo2 = QLabel(f"Текущая валюта: {self.purchase.Currency}")
+        labelInfo3 = QLabel(f"Текущая НМЦК: {self.purchase.InitialMaxContractPrice} {self.purchase.Currency}")
+        label1 = QLabel("Укажите курс иностранной валюты согласно ЦБ")
         # label2 = QLabel("Дата изменения значения валюты")
-        label3 = QLabel("Дата курса валюты")
+        label3 = QLabel("Укажите дату курса валюты согласно ЦБ")
       
 
         # Создаем поля ввода
         self.CurrencyValue = QLineEdit(self)
         # self.DateValueChanged = QDateEdit(self)
         self.CurrencyRateDate = QDateEdit(self)
+        self.CurrencyRateDate.setCalendarPopup(True)  # Устанавливаем свойство для включения всплывающего календаря
+        self.CurrencyRateDate.setDate(self.CurrencyRateDate.date().currentDate())  # Устанавливаем текущую дату
  
    
       
@@ -56,6 +61,8 @@ class InsertWidgetCurrency(QWidget):
 
         # Добавляем все строки в вертикальный контейнер
         self.layout1.addWidget(labelInfo)
+        self.layout1.addWidget(labelInfo2)
+        self.layout1.addWidget(labelInfo3)
         self.layout1.addWidget(label1)
 
         self.layout1.addLayout(layout2)
@@ -81,32 +88,48 @@ class InsertWidgetCurrency(QWidget):
         self.setLayout(main_layout)
     
     def save_tkp_data(self):
-        if self.purchase.isChanged == True:
-            self.update_currency()
+        try:
+            self.currencyToCheck = CurrencyRate.get(CurrencyRate.purchase == self.purchase_id)
+            if self.currencyToCheck.isChanged == True:
+                self.update_currency()
 
-        else:
+      
+  
+        except:
             currency = CurrencyRate(purchase=self.purchase_id,
                                 CurrentCurrency = "RUB",
                                 CurrencyValue= float(self.CurrencyValue.text()) if self.CurrencyValue.text() else 0,
                                 DateValueChanged=datetime.now().strftime("%d-%m-%Y"),
                                 CurrencyRateDate=self.CurrencyRateDate.text() if self.CurrencyRateDate.text() else 'нет данных',
-                                PreviousCurrency = str(self.purchase.Currency) if self.purchase else 'нет данных'
+                                PreviousCurrency = str(self.purchase.Currency) if self.purchase else 'нет данных',
+                                isChanged = True
                         
                                 )
-            purchaseToAdd = Purchase.update(
-                    Currency = "RUB",
-                    InitialMaxContractPrice = float(self.purchase.InitialMaxContractPrice) * float(self.CurrencyValue.text()),
-                    isChanged = True
-            ).where(Purchase.Id == self.purchase_id)
+            # purchaseToAdd = Purchase.update(
+            #         Currency = "RUB",
+            #         InitialMaxContractPrice = float(self.purchase.InitialMaxContractPrice) * float(self.CurrencyValue.text()),
+            #         isChanged = True
+            # ).where(Purchase.Id == self.purchase_id)
             try:
                 # Попытка сохранения данных
-                purchaseToAdd.execute()
+                # purchaseToAdd.execute()
                 currency.save()
                 db.close()
 
                 # Выводим сообщение об успешном сохранении
                 self.show_message("Успех", "Данные успешно добавлены")
                 self.close()
+                reply = QMessageBox()
+                reply.setText('Хотите изменить текущее  НМЦК значением в рублях?')
+                reply.addButton("нет", QMessageBox.NoRole)
+                reply.addButton("да", QMessageBox.YesRole)
+                result = reply.exec()
+                if result == 1:
+                    self.nmck_view = InsertWidgetCurrencyNMCK(self.purchase_id)
+                    self.nmck_view.show()
+            
+                else:
+                    self.close()
             except Exception as e:
                 # Выводим сообщение об ошибке
                 self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
@@ -119,22 +142,33 @@ class InsertWidgetCurrency(QWidget):
                             DateValueChanged=datetime.now().strftime("%d-%m-%Y"),
                             CurrencyRateDate=self.CurrencyRateDate.text() if self.CurrencyRateDate.text() else 'нет данных',
                             PreviousCurrency = str(self.purchase.Currency) if self.purchase else 'нет данных'
-                    
+
                             ).where(CurrencyRate.purchase ==self.purchase_id)
-        purchaseToAdd = Purchase.update(
-                Currency = "RUB",
-                InitialMaxContractPrice = float(self.purchase.InitialMaxContractPrice) * float(self.CurrencyValue.text()),
-                isChanged = True
-        ).where(Purchase.Id == self.purchase_id)
+        # purchaseToAdd = Purchase.update(
+        #         Currency = "RUB",
+        #         InitialMaxContractPrice = float(self.purchase.InitialMaxContractPrice) * float(self.CurrencyValue.text()),
+        #         isChanged = True
+        # ).where(Purchase.Id == self.purchase_id)
         try:
             # Попытка сохранения данных
             currency.execute()
-            purchaseToAdd.execute()
+            # purchaseToAdd.execute()
             db.close()
 
             # Выводим сообщение об успешном сохранении
             self.show_message("Успех", "Данные успешно добавлены")
             self.close()
+            reply = QMessageBox()
+            reply.setText('Хотите изменить текущее  НМЦК значением в рублях?')
+            reply.addButton("нет", QMessageBox.NoRole)
+            reply.addButton("да", QMessageBox.YesRole)
+            result = reply.exec()
+            if result == 1:
+                self.nmck_view = InsertWidgetCurrencyNMCK(self.purchase_id)
+                self.nmck_view.show()
+            
+            else:
+                self.close()
         except Exception as e:
             # Выводим сообщение об ошибке
             self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
@@ -150,7 +184,7 @@ class InsertWidgetCurrency(QWidget):
         super().closeEvent(event)
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
-#     window = InsertWidgetCurrency(1)
+#     window = InsertWidgetCurrency(2)
 #     window.show()
 #     sys.exit(app.exec())
         

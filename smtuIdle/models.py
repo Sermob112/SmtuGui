@@ -48,6 +48,7 @@ class Purchase(BaseModel):
     NMCKMarket = FloatField(null=True,  default="Нет данных", verbose_name="НМЦК рыночная")
     FinancingLimit = FloatField(null=True, default="Нет данных", verbose_name="Лимит финансирования")
     PurchaseStatus = CharField(null=True, max_length=500, default="[]", verbose_name="Статус закупки")
+    InitialMaxContractPriceOld = FloatField(null=True,  default="Нет данных", verbose_name="Начальная максимальная цена контракта старая")
     isChanged = BooleanField(null=True, verbose_name="Был изменен")
     def delete_instance(self, *args, **kwargs):
         # Добавьте каскадное удаление перед вызовом delete_instance
@@ -106,6 +107,7 @@ class CurrencyRate(Model):
     CurrencyRateDate = DateField(verbose_name="Дата курса валюты")
     PreviousCurrency = CharField(max_length=255, verbose_name="Предыдущая валюта")
     purchase = ForeignKeyField(Purchase,on_delete='CASCADE',  backref='contract', unique=True, verbose_name="Закупка")
+    isChanged = BooleanField(null=True, verbose_name="Был изменен")
     class Meta:
         database = db
 class User(Model):
