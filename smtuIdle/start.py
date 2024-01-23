@@ -3,7 +3,7 @@ from auth import *
 from PySide6.QtWidgets import *
 from initialize_db import initialize_database
 from MainWindow import Ui_MainWindow
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt,QRect,QCoreApplication
 class AuthWindow(QWidget):
     def __init__(self):
         super(AuthWindow, self).__init__()
@@ -20,9 +20,14 @@ class AuthWindow(QWidget):
 
         # Создайте макет для формы
         form_layout = QFormLayout()
-
+        label_layout = QFormLayout()
+        self.label = QLabel()
+        self.label.setMaximumWidth(400)
+        self.label.setWordWrap(True)
+        self.label.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
+        self.label.setAlignment(Qt.AlignCenter)
         self.username_label = QLabel("Имя пользователя:")
-        self.username_edit = QLineEdit()
+        self.username_edit = QLineEdit("")
         self.username_edit.setPlaceholderText("Введите ваше имя пользователя")
         self.username_edit.setMaximumWidth(200)  # Установите максимальную ширину
 
@@ -34,12 +39,13 @@ class AuthWindow(QWidget):
 
         self.login_button = QPushButton("Войти")
         self.login_button.clicked.connect(self.authenticate)
-
+        label_layout.addWidget(self.label)
         form_layout.addRow(self.username_label, self.username_edit)
         form_layout.addRow(self.password_label, self.password_edit)
         form_layout.addRow(self.login_button)
 
         # Добавьте макет формы в центральный макет
+        main_layout.addLayout(label_layout)
         main_layout.addLayout(form_layout)
 
         # Выровняйте форму по центру окна
