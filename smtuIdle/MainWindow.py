@@ -25,7 +25,6 @@ class Ui_MainWindow(QMainWindow):
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
         app.setStyle(style)
-        self.setObjectName("База данных")
         self.resize(1680, 960)
         # Установка каскадной таблицы стилей (CSS) для всего приложения
         # file = QFile(":/qdarkstyle/style.qss")
@@ -68,8 +67,9 @@ class Ui_MainWindow(QMainWindow):
         self.rightTopLayout.addWidget(self.userLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
         current_date = datetime.now()
-        formatted_date = current_date.strftime("%d-%m-%Y")
-        self.purchaseLabel.setText(f"Закупок в БД: {count_total_records()}. Дата: {formatted_date}")
+        self.formatted_date = current_date.strftime("%d-%m-%Y")
+        self.purchaseLabel.setText(f"Закупок в БД: {count_total_records()}. Дата: {self.formatted_date}")
+        self.updatePurchaseLabel()
         self.rightTopLayout.addWidget(self.purchaseLabel)
 
         # Добавление виджета в верхний макет
@@ -141,7 +141,7 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
          #Загрузка виджета CSV
-        self.loadCsv = CsvLoaderWidget()
+        self.loadCsv = CsvLoaderWidget(self)
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.loadCsv)
 
@@ -195,7 +195,8 @@ class Ui_MainWindow(QMainWindow):
         self.close()
         self.auth_window.show()
         self.close()
-
+    def updatePurchaseLabel(self):
+        self.purchaseLabel.setText(f"Закупок в БД: {count_total_records()}. Дата: {self.formatted_date}")
 
 
 

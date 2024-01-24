@@ -702,7 +702,7 @@ def count_total_records():
         # Если запрос вернул результат, выведите общее количество записей
         if result:
             total_records = result[0]
-            print(f"Общее количество записей в таблице: {total_records}")
+            # print(f"Общее количество записей в таблице: {total_records}")
         else:
             print("Не удалось получить общее количество записей.")
 
