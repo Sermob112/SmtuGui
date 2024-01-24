@@ -7,9 +7,9 @@ from parserV3 import *
 from PySide6.QtWidgets import QStyleFactory
 from CurrencyWindow import CurrencyWidget
 class CsvLoaderWidget(QWidget):
-    def __init__(self):
-        super(CsvLoaderWidget, self).__init__()
-
+    def __init__(self, main_window, parent =None):
+        super(CsvLoaderWidget, self).__init__(parent)
+        self.main_window = main_window
         # Добавляем счетчик новых записей как атрибут класса
         self.inserted_rows_count = 0
         self.repeat_count = 0
@@ -89,10 +89,11 @@ class CsvLoaderWidget(QWidget):
         if file_dialog.exec_():
             selected_file = file_dialog.selectedFiles()[0]
             self.inserted_rows_count, insert_errors = insert_in_table(selected_file)
-            
+            self.all_count = count_total_records()
             if not insert_errors:
                 QMessageBox.information(self, "Успех", "Данные успешно загружены")
                 self.update_table()
+               
                 purchases = Purchase.select().where((Purchase.Currency != 'RUB'))
                 if purchases:
                     reply = QMessageBox.question(self, "Внимание", "Найдены записи с валютами не в рублях. Изменить валюту?", 
@@ -140,12 +141,13 @@ class CsvLoaderWidget(QWidget):
         # Обновляем таблицу после изменения счетчика новых записей
         self.populate_table(self.table)
         self.update_second_table()
+        self.main_window.updatePurchaseLabel()
     def handle_table_click(self, row, col):
         # Получаем значение из колонки 'Id'
         id_item = self.second_table.item(row, 0)  # Предполагаем, что 'Id' находится в первой колонке
         if id_item:
             selected_id = id_item.text()
-            print(f'Selected Id: {selected_id}')
+            # print(f'Selected Id: {selected_id}')
 
             if selected_id in self.selected_ids:
                 # Если Id уже выбран, удаляем его из списка и сбрасываем цвет ячеек
@@ -174,6 +176,8 @@ class CsvLoaderWidget(QWidget):
                     # self.second_table.setRowCount(0)
                     self.selected_ids = []
                     self.update_second_table()
+                    self.all_count = count_total_records()
+                    self.update_table()
                 else:
                     QMessageBox.information(self, "Ошибка", "Ошибка при удалении записей")
                     # print("Ошибка при удалении записей")
