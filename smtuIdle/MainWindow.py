@@ -9,6 +9,7 @@ from DBtest import PurchasesWidget
 from LoadCsv import CsvLoaderWidget
 from InsertWidgetNMCK import InsertWidgetNMCK
 from statisticWidget import StatisticWidget
+from CurrencyWindow import CurrencyWidget
 from debugWindow import DebugWidget
 from parserV3 import count_total_records
 from datetime import datetime
@@ -150,9 +151,9 @@ class Ui_MainWindow(QMainWindow):
         layout.addWidget(self.Debug)
         
         #Загрузка виджета ввод данных
-        # self.Insert = InsertWidgetNMCK()
-        # layout = QVBoxLayout(self.page4)
-        # layout.addWidget(self.Insert)
+        self.Insert = CurrencyWidget()
+        layout = QVBoxLayout(self.page4)
+        layout.addWidget(self.Insert)
           #Загрузка виджета статистического анализа
         self.Statistic = StatisticWidget()
         layout = QVBoxLayout(self.page5)
@@ -179,7 +180,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton1.setText(_translate("MainWindow", "Отладка"))
         self.pushButton2.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton3.setText(_translate("MainWindow", "Ввод Закупок"))
-        self.pushButton4.setText(_translate("MainWindow", "Заглушка"))
+        self.pushButton4.setText(_translate("MainWindow", "Валюта"))
         self.pushButton5.setText(_translate("MainWindow", "Статистический анализ"))
 
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
