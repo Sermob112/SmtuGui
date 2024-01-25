@@ -96,13 +96,20 @@ class CsvLoaderWidget(QWidget):
                
                 purchases = Purchase.select().where((Purchase.Currency != 'RUB'))
                 if purchases:
-                    reply = QMessageBox.question(self, "Внимание", "Найдены записи с валютами не в рублях. Изменить валюту?", 
-                                        QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    # reply = QMessageBox.question(self, "Внимание", "Найдены записи с валютами не в рублях. Изменить валюту?", 
+                    #                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                     
-                    if reply == QMessageBox.Yes:
+                    # if reply == QMessageBox.Yes:
+                    #     self.cur = CurrencyWidget()
+                    #     self.cur.show()
+                    reply = QMessageBox()
+                    reply.setText("Найдены записи с валютами не в рублях. Изменить валюту?")
+                    reply.addButton("нет", QMessageBox.NoRole)
+                    reply.addButton("да", QMessageBox.YesRole)
+                    result = reply.exec()
+                    if result == 1:
                         self.cur = CurrencyWidget()
                         self.cur.show()
-                    
                     else:
                        pass
 
@@ -164,10 +171,16 @@ class CsvLoaderWidget(QWidget):
                     if item:
                         item.setBackground(Qt.red)
     def delete_selected_records(self):
-        reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            if self.selected_ids:
+        # reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
+        #                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        # if reply == QMessageBox.Yes:
+        reply = QMessageBox()
+        reply.setText('Вы точно хотите удалить выбранные записи?')
+        reply.addButton("нет", QMessageBox.NoRole)
+        reply.addButton("да", QMessageBox.YesRole)
+        result = reply.exec()
+        if result == 1:
+            # if self.selected_ids:
                 success = delete_records_by_id(self.selected_ids)
                 if success:
                     QMessageBox.information(self, "Успех", f"Успешно удалены записи с номерами:, {self.selected_ids}")

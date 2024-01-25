@@ -39,7 +39,7 @@ class CurrencyWidget(QWidget):
 
     def populate_table(self):
         self.table.setRowCount(0)
-        purchases = Purchase.select().where((Purchase.Currency != 'RUB') & (Purchase.Currency.is_null(False)) &(Purchase.Currency != 'Нет данных') )
+        purchases = Purchase.select().where((Purchase.Currency != 'RUB') & (Purchase.Currency.is_null(False)) &(Purchase.Currency != 'Нет данных')  )
         for purchase in purchases:
             currency_value = purchase.Currency or "Нет данных"
             registry_number = purchase.RegistryNumber or "Нет данных"
@@ -68,7 +68,7 @@ class CurrencyWidget(QWidget):
                         item.setBackground(Qt.blue) 
             selected_id = id_item.text()
             print(f'Selected Id: {selected_id}')
-            self.currency_shower = InsertWidgetCurrency(selected_id)
+            self.currency_shower = InsertWidgetCurrency(self,selected_id)
             self.currency_shower.show()
             self.currency_shower.closed_signal.connect(self.handle_currency_shower_closed)
     def handle_currency_shower_closed(self):

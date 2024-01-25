@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication,QFileDialog, QMessageBox, QCompleter,QMainWindow,QLabel,QLineEdit,QComboBox, QTableWidget,QHBoxLayout, QTableWidgetItem, QVBoxLayout, QWidget,QPushButton,QHeaderView
+from PySide6.QtWidgets import *
 from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
 from datetime import date
@@ -59,12 +59,15 @@ class PurchasesWidget(QWidget):
         self.max_price_input.setFixedWidth(100)
 
         self.min_data_label = QLabel("Начальная дата", self)
-        self.min_data_input = QLineEdit(self)
-        self.min_data_input.setPlaceholderText("Формат: дд-мм-гггг")
+        self.min_data_input = QDateEdit(self)
+        self.min_data_input.setCalendarPopup(True)
+        self.min_data_input.setDate(self.min_data_input.date().currentDate())
         self.min_data_input.setFixedWidth(150)
         self.max_data_label = QLabel("Конечная дата", self)
-        self.max_data_input = QLineEdit(self)
-        self.max_data_input.setPlaceholderText("Формат: дд-мм-гггг")
+        self.max_data_input = QDateEdit(self)
+        self.max_data_input.setCalendarPopup(True)
+        self.max_data_input.setDate(self.max_data_input.date().currentDate())
+
         self.max_data_input.setFixedWidth(150)
          #  кнопка "Сбросить фильтры" 
         self.reset_filters_button = QPushButton("Сбросить фильтры", self)
@@ -174,7 +177,8 @@ class PurchasesWidget(QWidget):
         layout.addLayout(button_layout2)
         layout.addLayout(button_layout3)
         # Получаем данные из базы данных и отображаем первую запись
-        self.purchases = Purchase.select()
+        self.reload_data()
+        # self.purchases = Purchase.select()
         # self.purchases = (Purchase
         #         .select()
         #         .join(Contract, JOIN.LEFT_OUTER)
@@ -187,8 +191,8 @@ class PurchasesWidget(QWidget):
         #         .execute())
    
         # self.purchases_list = list(self.purchases)
-        self.purchases_list = list(self.purchases)
-        self.show_current_purchase()
+        # self.purchases_list = list(self.purchases)
+        # self.show_current_purchase()
     def show_current_purchase(self):
 
         if len(self.purchases_list) != 0:
@@ -350,11 +354,12 @@ class PurchasesWidget(QWidget):
         self.min_price = float(self.min_price_input.text()) if self.min_price_input.text() else float('-inf')
         self.max_price = float(self.max_price_input.text()) if self.max_price_input.text() else float('inf')
 
-        min_date_str = self.min_data_input.text()
-        max_date_str = self.max_data_input.text()
+        min_date_str = self.min_data_input.date()
+        max_date_str = self.max_data_input.date()
 
-        self.min_date = datetime.strptime(min_date_str, '%d-%m-%Y').date() if min_date_str else None
-        self.max_date = datetime.strptime(max_date_str, '%d-%m-%Y').date() if max_date_str else None
+        self.min_date = min_date_str.toPython() if min_date_str.isValid() else None
+        self.max_date = max_date_str.toPython() if max_date_str.isValid() else None
+
         
         # Выполняем запрос с фильтрацией по диапазону цен и сортировкой
         # Фильтр по цене
@@ -452,9 +457,7 @@ class PurchasesWidget(QWidget):
         
         
         # Возвращаем записи в исходное состояние без применения каких-либо фильтров
-        purchases_query_combined = Purchase.select()
-        self.purchases_list = list(purchases_query_combined)
-        self.show_current_purchase()
+        self.reload_data()
 
     def add_button_contract_clicked(self):
         
@@ -482,9 +485,15 @@ class PurchasesWidget(QWidget):
      
 
     def remove_button_clicked(self):
-        reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
+        # reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
+        #                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        # if reply == QMessageBox.Yes:
+        reply = QMessageBox()
+        reply.setText('Вы точно хотите удалить выбранные записи?')
+        reply.addButton("нет", QMessageBox.NoRole)
+        reply.addButton("да", QMessageBox.YesRole)
+        result = reply.exec()
+        if result == 1:
             if self.current_purchase.Id:
                 success = delete_records_by_id([self.current_purchase.Id])
                 if success:
@@ -503,17 +512,17 @@ class PurchasesWidget(QWidget):
             self.curr_shower = InsertWidgetCurrency(purchase_id)
             self.curr_shower.show()
     def export_to_excel_clicked(self ):
-
+        current_sort_option = self.sort_options.currentText()
         search_input = self.selected_text if self.selected_text is not None else None
-        sort_options = search_input if self.selected_text is not None  else None
-        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.selected_text is not None  else None
-        min_date = self.min_date if self.selected_text is not None  else None
-        max_date = self.max_date if self.selected_text is not None  else None
-        min_price = self.min_price if self.selected_text is not None  else None
-        max_price = self.max_price  if self.selected_text is not None  else None
+        sort_options  = current_sort_option if current_sort_option is not None  else None
+        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order is not None  else None
+        min_date = self.min_date if self.min_date is not None  else None
+        max_date = self.max_date if self.max_date is not None  else None
+        min_price = self.min_price if self.min_price is not None  else None
+        max_price = self.max_price  if self.max_price is not None  else None
         filters = {
         'search_input': search_input,
-        'filter_criteria': sort_options,
+        'filter_criteria': sort_options ,
         'purchase_order': sort_by_putch_order,
         'start_date': min_date,
         'end_date': max_date,
@@ -521,6 +530,7 @@ class PurchasesWidget(QWidget):
         'max_price': max_price,
         
     }   
+    
          
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
@@ -543,7 +553,9 @@ class PurchasesWidget(QWidget):
         Purchase.ProcurementFeatures, Purchase.ApplicationStartDate, Purchase.ApplicationEndDate,
         Purchase.AuctionDate, Purchase.QueryCount, Purchase.ResponseCount, Purchase.AveragePrice,
         Purchase.MinPrice, Purchase.MaxPrice, Purchase.StandardDeviation, Purchase.CoefficientOfVariation,
-        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit,  Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
+        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceOld,
+        
+        Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
         Contract.PriceProposal, Contract.Applicant, Contract.Applicant_satatus, Contract.WinnerExecutor,
         Contract.ContractingAuthority, Contract.ContractIdentifier, Contract.RegistryNumber,
         Contract.ContractNumber, Contract.StartDate, Contract.EndDate, Contract.ContractPrice,
@@ -576,13 +588,18 @@ class PurchasesWidget(QWidget):
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
            
         
+    def reload_data(self):
+        self.purchases = Purchase.select()
+        self.purchases_list = list(self.purchases)
+        self.update()
+        self.show_current_purchase()
         
 
         
         
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    csv_loader_widget = PurchasesWidget()
+    csv_loader_widget.show()
+    sys.exit(app.exec())

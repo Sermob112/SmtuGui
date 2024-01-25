@@ -14,13 +14,14 @@ db = SqliteDatabase('test.db')
 
 class InsertWidgetCurrency(QWidget):
     closed_signal = Signal()
-    def __init__(self, purchase_id):
+    def __init__(self,currency_window ,purchase_id):
         super().__init__()
         self.setWindowTitle("Окно определения валюты")
         self.setGeometry(100, 100, 600, 200)
         self.tkp_data = {}
         self.purchase_id = purchase_id
         self.purchase = Purchase.get(Purchase.Id == self.purchase_id)
+        self.currency_window = currency_window
 
         labelInfo = QLabel(f"Реестровый номер закупки: {self.purchase.RegistryNumber}")
         labelInfo2 = QLabel(f"Текущая валюта: {self.purchase.Currency}")
@@ -125,7 +126,7 @@ class InsertWidgetCurrency(QWidget):
                 reply.addButton("да", QMessageBox.YesRole)
                 result = reply.exec()
                 if result == 1:
-                    self.nmck_view = InsertWidgetCurrencyNMCK(self.purchase_id)
+                    self.nmck_view = InsertWidgetCurrencyNMCK( self.currency_window,self.purchase_id)
                     self.nmck_view.show()
             
                 else:

@@ -13,12 +13,13 @@ db = SqliteDatabase('test.db')
 
 class InsertWidgetCurrencyNMCK(QWidget):
     closed_signal = Signal()
-    def __init__(self, purchase_id):
+    def __init__(self, currency_win,purchase_id):
         super().__init__()
         self.setWindowTitle("Окно определения валюты")
         self.setGeometry(100, 100, 600, 200)
         self.tkp_data = {}
         self.purchase_id = purchase_id
+        self.currency_window = currency_win
         self.purchase = Purchase.get(Purchase.Id == self.purchase_id)
         self.currency = CurrencyRate.get(CurrencyRate.purchase == self.purchase_id)
         labelInfo = QLabel(f"Реестровый номер закупки: {self.purchase.RegistryNumber}")
@@ -86,7 +87,7 @@ class InsertWidgetCurrencyNMCK(QWidget):
                 purchaseToAdd.execute()
               
                 db.close()
-
+                self.currency_window.populate_table()
                 # Выводим сообщение об успешном сохранении
                 self.show_message("Успех", "Данные успешно добавлены")
                 self.close()
@@ -107,7 +108,7 @@ class InsertWidgetCurrencyNMCK(QWidget):
             # Попытка сохранения данных
             purchaseToAdd.execute()
             db.close()
-
+            self.currency_window.populate_table()
             # Выводим сообщение об успешном сохранении
             self.show_message("Успех", "Данные успешно добавлены")
             self.close()
