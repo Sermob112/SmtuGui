@@ -222,7 +222,8 @@ class PurchasesWidget(QWidget):
             self.current_purchase = self.purchases_list[self.current_position]
 
             # Добавляем данные в виде "название поля - значение поля"
-            self.add_row_to_table("Идентификатор", str(current_purchase.Id))
+            self.add_section_to_table("Описание закупки")
+            self.add_row_to_table("Порядковый номер записи в БД", str(current_purchase.Id))
             self.add_row_to_table("Закон", current_purchase.PurchaseOrder)
             self.add_row_to_table("Реестровый номер", current_purchase.RegistryNumber)
             self.add_row_to_table("Метод закупки", current_purchase.ProcurementMethod)
@@ -261,10 +262,11 @@ class PurchasesWidget(QWidget):
             
            
 
-
             # Получаем связанные записи из модели Contract
             self.contracts = Contract.select().where(Contract.purchase == current_purchase)
             for contract in self.contracts:
+                
+                self.add_section_to_table("Определение победителя")
                 self.add_row_to_table("Общее количество заявок", str(contract.TotalApplications))
                 self.add_row_to_table("Общее количество допущенных заявок", str(contract.AdmittedApplications))
                 self.add_row_to_table("Общее количество отклоненных заявок", str(contract.RejectedApplications))
@@ -277,6 +279,7 @@ class PurchasesWidget(QWidget):
                 Applicant_satatus = json.loads(contract.Applicant_satatus)
                 for key, value in Applicant_satatus.items():
                     self.add_row_to_table(key, str(value))
+                self.add_section_to_table("Заключение контракта")
                 self.add_row_to_table("Победитель-исполнитель контракта", contract.WinnerExecutor)
                 self.add_row_to_table("Заказчик по контракту", contract.ContractingAuthority)
                 self.add_row_to_table("Идентификатор договора", contract.ContractIdentifier)
@@ -293,6 +296,7 @@ class PurchasesWidget(QWidget):
 
             self.finalDetermination = FinalDetermination.select().where(FinalDetermination.purchase == current_purchase)
             for det in self.finalDetermination:
+        
                 self.add_section_to_table("Итоговое определение НМЦК с использованием нескольких методов. НМЦК с учетом метода и способа расчета")
                 self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации", str(det.RequestMethod))
                 self.add_row_to_table("Способ использования общедоступной информации", str(det.PublicInformationMethod))
