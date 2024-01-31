@@ -22,7 +22,7 @@ class Ui_MainWindow(QMainWindow):
         self.username = username
         self.setupUi()
     def setupUi(self):
-        self.setWindowTitle("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
+
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
         app.setStyle(style)
@@ -89,29 +89,49 @@ class Ui_MainWindow(QMainWindow):
         self.horizontalLayout = QtWidgets.QHBoxLayout()
 
         # Левая панель с кнопками
-        self.leftPanelLayout = QtWidgets.QVBoxLayout()
-
+    
+        # self.leftPanelFrame = QtWidgets.QFrame(self.centralwidget)
+        self.leftPanelLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.leftPanelLayout.addSpacing(50)
         self.pushButton1 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton1.setObjectName("pushButton1")
         self.leftPanelLayout.addWidget(self.pushButton1)
-
+        
+        self.leftPanelLayout.addSpacing(50)
         self.pushButton2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton2.setObjectName("pushButton2")
         self.leftPanelLayout.addWidget(self.pushButton2)
-
+        self.leftPanelLayout.addSpacing(50)
         self.pushButton3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton3.setObjectName("pushButton3")
         self.leftPanelLayout.addWidget(self.pushButton3)
-
+        self.leftPanelLayout.addSpacing(50)
         self.pushButton4 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton4.setObjectName("pushButton4")
         self.leftPanelLayout.addWidget(self.pushButton4)
-
+        self.leftPanelLayout.addSpacing(50)
         self.pushButton5 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton5.setObjectName("pushButton5")
         self.leftPanelLayout.addWidget(self.pushButton5)
+  
+        # Задаем фиксированную высоту и максимальное расстояние между кнопками
+        button_height = 30  # Задайте желаемую высоту
+
+        self.leftPanelLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.pushButton1.setFixedHeight(button_height)
+        self.pushButton2.setFixedHeight(button_height)
+        self.pushButton3.setFixedHeight(button_height)
+        self.pushButton4.setFixedHeight(button_height)
+        self.pushButton5.setFixedHeight(button_height)
+        # max_height = 300
+        # self.leftPanelFrame.setMaximumHeight(max_height)
+   
+      
+  
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
+        
+
 
         # Линия-разделитель
         self.line = QtWidgets.QFrame(self.centralwidget)
@@ -187,7 +207,7 @@ class Ui_MainWindow(QMainWindow):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "БД НМЦК"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
         self.pushButton1.setText(_translate("MainWindow", "Ввод Закупок"))
         self.pushButton2.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
