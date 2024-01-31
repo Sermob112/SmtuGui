@@ -22,7 +22,7 @@ class Ui_MainWindow(QMainWindow):
         self.username = username
         self.setupUi()
     def setupUi(self):
-        self.setWindowTitle("БД НМЦК")
+        self.setWindowTitle("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
         app.setStyle(style)
@@ -42,30 +42,34 @@ class Ui_MainWindow(QMainWindow):
                 # Общий макет
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
 
-        # Верхний макет
+        self.centralwidget = QtWidgets.QWidget(self)
+        self.setCentralWidget(self.centralwidget)
+
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+
         self.topLayout = QtWidgets.QHBoxLayout()
 
-        # Статический виджет в левой части
-        self.leftTopWidget = QtWidgets.QWidget(self.centralwidget)
-        self.leftTopLayout = QtWidgets.QVBoxLayout(self.leftTopWidget)
-
-        self.dbLabel = QtWidgets.QLabel(self.leftTopWidget)
-        self.dbLabel.setText("БД НМЦК и ЦК")
-        self.dbLabel.setAlignment(QtCore.Qt.AlignLeft)
-        self.leftTopLayout.addWidget(self.dbLabel)
-        self.topLayout.addWidget(self.leftTopWidget)
-
-        # Пустой виджет в центре
+        # Статический виджет в центре
         self.centerWidget = QtWidgets.QWidget(self.centralwidget)
+        self.centerLayout = QtWidgets.QVBoxLayout(self.centerWidget)
+
+
+ 
+
         self.topLayout.addWidget(self.centerWidget)
 
-        # Статический виджет в правой части
+        # Статический виджет справа (бывший правыйTopWidget)
         self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
         self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
+
         self.rightTopLayout.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
+
         self.userLabel = QtWidgets.QLabel(self.rightTopWidget)
+        self.dbLabel = QtWidgets.QLabel(self.rightTopWidget)
+        self.dbLabel.setText("БД НМЦК и ЦК")
         self.userLabel.setText(f"Пользователь: {self.username}")
         self.rightTopLayout.addWidget(self.userLabel)
+        self.rightTopLayout.addWidget(self.dbLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
         current_date = datetime.now()
         self.formatted_date = current_date.strftime("%d-%m-%Y")
@@ -73,9 +77,14 @@ class Ui_MainWindow(QMainWindow):
         self.updatePurchaseLabel()
         self.rightTopLayout.addWidget(self.purchaseLabel)
 
-        # Добавление виджета в верхний макет
         self.topLayout.addWidget(self.rightTopWidget)
+
         self.verticalLayout.addLayout(self.topLayout)
+         # Добавляем вертикальную разделительную черту внизу
+        line = QtWidgets.QFrame(self.centralwidget)
+        line.setFrameShape(QtWidgets.QFrame.HLine)
+        line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.verticalLayout.addWidget(line)
         # Общий макет
         self.horizontalLayout = QtWidgets.QHBoxLayout()
 
@@ -138,25 +147,27 @@ class Ui_MainWindow(QMainWindow):
         self.stackedWidget.addWidget(self.page5)
 
         #Загрузка виджета БД
-        self.purchaseViewer = PurchasesWidget()
+        self.purchaseViewer = PurchasesWidget(self)
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
-         #Загрузка виджета CSV
-        self.loadCsv = CsvLoaderWidget(self)
-        layout = QVBoxLayout(self.page3)
-        layout.addWidget(self.loadCsv)
+     
 
         self.Debug = DebugWidget()
-        layout = QVBoxLayout(self.page1)
+        layout = QVBoxLayout(self.page5)
         layout.addWidget(self.Debug)
         
-        #Загрузка виджета ввод данных
+        #Загрузка виджета ввод данных валюты
         self.Insert = CurrencyWidget()
         layout = QVBoxLayout(self.page4)
         layout.addWidget(self.Insert)
+
+            #Загрузка виджета CSV
+        self.loadCsv = CsvLoaderWidget(self, self.Insert)
+        layout = QVBoxLayout(self.page1)
+        layout.addWidget(self.loadCsv)
           #Загрузка виджета статистического анализа
         self.Statistic = StatisticWidget()
-        layout = QVBoxLayout(self.page5)
+        layout = QVBoxLayout(self.page3)
         layout.addWidget(self.Statistic)
 
         self.horizontalLayout.addWidget(self.stackedWidget)
@@ -177,11 +188,11 @@ class Ui_MainWindow(QMainWindow):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "БД НМЦК"))
-        self.pushButton1.setText(_translate("MainWindow", "Отладка"))
+        self.pushButton1.setText(_translate("MainWindow", "Ввод Закупок"))
         self.pushButton2.setText(_translate("MainWindow", "Просмотр БД"))
-        self.pushButton3.setText(_translate("MainWindow", "Ввод Закупок"))
+        self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
-        self.pushButton5.setText(_translate("MainWindow", "Статистический анализ"))
+        self.pushButton5.setText(_translate("MainWindow", "Отладка"))
 
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
@@ -191,7 +202,7 @@ class Ui_MainWindow(QMainWindow):
     def exit(self):
         # MainWindow.close()
 
-        from smtuIdle.start import AuthWindow
+        from start import AuthWindow
         self.auth_window = AuthWindow()
         self.close()
         self.auth_window.show()
@@ -205,7 +216,7 @@ class Ui_MainWindow(QMainWindow):
 #     import sys
 #     app = QtWidgets.QApplication(sys.argv)
 #     MainWindow = QtWidgets.QMainWindow()
-#     ui = Ui_MainWindow()
+#     ui = Ui_MainWindow(username="user")
 #     ui.setupUi(MainWindow)
 #     MainWindow.show()
 #     sys.exit(app.exec())

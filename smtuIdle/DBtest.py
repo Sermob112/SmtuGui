@@ -25,9 +25,9 @@ cursor = db.cursor()
 
 
 class PurchasesWidget(QWidget):
-    def __init__(self):
+    def __init__(self,main_window):
         super().__init__()
-      
+        self.main_win = main_window
         self.selected_text = None
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
@@ -514,6 +514,7 @@ class PurchasesWidget(QWidget):
             if self.current_purchase.Id:
                 success = delete_records_by_id([self.current_purchase.Id])
                 if success:
+                    self.main_win.updatePurchaseLabel()
                     QMessageBox.information(self, "Успех", "Вы успешно удалили запись!")
                     self.resetFilters()
                 else:

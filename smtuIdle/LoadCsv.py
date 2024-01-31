@@ -7,9 +7,10 @@ from parserV3 import *
 from PySide6.QtWidgets import QStyleFactory
 from CurrencyWindow import CurrencyWidget
 class CsvLoaderWidget(QWidget):
-    def __init__(self, main_window, parent =None):
+    def __init__(self, main_window, curr_win ,parent =None):
         super(CsvLoaderWidget, self).__init__(parent)
         self.main_window = main_window
+        self.curr_wind = curr_win
         # Добавляем счетчик новых записей как атрибут класса
         self.inserted_rows_count = 0
         self.repeat_count = 0
@@ -38,6 +39,7 @@ class CsvLoaderWidget(QWidget):
 
         # Добавляем надпись
         lbl_info = QLabel('Информация о дублировании или загрузке новых закупок', self)
+        lbl_info.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_info)
 
         # Добавляем таблицу
@@ -51,13 +53,14 @@ class CsvLoaderWidget(QWidget):
         layout.addWidget(self.table)
 
         # Добавляем лейбл под таблицей
-        lbl_table_info = QLabel('Дополнительная информация под таблицей', self)
+        lbl_table_info = QLabel('Таблица дубликатов', self)
+        lbl_table_info.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_table_info)
        
         # Вторая таблица
         self.second_table = QTableWidget(self)
         self.second_table.setColumnCount(8)
-        self.second_table.setHorizontalHeaderLabels(['Id', 'Реестровый номер', 'Дата аукциона', 'Дата начала заявки', 'Дата окончания заявки', 'Дата обновления', 'Дата размещения', 'Номер лота'])
+        self.second_table.setHorizontalHeaderLabels(['Номер закупки в БД', 'Реестровый номер', 'Дата аукциона', 'Дата начала заявки', 'Дата окончания заявки', 'Дата обновления', 'Дата размещения', 'Номер лота'])
         self.second_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.second_table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.second_table.verticalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -66,7 +69,7 @@ class CsvLoaderWidget(QWidget):
         # Добавляем кнопку "Удалить выбранные записи"
         h_layout2 = QHBoxLayout()
         h_layout2.addStretch()
-        btn_delete_selected = QPushButton('Удалить выбранные записи', self)
+        btn_delete_selected = QPushButton('Удалить выбранные дубликаты', self)
         btn_delete_selected.clicked.connect(self.delete_selected_records)
         btn_delete_selected.setMaximumWidth(250)
         btn_delete_selected.setMinimumWidth(250)
@@ -93,8 +96,8 @@ class CsvLoaderWidget(QWidget):
             if not insert_errors:
                 QMessageBox.information(self, "Успех", "Данные успешно загружены")
                 self.update_table()
-               
-                purchases = Purchase.select().where((Purchase.Currency != 'RUB'))
+
+                purchases = Purchase.select().where((Purchase.Currency != "RUB"))
                 if purchases:
                     # reply = QMessageBox.question(self, "Внимание", "Найдены записи с валютами не в рублях. Изменить валюту?", 
                     #                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -102,6 +105,8 @@ class CsvLoaderWidget(QWidget):
                     # if reply == QMessageBox.Yes:
                     #     self.cur = CurrencyWidget()
                     #     self.cur.show()
+                    self.curr_wind.populate_table()
+                   
                     reply = QMessageBox()
                     reply.setText("Найдены записи с валютами не в рублях. Изменить валюту?")
                     reply.addButton("нет", QMessageBox.NoRole)
@@ -109,6 +114,7 @@ class CsvLoaderWidget(QWidget):
                     result = reply.exec()
                     if result == 1:
                         self.cur = CurrencyWidget()
+                        self.cur.populate_table()
                         self.cur.show()
                     else:
                        pass
@@ -120,8 +126,9 @@ class CsvLoaderWidget(QWidget):
     def populate_table(self, table):
         # Добавляем данные в таблицу
         data = [
-            ('В БД НМЦК и ЦК добавлено Закупок:', str(self.inserted_rows_count)),
-           ('В БД НМЦК и ЦК всего размещено Закупок:', str(self.all_count))
+             ('В БД НМЦК и ЦК всего размещено Закупок:', str(self.all_count)),
+            ('В БД НМЦК и ЦК добавлено Закупок:', str(self.inserted_rows_count))
+          
           
         ]
         
