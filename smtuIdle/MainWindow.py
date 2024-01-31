@@ -13,6 +13,9 @@ from CurrencyWindow import CurrencyWidget
 from debugWindow import DebugWidget
 from parserV3 import count_total_records
 from datetime import datetime
+from parserV3 import export_to_excel_all
+from models import *
+from peewee import JOIN
 # from Module_start import AuthManager
 
 class Ui_MainWindow(QMainWindow):
@@ -113,6 +116,10 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton5.setObjectName("pushButton5")
         self.leftPanelLayout.addWidget(self.pushButton5)
+        self.leftPanelLayout.addSpacing(50)
+        self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton6.setObjectName("pushButton6")
+        self.leftPanelLayout.addWidget(self.pushButton6)
   
         # Задаем фиксированную высоту и максимальное расстояние между кнопками
         button_height = 30  # Задайте желаемую высоту
@@ -162,10 +169,13 @@ class Ui_MainWindow(QMainWindow):
         self.label4 = QtWidgets.QLabel(self.page4)
         self.stackedWidget.addWidget(self.page4)
 
-        self.page5 = QtWidgets.QWidget()
-        self.label5 = QtWidgets.QLabel(self.page5)
-        self.stackedWidget.addWidget(self.page5)
+        # self.page5 = QtWidgets.QWidget()
+        # self.label5 = QtWidgets.QLabel(self.page5)
+        # self.stackedWidget.addWidget(self.page5)
 
+        self.page6 = QtWidgets.QWidget()
+        self.label6 = QtWidgets.QLabel(self.page6)
+        self.stackedWidget.addWidget(self.page6)
         #Загрузка виджета БД
         self.purchaseViewer = PurchasesWidget(self)
         layout = QVBoxLayout(self.page2)
@@ -173,7 +183,7 @@ class Ui_MainWindow(QMainWindow):
      
 
         self.Debug = DebugWidget()
-        layout = QVBoxLayout(self.page5)
+        layout = QVBoxLayout(self.page6)
         layout.addWidget(self.Debug)
         
         #Загрузка виджета ввод данных валюты
@@ -190,6 +200,8 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.Statistic)
 
+
+
         self.horizontalLayout.addWidget(self.stackedWidget)
 
         self.verticalLayout.addLayout(self.horizontalLayout)
@@ -201,7 +213,8 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
-        self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
+        self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
+        self.pushButton5.clicked.connect(self.export_to_excel_all)
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -212,13 +225,13 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton2.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
-        self.pushButton5.setText(_translate("MainWindow", "Отладка"))
-
-        self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
-        self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
-        self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
-        self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
-        self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
+        self.pushButton5.setText(_translate("MainWindow", "Экспорт всех данных БД в Excel"))
+        self.pushButton6.setText(_translate("MainWindow", "Отладка"))
+        # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+        # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
+        # self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
+        # self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
+        # self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
     def exit(self):
         # MainWindow.close()
 
@@ -229,6 +242,63 @@ class Ui_MainWindow(QMainWindow):
         self.close()
     def updatePurchaseLabel(self):
         self.purchaseLabel.setText(f"Закупок в БД: {count_total_records()}. Дата: {self.formatted_date}")
+    def export_to_excel_all(self):
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(QFileDialog.Directory)
+        self.purchases = Purchase.select()
+      
+
+        if file_dialog.exec_():
+            selected_file = file_dialog.selectedFiles()[0]
+            selected_file = selected_file if selected_file else None
+            if selected_file:
+                # query1 = self.purchases
+                # query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                query = (
+                    self.purchases
+                    .select(Purchase.Id, Purchase.PurchaseOrder, Purchase.RegistryNumber, Purchase.ProcurementMethod,
+        Purchase.PurchaseName, Purchase.AuctionSubject, Purchase.PurchaseIdentificationCode,
+        Purchase.LotNumber, Purchase.LotName, Purchase.InitialMaxContractPrice, Purchase.Currency,
+        Purchase.InitialMaxContractPriceInCurrency, Purchase.ContractCurrency,
+        Purchase.OKDPClassification, Purchase.OKPDClassification, Purchase.OKPD2Classification,
+        Purchase.PositionCode, Purchase.CustomerName, Purchase.ProcurementOrganization,
+        Purchase.PlacementDate, Purchase.UpdateDate, Purchase.ProcurementStage,
+        Purchase.ProcurementFeatures, Purchase.ApplicationStartDate, Purchase.ApplicationEndDate,
+        Purchase.AuctionDate, Purchase.QueryCount, Purchase.ResponseCount, Purchase.AveragePrice,
+        Purchase.MinPrice, Purchase.MaxPrice, Purchase.StandardDeviation, Purchase.CoefficientOfVariation,
+        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceOld,
+        
+        Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
+        Contract.PriceProposal, Contract.Applicant, Contract.Applicant_satatus, Contract.WinnerExecutor,
+        Contract.ContractingAuthority, Contract.ContractIdentifier, Contract.RegistryNumber,
+        Contract.ContractNumber, Contract.StartDate, Contract.EndDate, Contract.ContractPrice,
+        Contract.AdvancePayment, Contract.ReductionNMC, Contract.ReductionNMCPercent,
+        Contract.SupplierProtocol, Contract.ContractFile, FinalDetermination.RequestMethod, FinalDetermination.PublicInformationMethod,
+        FinalDetermination.NMCObtainedMethods, FinalDetermination.CostMethodNMC,
+        FinalDetermination.ComparablePrice, FinalDetermination.NMCMethodsTwo,
+        FinalDetermination.CEIComparablePrices, FinalDetermination.CEICostMethod,
+        FinalDetermination.CEIMethodsTwo,  CurrencyRate.CurrencyValue, CurrencyRate.CurrentCurrency,
+        CurrencyRate.DateValueChanged, CurrencyRate.CurrencyRateDate, CurrencyRate.PreviousCurrency)
+                    .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                    .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
+                    .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
+                )     
+                
+                # query = (
+                #     self.purchases
+                #     .select(Purchase, Contract, FinalDetermination, CurrencyRate)
+                #     .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                #     .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
+                #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
+                # )     
+                self.data = list(query.tuples())
+                # print(self.data[0])
+                if export_to_excel_all(self.data ,f'{selected_file}/Все данные.xlsx') == True:
+                    QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
+                else:
+                    QMessageBox.warning(self, "Ошибка", "Ошибка записи")
+            else:
+                QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
 
 
 

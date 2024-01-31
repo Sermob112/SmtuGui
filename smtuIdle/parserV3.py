@@ -624,6 +624,123 @@ def export_to_excel(data, output_excel_path, filters):
     except Exception as e:
         print("Ошибка при экспорте данных в Excel:", e)
 
+
+def export_to_excel_all(data, output_excel_path):
+    try:
+        # Создайте DataFrame из данных
+     
+    # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
+        
+        # selected_data = [tuple[:69] for tuple in data]
+       
+        selected_columns = ["Id",
+             "PurchaseOrder", "RegistryNumber", "ProcurementMethod", "PurchaseName",
+                 "AuctionSubject", "PurchaseIdentificationCode", "LotNumber", "LotName",
+                 "InitialMaxContractPrice", "Currency", "InitialMaxContractPriceInCurrency", 
+                 "ContractCurrency", "OKDPClassification", "OKPDClassification",
+                 "OKPD2Classification", "PositionCode", "CustomerName", "ProcurementOrganization",
+                 "PlacementDate", "UpdateDate", "ProcurementStage", "ProcurementFeatures",
+                "ApplicationStartDate", "ApplicationEndDate", "AuctionDate","QueryCount","ResponseCount",
+                "AveragePrice","MinPrice","MaxPrice","StandardDeviation","CoefficientOfVariation","TKPData","NMCKMarket",
+                "FinancingLimit", "InitialMaxContractPriceOld",
+                "TotalApplications", "AdmittedApplications", "RejectedApplications",
+                "PriceProposal", "Applicant", "Applicant_satatus", "WinnerExecutor",
+                "ContractingAuthority", "ContractIdentifier", "RegistryNumber_contract",
+                "ContractNumber", "StartDate", "EndDate", "ContractPrice", "AdvancePayment",
+                "ReductionNMC", "ReductionNMCPercent", "SupplierProtocol", "ContractFile",
+
+                "RequestMethod","PublicInformationMethod","NMCObtainedMethods","CostMethodNMC",
+                "ComparablePrice","NMCMethodsTwo","CEIComparablePrices","CEICostMethod","CEIMethodsTwo",
+                
+                "CurrencyValue","CurrentCurrency","DateValueChanged","CurrencyRateDate","PreviousCurrency", ]
+        selected_data = [[t[selected_columns.index(col)] for col in selected_columns] for t in data]
+        # print(selected_data[0])
+        # Создайте DataFrame с данными
+        data_df = pd.DataFrame(selected_data, columns=selected_columns)
+
+        # Создайте словарь для перевода названий столбцов
+        column_translation = {
+            "Id":"Номер",
+        "PurchaseOrder": "Закон",
+        "RegistryNumber": "Реестровый Номер",
+        "ProcurementMethod": "Метод Закупки",
+        "PurchaseName": "Название Закупки",
+        "AuctionSubject": "Тема Аукциона",
+        "PurchaseIdentificationCode": "Идентификационный Код Закупки",
+        "LotNumber": "Номер Лота",
+        "LotName": "Название Лота",
+        "InitialMaxContractPrice": "Начальная Максимальная Цена Контракта",
+        "Currency": "Валюта",
+        "InitialMaxContractPriceInCurrency": "Начальная Максимальная Цена Контракта в Валюте",
+        "ContractCurrency": "Валюта Контракта",
+        "OKDPClassification": "Классификация ОКДП",
+        "OKPDClassification": "Классификация ОКПД",
+        "OKPD2Classification": "Классификация ОКПД2",
+        "PositionCode": "Код Позиции",
+        "CustomerName": "Наименование Заказчика",
+        "ProcurementOrganization": "Организация Закупки",
+        "PlacementDate": "Дата Размещения",
+        "UpdateDate": "Дата Обновления",
+        "ProcurementStage": "Этап Закупки",
+        "ProcurementFeatures": "Особенности Закупки",
+        "ApplicationStartDate": "Дата Начала Подачи Заявок",
+        "ApplicationEndDate": "Дата Окончания Подачи Заявок",
+        "AuctionDate": "Дата Аукциона",
+        "QueryCount":"Количество запросов",
+        "ResponseCount":"Количество ответов",
+        "AveragePrice":"Среднее значение цены",
+        "MinPrice":"Минимальная цена",
+        "MaxPrice":"Максимальная цена",
+        "StandardDeviation":"Среднее квадратичное отклонение",
+        "CoefficientOfVariation":"Коэффициент вариации",
+        "TKPData":"ТКП",
+        "NMCKMarket":"Цена рыночная",
+        "FinancingLimit":"Лимит финансирования",
+        "InitialMaxContractPriceOld":"Прошлая цена",
+        "TotalApplications": "Общее количество заявок",
+        "AdmittedApplications": "Общее количество допущенных заявок",
+        "RejectedApplications": "Общее количество отклоненных заявок",
+        "PriceProposal": "Ценовое предложение",
+        "Applicant": "Заявитель",
+        "Applicant_satatus": "Статус заявителя",
+        "WinnerExecutor": "Победитель-исполнитель контракта",
+        "ContractingAuthority": "Заказчик по контракту",
+        "ContractIdentifier": "Идентификатор договора",
+        "RegistryNumber_contract": "Реестровый номер договора",
+        "ContractNumber": "№ договора",
+        "StartDate": "Дата начала/подписания",
+        "EndDate": "Дата окончания/исполнения",
+        "ContractPrice": "Цена договора, руб.",
+        "AdvancePayment": "Размер авансирования, руб./(%)",
+        "ReductionNMC": "Снижение НМЦК, руб.",
+        "ReductionNMCPercent": "Снижение НМЦК, %",
+        "SupplierProtocol": "Протоколы определения поставщика (выписка)",
+        "ContractFile": "Договор",
+        "RequestMethod":"Способ направления запросов о предоставлении ценовой информации",
+        "PublicInformationMethod": "Способ использования общедоступной информации",
+        "NMCObtainedMethods": "НМЦК, полученная различными способами", 
+        "CostMethodNMC": "НМЦК на основе затратного метода, руб. (в случае его применения)",
+        "ComparablePrice": "Цена сравнимой продукции",
+        "NMCMethodsTwo": "НМЦК, полученная с применением двух методов",
+        "CEIComparablePrices": "ЦКЕИ на основе метода сопоставимых рыночных цен",
+        "CEICostMethod": "ЦКЕИ на основе затратного метода, руб. (в случае его применения)",
+        "CEIMethodsTwo":"ЦКЕИ, полученная с применением двух методов",
+        "CurrencyValue" :"Значение валюты",
+        "CurrentCurrency" :"Текущая валюта",
+        "DateValueChanged" :"Дата изменения значения валюты",
+        "CurrencyRateDate" :"Дата курса валюты",
+        "PreviousCurrency" :"Предыдущая валюта",
+
+    }
+
+       
+
+        data_df.rename(columns=column_translation, inplace=True)
+        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+            data_df.to_excel(writer, startrow=0, header=True, index=False)
+        return True
+    except Exception as e:
+        print("Ошибка при экспорте данных в Excel:", e)
 # import numpy as np
 # import statistics
 # tkp_values_all = [4650000000,4001165000,5500000000]

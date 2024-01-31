@@ -557,7 +557,7 @@ class PurchasesWidget(QWidget):
             selected_file = file_dialog.selectedFiles()[0]
             selected_file = selected_file if selected_file else None
             if selected_file:
-                query1 = self.purchases
+                # query1 = self.purchases
                 # query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
                 query = (
                     self.purchases
@@ -598,7 +598,7 @@ class PurchasesWidget(QWidget):
                 # )     
                 self.data = list(query.tuples())
                 # print(self.data[0])
-                if export_to_excel(self.data ,f'{selected_file}/Все данные.xlsx',filters=filters ) == True:
+                if export_to_excel(self.data ,f'{selected_file}/Отфильтрованные данные.xlsx',filters=filters ) == True:
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
                 else:
                     QMessageBox.warning(self, "Ошибка", "Ошибка записи")
