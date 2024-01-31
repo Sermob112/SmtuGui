@@ -398,10 +398,8 @@ class PurchasesWidget(QWidget):
                 Purchase.PurchaseOrder ==  self.selected_order
             )
        
-        if self.selected_text == None:
-            self.selected_text = self.search_input.text()
-        else:
-            keyword = self.selected_text
+   
+        keyword = self.selected_text
         
 
     # Добавляем фильтр по ключевому слову (RegistryNumber)
@@ -469,6 +467,7 @@ class PurchasesWidget(QWidget):
         self.sort_by_putch_order.setCurrentIndex(0)  # Сбрасываем выбранное значение в выпадающем списке
         self.search_input.clear()
         self.current_position = 0
+        self.selected_text = None
         # Очищаем и снова получаем уникальные значения для автозаполнения
         self.unique_values_query = self.findUnic()
         
@@ -616,8 +615,8 @@ class PurchasesWidget(QWidget):
         
         
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    csv_loader_widget = PurchasesWidget()
-    csv_loader_widget.show()
-    sys.exit(app.exec())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     csv_loader_widget = PurchasesWidget()
+#     csv_loader_widget.show()
+#     sys.exit(app.exec())
