@@ -44,7 +44,7 @@ class AuthWindow(QWidget):
         self.password_edit.setEchoMode(QLineEdit.Password)
         self.password_edit.setPlaceholderText("Введите ваш пароль")
         self.password_edit.setMaximumWidth(200)  # Установите максимальную ширину
-        self.password_edit.setAlignment(Qt.AlignCenter)
+        self.password_edit.setAlignment(Qt.AlignLeft)
         self.login_button = QPushButton("Войти")
         self.login_button.clicked.connect(self.authenticate)
         self.login_button.setFixedWidth(300)

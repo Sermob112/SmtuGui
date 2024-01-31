@@ -53,7 +53,7 @@ class InsertWidgetCurrencyNMCK(QWidget):
         self.layout1.addLayout(layout3)
         self.layout1.addLayout(layout4)
 
-        self.add_tkp_button = QPushButton("Добавить Данные")
+        self.add_tkp_button = QPushButton("Изменить Данные")
         self.add_tkp_button.clicked.connect(self.save_tkp_data)
 
         scroll_area = QScrollArea(self)

@@ -174,12 +174,12 @@ def insert_in_table_full(csv_file_path):
                     initial_max_contract_price = float(row[8])
                 except ValueError:
                     initial_max_contract_price = 0.0  # Если не удалось преобразовать в float, устанавливаем значение по умолчанию
-                Currency = 'Нет данных'
+                Currency = row[63] if row[63]  else 'Нет данных'
                 try:
                     InitialMaxContractPriceInCurrency = float(row[10])
                 except ValueError:
                     InitialMaxContractPriceInCurrency = 0
-                ContractCurrency =  'Нет данных'
+                ContractCurrency =   row[63] if row[63]  else 'Нет данных'
                 OKDPClassification =  'Нет данных'
                 OKPDClassification =  'Нет данных'
                 OKPD2Classification = 'Нет данных'

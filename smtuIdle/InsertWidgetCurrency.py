@@ -33,6 +33,7 @@ class InsertWidgetCurrency(QWidget):
 
         # Создаем поля ввода
         self.CurrencyValue = QLineEdit(self)
+        self.CurrencyValue.setMaximumWidth(200)
         # self.DateValueChanged = QDateEdit(self)
         self.CurrencyRateDate = QDateEdit(self)
         self.CurrencyRateDate.setCalendarPopup(True)  # Устанавливаем свойство для включения всплывающего календаря
@@ -48,6 +49,7 @@ class InsertWidgetCurrency(QWidget):
       
         layout2.addWidget(label1)
         layout2.addWidget(self.CurrencyValue)
+        layout2.setAlignment(Qt.AlignLeft)
         
         # Добавляем лейбл и поле ввода во вторую строку
         # layout3.addWidget(label2)
@@ -64,13 +66,12 @@ class InsertWidgetCurrency(QWidget):
         self.layout1.addWidget(labelInfo)
         self.layout1.addWidget(labelInfo2)
         self.layout1.addWidget(labelInfo3)
-        self.layout1.addWidget(label1)
 
         self.layout1.addLayout(layout2)
         self.layout1.addLayout(layout3)
         self.layout1.addLayout(layout4)
 
-        self.add_tkp_button = QPushButton("Добавить Данные")
+        self.add_tkp_button = QPushButton("Изменить Данные")
         self.add_tkp_button.clicked.connect(self.save_tkp_data)
 
         scroll_area = QScrollArea(self)
@@ -185,7 +186,7 @@ class InsertWidgetCurrency(QWidget):
         super().closeEvent(event)
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
-#     window = InsertWidgetCurrency(2)
+#     window = InsertWidgetCurrency(4)
 #     window.show()
 #     sys.exit(app.exec())
         
