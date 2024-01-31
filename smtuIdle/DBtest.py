@@ -61,7 +61,7 @@ class PurchasesWidget(QWidget):
         self.min_data_label = QLabel("Начальная дата", self)
         self.min_data_input = QDateEdit(self)
         self.min_data_input.setCalendarPopup(True)
-        self.min_data_input.setDate(self.min_data_input.date().currentDate())
+        # self.min_data_input.setDate(self.min_data_input.date().currentDate())
         self.min_data_input.setFixedWidth(150)
         self.max_data_label = QLabel("Конечная дата", self)
         self.max_data_input = QDateEdit(self)
@@ -75,7 +75,7 @@ class PurchasesWidget(QWidget):
         # Создаем поле ввода для поиска
         
         self.search_input = QLineEdit(self)
-        self.search_input.setPlaceholderText("Поиск...")
+        self.search_input.setPlaceholderText("Поиск по Реестровому номеру, заказчику, наименованию объекта или организации")
         self.unique_values_query = self.findUnic()
         completer = QCompleter(self.unique_values_query )
         completer.setCaseSensitivity(Qt.CaseInsensitive)
@@ -153,20 +153,32 @@ class PurchasesWidget(QWidget):
         layout.addWidget(self.sort_options)
         layout.addWidget(self.sort_by_putch_order)
         # Создаем горизонтальный макет для минимальной и максимальной цены
-        price_layout = QHBoxLayout()
-        price_layout.addWidget(self.min_price_label)
-        price_layout.addWidget(self.min_price_input)
-        price_layout.addWidget(self.max_price_label)
-        price_layout.addWidget(self.max_price_input)
-        layout.addLayout(price_layout)
+        price_layout = QGridLayout()
+        # Добавляем их в сетку
+        price_layout.addWidget(self.min_price_label, 0, 0)
+        price_layout.addWidget(self.min_price_input, 0, 1)
+        price_layout.addWidget(self.max_price_label, 1, 0)
+        price_layout.addWidget(self.max_price_input, 1, 1)
+        # layout.addLayout(price_layout)
 
         # Создаем горизонтальный макет для начальной и конечной даты
-        date_layout = QHBoxLayout()
-        date_layout.addWidget(self.min_data_label)
-        date_layout.addWidget(self.min_data_input)
-        date_layout.addWidget(self.max_data_label)
-        date_layout.addWidget(self.max_data_input)
-        layout.addLayout(date_layout)
+        date_layout = QGridLayout()
+        date_layout.addWidget(self.min_data_label, 0, 0)
+        date_layout.addWidget(self.min_data_input, 0, 1)
+        date_layout.addWidget(self.max_data_label, 1, 0)
+        date_layout.addWidget(self.max_data_input, 1, 1)
+        combined_layout = QHBoxLayout()
+        combined_layout.addLayout(price_layout)
+        combined_layout.addLayout(date_layout)
+        combined_layout.addSpacing(200) 
+        frame = QFrame()
+        frame.setLayout(combined_layout)
+
+        # Ограничиваем максимальную ширину frame
+        frame.setMaximumWidth(850)
+        layout.addWidget(frame)
+        price_layout.setColumnStretch(2, 1)  # Растягиваем последний столбец
+        date_layout.setColumnStretch(2, 1)
 
         # Добавляем кнопку "Применить фильтр"
         layout.addWidget(self.apply_filter_button)
@@ -194,7 +206,7 @@ class PurchasesWidget(QWidget):
         # self.purchases_list = list(self.purchases)
         # self.show_current_purchase()
     def show_current_purchase(self):
-
+     
         if len(self.purchases_list) != 0:
             current_purchase = self.purchases_list[self.current_position]
             # Отображаем информацию о текущей записи в лейбле
@@ -338,6 +350,7 @@ class PurchasesWidget(QWidget):
             self.show_current_purchase()
 
     def apply_filter(self):
+        self.current_position = 0
         self.selected_option = self.sort_options.currentText()
 
         if  self.selected_option == "Сортировать по возрастанию цены":
@@ -385,7 +398,11 @@ class PurchasesWidget(QWidget):
                 Purchase.PurchaseOrder ==  self.selected_order
             )
        
-        keyword = self.selected_text
+        if self.selected_text == None:
+            self.selected_text = self.search_input.text()
+        else:
+            keyword = self.selected_text
+        
 
     # Добавляем фильтр по ключевому слову (RegistryNumber)
         if keyword:
@@ -451,7 +468,7 @@ class PurchasesWidget(QWidget):
         self.max_data_input.clear()
         self.sort_by_putch_order.setCurrentIndex(0)  # Сбрасываем выбранное значение в выпадающем списке
         self.search_input.clear()
-
+        self.current_position = 0
         # Очищаем и снова получаем уникальные значения для автозаполнения
         self.unique_values_query = self.findUnic()
         
@@ -516,10 +533,10 @@ class PurchasesWidget(QWidget):
         search_input = self.selected_text if self.selected_text is not None else None
         sort_options  = current_sort_option if current_sort_option is not None  else None
         sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order is not None  else None
-        min_date = self.min_date if self.min_date is not None  else None
-        max_date = self.max_date if self.max_date is not None  else None
-        min_price = self.min_price if self.min_price is not None  else None
-        max_price = self.max_price  if self.max_price is not None  else None
+        min_date = self.min_data_input.date().toPython() if self.min_data_input.date().toPython() is not None  else None
+        max_date = self.max_data_input.date().toPython() if self.max_data_input.date().toPython() is not None  else None
+        min_price = self.min_price_input.text() if self.min_price_input.text() is not None  else None
+        max_price = self.max_price_input.text()  if self.max_price_input.text() is not None  else None
         filters = {
         'search_input': search_input,
         'filter_criteria': sort_options ,
