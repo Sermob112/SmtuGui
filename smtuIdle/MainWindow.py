@@ -130,6 +130,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton3.setFixedHeight(button_height)
         self.pushButton4.setFixedHeight(button_height)
         self.pushButton5.setFixedHeight(button_height)
+        self.pushButton6.setFixedHeight(button_height)
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
