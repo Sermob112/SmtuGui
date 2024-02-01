@@ -193,7 +193,7 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page0)
         layout.addWidget(self.purchaseViewerall)
         #Загрузка виджета БД закупок
-        self.purchaseViewer = PurchasesWidget(self)
+        self.purchaseViewer = PurchasesWidget()
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
      
@@ -217,7 +217,7 @@ class Ui_MainWindow(QMainWindow):
         layout.addWidget(self.Statistic)
 
 
-
+        self.purchaseViewerall.window = self
         self.horizontalLayout.addWidget(self.stackedWidget)
 
         self.verticalLayout.addLayout(self.horizontalLayout)

@@ -25,9 +25,9 @@ cursor = db.cursor()
 
 
 class PurchasesWidget(QWidget):
-    def __init__(self,main_window):
+    def __init__(self):
         super().__init__()
-        self.main_win = main_window
+        # self.main_win = main_window
         self.selected_text = None
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
@@ -37,7 +37,7 @@ class PurchasesWidget(QWidget):
         self.table.setShowGrid(True)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setVisible(False)
-        self.current_position = 0   
+        self.current_position =0
 
          # Создаем выпадающее меню
         self.sort_options = QComboBox(self)
@@ -206,20 +206,12 @@ class PurchasesWidget(QWidget):
         # self.purchases_list = list(self.purchases)
         # self.show_current_purchase()
     def show_current_purchase(self):
-     
-        if len(self.purchases_list) != 0:
-            current_purchase = self.purchases_list[self.current_position]
-            # Отображаем информацию о текущей записи в лейбле
-            self.label.setText(f"Запись {self.current_position + 1} из {len(self.purchases_list)}")
-            # Дополнительный код для отображения записи в таблице (замените на свой код)
-            # self.table.setItem(row, column, QTableWidgetItem(str(current_purchase.some_property)))
-        else:
-            self.label.setText("Нет записей")
+        
         # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)
         if len(self.purchases_list) != 0:
             # Получаем текущую запись
-            self.current_purchase = self.purchases_list[self.current_position]
+            current_purchase = self.purchases_list[0]
 
             # Добавляем данные в виде "название поля - значение поля"
             self.add_section_to_table("Описание закупки")
@@ -517,7 +509,7 @@ class PurchasesWidget(QWidget):
             if self.current_purchase.Id:
                 success = delete_records_by_id([self.current_purchase.Id])
                 if success:
-                    self.main_win.updatePurchaseLabel()
+                    # self.main_win.updatePurchaseLabel()
                     QMessageBox.information(self, "Успех", "Вы успешно удалили запись!")
                     self.resetFilters()
                 else:
@@ -614,13 +606,19 @@ class PurchasesWidget(QWidget):
         self.purchases_list = list(self.purchases)
         self.update()
         self.show_current_purchase()
+
+    def reload_data_id(self,id):
+        self.purchases = Purchase.select().where(Purchase.Id == id)
+        self.purchases_list = list(self.purchases)
+        self.update()
+        self.show_current_purchase()
         
 
         
         
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec())
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    csv_loader_widget = PurchasesWidget()
+    csv_loader_widget.show()
+    sys.exit(app.exec())
