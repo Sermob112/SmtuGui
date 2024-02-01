@@ -47,6 +47,7 @@ class PurchasesWidgetAll(QWidget):
         self.table.horizontalHeader().setVisible(True)
         self.current_position = 0   
         self.label = QLabel("Всего записей", self)
+        self.table.cellClicked.connect(self.handle_cell_click)
          # Создаем выпадающее меню
         self.sort_options = QComboBox(self)
         self.sort_options.addItems(["Сортировать по возрастанию цены", "Сортировать по убыванию цены",
@@ -67,6 +68,8 @@ class PurchasesWidgetAll(QWidget):
         self.max_price_label = QLabel("Максимальная цена", self)
         self.max_price_input = QLineEdit(self)
         self.max_price_input.setFixedWidth(100)
+        self.toExcel = QPushButton("Экспорт в Excel", self)
+        self.toExcel.clicked.connect(self.export_to_excel_clicked)
 
         self.min_data_label = QLabel("Начальная дата", self)
         self.min_data_input = QDateEdit(self)
@@ -77,7 +80,8 @@ class PurchasesWidgetAll(QWidget):
         self.max_data_input = QDateEdit(self)
         self.max_data_input.setCalendarPopup(True)
         self.max_data_input.setDate(self.max_data_input.date().currentDate())
-
+        button_layout3 = QHBoxLayout()
+        button_layout3.addWidget(self.toExcel)
         self.max_data_input.setFixedWidth(150)
          #  кнопка "Сбросить фильтры" 
         self.reset_filters_button = QPushButton("Сбросить фильтры", self)
@@ -149,7 +153,7 @@ class PurchasesWidgetAll(QWidget):
         # Добавляем таблицу и остальные элементы в макет
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
- 
+        layout.addLayout(button_layout3)
         # Получаем данные из базы данных и отображаем первую запись
         self.reload_data()
         # self.purchases = Purchase.select()
@@ -263,7 +267,15 @@ class PurchasesWidgetAll(QWidget):
         self.show_all_purchases()
 
   
+    def handle_cell_click(self, row, column):
+        # Получаем Id из выбранной строки и выводим в консоль
 
+        selected_id = self.table.item(row, 0).text()
+        self.window.stackedWidget.setCurrentIndex(2)
+        self.window.purchaseViewer.reload_data_id(selected_id)
+        # from DBtest import PurchasesWidget
+        # self.wind = PurchasesWidget(selected_id)
+        # self.wind.show()
 
 
     def findUnic(self):
@@ -319,29 +331,6 @@ class PurchasesWidgetAll(QWidget):
         # Возвращаем записи в исходное состояние без применения каких-либо фильтров
         self.reload_data()
 
-    def add_button_contract_clicked(self):
-        
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-            self.insert_cont = InsertWidgetContract(purchase_id)
-            self.insert_cont.show()
-    
-
-    def add_button_tkp_clicked(self):
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-            self.tkp_shower = InsertWidgetNMCK(purchase_id)
-            self.tkp_shower.show()
-    
-    def add_button_cia_clicked(self):
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-            self.cia_shower = InsertWidgetCEIA(purchase_id)
-            self.cia_shower.show()
-            
      
 
     def remove_button_clicked(self):
