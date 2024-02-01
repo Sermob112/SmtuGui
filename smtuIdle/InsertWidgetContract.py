@@ -2,7 +2,7 @@ from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 from datetime import date
-from models import Contract
+from models import Contract,Purchase
 from PySide6.QtCore import Qt, QStringListModel
 from PySide6.QtGui import *
 import sys, json
@@ -19,7 +19,10 @@ class InsertWidgetContract(QWidget):
         self.setWindowTitle("Окно ввода даных Контрактов")
         self.setGeometry(100, 100, 600, 400)
         
-        label1 = QLabel("Ввод данных по заявкам")
+       
+        #Контракт
+        label1 = QLabel("2.Расчет НМЦК методом использования общедоступной информации")
+        label1.setAlignment(Qt.AlignCenter)
         label2 = QLabel("Количество заявок на участие в закупке:")
         label3 = QLabel("Количество допущенных заявок на участие в закупке:")
         label4 = QLabel("Количество отклоненных заявок на участие в закупке:")
@@ -131,8 +134,46 @@ class InsertWidgetContract(QWidget):
 
         layout17.addWidget(label17)
         layout17.addWidget(self.ContractFile)
+         #НМЦК -ТКП
+        labelNMCK1 = QLabel("1. Расчет НМЦК затратным методом")
+        labelNMCK1.setAlignment(Qt.AlignCenter)
+        labelNMCK2 = QLabel("Количество запросов ТКП:")
+        labelNMCK3 = QLabel("Количество ответов ТКП:")
+        labelNMCK4 = QLabel("Лимит финансирования, руб.:")
 
-        # Добавляем все строки в вертикальный контейнер
+         # Создаем поля ввода
+        self.editNMCK1 = QLineEdit(self)
+        self.editNMCK1.setValidator(QIntValidator())
+        self.editNMCK1.textChanged.connect(self.update_fields_nmck)
+        self.editNMCK2 = QLineEdit(self)
+        self.editNMCK2.setValidator(QIntValidator())
+        self.editNMCK3 = QLineEdit(self)
+        self.editNMCK3.setValidator(QIntValidator())
+
+    
+        layoutNMCK2 = QHBoxLayout(self)
+        layoutNMCK3 = QHBoxLayout(self)
+        layoutNMCK4 = QHBoxLayout(self)
+
+           # Добавляем лейбл и поле ввода в первую строку
+        layoutNMCK2.addWidget(labelNMCK2)
+        layoutNMCK2.addWidget(self.editNMCK1)
+        
+        # Добавляем лейбл и поле ввода во вторую строку
+        layoutNMCK3.addWidget(labelNMCK3)
+        layoutNMCK3.addWidget(self.editNMCK2)
+
+        # Добавляем лейбл и поле ввода в третью строку
+        layoutNMCK4.addWidget(labelNMCK4)
+        layoutNMCK4.addWidget(self.editNMCK3)
+        self.form_layout_NMCK = QVBoxLayout()
+        # Добавляем все строки в вертикальный контейнер NMCK
+        self.layout1.addWidget(labelNMCK1)
+        self.layout1.addLayout(layoutNMCK2)
+        self.layout1.addLayout(layoutNMCK3)
+        self.layout1.addLayout(layoutNMCK4)
+        self.layout1.addLayout(self.form_layout_NMCK)
+        # Добавляем все строки в вертикальный контейнер COntract
         self.layout1.addWidget(label1)
         self.layout1.addLayout(layout2)
         self.layout1.addLayout(layout3)
@@ -207,8 +248,64 @@ class InsertWidgetContract(QWidget):
             if widget is not None:
                 widget.setParent(None)
                 widget.deleteLater()
-    def save_tkp_data(self):
+    def update_fields_nmck(self):
+        num_fields = int(self.editNMCK1.text())
+        if num_fields > 10:
+            num_fields = 10
+        elif num_fields < 0:
+            num_fields = 1
 
+        # Удаляем все существующие поля ввода из формы
+        self.clear_layout(self.form_layout_NMCK)
+
+        # Создаем и добавляем новые поля ввода в форму
+        for i in range(num_fields):
+            label = QLabel(f"Ценовое предложение №{i + 1}:")
+            edit = QLineEdit(self)
+            edit.setValidator(QIntValidator())
+            self.form_layout_NMCK.addWidget(label)
+            self.form_layout_NMCK.addWidget(edit)
+            # key = f"ТКП {i + 1}"
+            # self.tkp_data[key] = int(edit.text()) if edit.text() else 0
+        # self.add_tkp_button = QPushButton("Добавить ТКП")
+        self.form_layout_NMCK.addWidget(self.add_tkp_button)
+        # self.add_tkp_button.clicked.connect(self.save_tkp_data)
+        self.update()
+    def save_tkp_data(self):
+        # TKP
+ 
+        self.tkp_data = {}
+
+        # Заполняем словарь данными из динамических полей
+        for i in range(0,self.form_layout.count() - 1,2):  # -1, чтобы не включать кнопку
+            key = f"ТКП {i}"
+            edit = self.form_layout.itemAt(i+1).widget()
+            self.tkp_data[key] = int(edit.text()) if edit.text() else 0
+
+        tkp_json = json.dumps(self.tkp_data,ensure_ascii=False)
+        tkp_values_all = [int(value) for value in  self.tkp_data.values()]
+        if tkp_values_all:
+                
+                max_tkp = max(tkp_values_all)
+                min_tkp = min(tkp_values_all)
+                avg_tkp = sum(tkp_values_all) / len(tkp_values_all)
+                standard_deviation = statistics.stdev(tkp_values_all)
+                cv = (standard_deviation / avg_tkp) * 100
+     
+        
+        purchase = Purchase.update(
+                            TKPData=tkp_json,
+                            QueryCount=int(self.edit1.text()) if self.edit1.text() else 0,
+                            ResponseCount=int(self.edit2.text()) if self.edit2.text() else 0,
+                            FinancingLimit=int(self.edit3.text()) if self.edit3.text() else 0,
+                            AveragePrice = avg_tkp if avg_tkp else 0,
+                            MinPrice = min_tkp if min_tkp else 0,
+                            MaxPrice = max_tkp if max_tkp else 0,
+                            StandardDeviation = standard_deviation if standard_deviation else 0,
+                            CoefficientOfVariation = cv if cv else 0,
+                            NMCKMarket = avg_tkp if avg_tkp else 0,
+                            ).where(Purchase.Id == self.purchase_id)
+        #Контракты
         self.price_proposal = {}
         self.applicant = {}
         self.status = {}
@@ -258,6 +355,7 @@ class InsertWidgetContract(QWidget):
        
         try:
             # Попытка сохранения данных
+            purchase.execute()
             contract.save()
             db.close()
 
@@ -273,10 +371,11 @@ class InsertWidgetContract(QWidget):
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
         msg_box.exec()
+  
 
-# if __name__ == "__main__":
-#     app = QApplication(sys.argv)
-#     window = InsertWidgetContract(3)
-#     window.show()
-#     sys.exit(app.exec())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = InsertWidgetContract(3)
+    window.show()
+    sys.exit(app.exec())
         
