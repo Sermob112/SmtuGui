@@ -7,10 +7,11 @@ from parserV3 import *
 from PySide6.QtWidgets import QStyleFactory
 from CurrencyWindow import CurrencyWidget
 class CsvLoaderWidget(QWidget):
-    def __init__(self, main_window, curr_win ,parent =None):
+    def __init__(self, main_window, curr_win , purchaseViewerallparent, parent=None):
         super(CsvLoaderWidget, self).__init__(parent)
         self.main_window = main_window
         self.curr_wind = curr_win
+        self.purchaseViewerall = purchaseViewerallparent
         # Добавляем счетчик новых записей как атрибут класса
         self.inserted_rows_count = 0
         self.repeat_count = 0
@@ -106,7 +107,7 @@ class CsvLoaderWidget(QWidget):
                     #     self.cur = CurrencyWidget()
                     #     self.cur.show()
                     self.curr_wind.populate_table()
-                   
+                    self.purchaseViewerall.resetFilters()
                     reply = QMessageBox()
                     reply.setText("Найдены записи с валютами не в рублях. Изменить валюту?")
                     reply.addButton("нет", QMessageBox.NoRole)
@@ -198,6 +199,7 @@ class CsvLoaderWidget(QWidget):
                     self.update_second_table()
                     self.all_count = count_total_records()
                     self.update_table()
+                    self.purchaseViewerall.resetFilters()
                 else:
                     QMessageBox.information(self, "Ошибка", "Ошибка при удалении записей")
                     # print("Ошибка при удалении записей")

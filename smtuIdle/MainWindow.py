@@ -208,7 +208,7 @@ class Ui_MainWindow(QMainWindow):
         layout.addWidget(self.Insert)
 
             #Загрузка виджета CSV
-        self.loadCsv = CsvLoaderWidget(self, self.Insert)
+        self.loadCsv = CsvLoaderWidget(self, self.Insert,self.purchaseViewerall )
         layout = QVBoxLayout(self.page1)
         layout.addWidget(self.loadCsv)
           #Загрузка виджета статистического анализа

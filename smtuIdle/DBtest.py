@@ -67,8 +67,8 @@ class PurchasesWidget(QWidget):
         button_layout2 = QHBoxLayout()
 
         button_layout2.addWidget(self.addButtonContract)
-        button_layout2.addWidget(self.addButtonTKP)
-        button_layout2.addWidget(self.addButtonCIA)
+        # button_layout2.addWidget(self.addButtonTKP)
+        # button_layout2.addWidget(self.addButtonCIA)
         button_layout2.addWidget(self.addButtonCurrency)
 
         
@@ -246,7 +246,7 @@ class PurchasesWidget(QWidget):
         if len(self.purchases_list) != 0:
             self.current_purchase = self.purchases_list[self.current_position]
             purchase_id = self.current_purchase.Id
-            self.insert_cont = InsertWidgetContract(purchase_id)
+            self.insert_cont = InsertWidgetContract(purchase_id,self)
             self.insert_cont.show()
     
 
