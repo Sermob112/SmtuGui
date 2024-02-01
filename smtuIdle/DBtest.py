@@ -411,7 +411,7 @@ class PurchasesWidget(QWidget):
             purchases_query_combined = purchases_query_combined.where(
                 (Purchase.RegistryNumber.contains(keyword)) |
                 (Purchase.ProcurementOrganization.contains(keyword)) |
-                     (Purchase.RegistryNumber.contains(keyword)) |
+                     (Purchase.PurchaseName.contains(keyword)) |
                      (Purchase.CustomerName.contains(keyword))
             )
         
