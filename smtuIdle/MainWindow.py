@@ -11,6 +11,7 @@ from InsertWidgetNMCK import InsertWidgetNMCK
 from statisticWidget import StatisticWidget
 from CurrencyWindow import CurrencyWidget
 from debugWindow import DebugWidget
+from AllDbScroller import PurchasesWidgetAll
 from parserV3 import count_total_records
 from datetime import datetime
 from parserV3 import export_to_excel_all
@@ -95,6 +96,10 @@ class Ui_MainWindow(QMainWindow):
     
         # self.leftPanelFrame = QtWidgets.QFrame(self.centralwidget)
         self.leftPanelLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.pushButton0 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton0.setObjectName("pushButton0")
+        self.leftPanelLayout.addWidget(self.pushButton0)
+        
         self.leftPanelLayout.addSpacing(50)
         self.pushButton1 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton1.setObjectName("pushButton1")
@@ -125,6 +130,7 @@ class Ui_MainWindow(QMainWindow):
         button_height = 30  # Задайте желаемую высоту
 
         self.leftPanelLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.pushButton0.setFixedHeight(button_height)
         self.pushButton1.setFixedHeight(button_height)
         self.pushButton2.setFixedHeight(button_height)
         self.pushButton3.setFixedHeight(button_height)
@@ -150,7 +156,10 @@ class Ui_MainWindow(QMainWindow):
         # Стек виджет для правой части
         self.stackedWidget = QtWidgets.QStackedWidget(self.centralwidget)
         self.stackedWidget.setObjectName("stackedWidget")
-
+        self.page0 = QtWidgets.QWidget()
+        self.label0 = QtWidgets.QLabel(self.page0)
+        self.label0.setGeometry(QtCore.QRect(100, 100, 200, 50))
+        self.stackedWidget.addWidget(self.page0)
         # Добавление страниц в стек виджет
         self.page1 = QtWidgets.QWidget()
         self.label1 = QtWidgets.QLabel(self.page1)
@@ -177,7 +186,13 @@ class Ui_MainWindow(QMainWindow):
         self.page6 = QtWidgets.QWidget()
         self.label6 = QtWidgets.QLabel(self.page6)
         self.stackedWidget.addWidget(self.page6)
-        #Загрузка виджета БД
+
+
+         #Загрузка виджета БД 
+        self.purchaseViewerall = PurchasesWidgetAll()
+        layout = QVBoxLayout(self.page0)
+        layout.addWidget(self.purchaseViewerall)
+        #Загрузка виджета БД закупок
         self.purchaseViewer = PurchasesWidget(self)
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
@@ -210,11 +225,12 @@ class Ui_MainWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         # Подключение сигналов к слотам
-        self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
-        self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
-        self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
-        self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
-        self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
+        self.pushButton0.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
+        self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
+        self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
+        self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
+        self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
+        self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
         self.pushButton5.clicked.connect(self.export_to_excel_all)
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -222,8 +238,9 @@ class Ui_MainWindow(QMainWindow):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
+        self.pushButton0.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton1.setText(_translate("MainWindow", "Ввод Закупок"))
-        self.pushButton2.setText(_translate("MainWindow", "Просмотр БД"))
+        self.pushButton2.setText(_translate("MainWindow", "Просмотр закупок БД"))
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
         self.pushButton5.setText(_translate("MainWindow", "Экспорт всех данных БД в Excel"))
