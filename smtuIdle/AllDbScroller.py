@@ -430,10 +430,10 @@ class PurchasesWidgetAll(QWidget):
                 #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
                 # )     
                 records, data, user = self.main_window.return_variabels()
-                cleaned_filename = data.sub(r'[\\/*?:"<>| ]', '_', data)
+                # cleaned_filename = data.sub(r'[\\/*?:"<>| ]', '_', data)
                 self.data = list(query.tuples())
                 # print(self.data[0])
-                if export_to_excel(self.data ,f'{selected_file}/Отфильтрованные данные {cleaned_filename} {records} {user}.xlsx',filters=filters ) == True:
+                if export_to_excel(self.data ,f'{selected_file}/Отфильтрованные данные__{data}_{records}_{user}.xlsx',filters=filters ) == True:
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
                 else:
                     QMessageBox.warning(self, "Ошибка", "Ошибка записи")

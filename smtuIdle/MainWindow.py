@@ -274,6 +274,9 @@ class Ui_MainWindow(QMainWindow):
         file_dialog.setFileMode(QFileDialog.Directory)
         self.purchases = Purchase.select()
     def return_variabels(self):
+        self.totalRecords = f"Закупок в БД {count_total_records()}"
+        self.user = f"Пользователь {self.username}"
+        self.date = f"Дата {self.formatted_date}"
         return self.totalRecords,self.date, self.user
     
         if file_dialog.exec_():
