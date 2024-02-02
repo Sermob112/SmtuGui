@@ -5,6 +5,7 @@ from peewee import *
 import pandas as pd
 from models import Purchase, Contract
 import json
+from functools import partial
 
 class StatisticWidget(QWidget):
     def __init__(self):
@@ -17,14 +18,14 @@ class StatisticWidget(QWidget):
         self.label_text = "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП"
         self.label = QLabel(self.label_text)
          # Создаем кнопки "Назад" и "Вперед"
-        btn_back = QPushButton("Назад", self)
-        btn_forward = QPushButton("Вперед", self)
+        # btn_back = QPushButton("Назад", self)
+        # btn_forward = QPushButton("Вперед", self)
         self.toExcel = QPushButton("Экспорт в Excel", self)
         self.Update = QPushButton("Обновить", self)
         # btn_analysis = QPushButton("Анализ", self)
 
-        btn_back.clicked.connect(self.show_previous_data)
-        btn_forward.clicked.connect(self.show_next_data)
+        # btn_back.clicked.connect(self.show_previous_data)
+        # btn_forward.clicked.connect(self.show_next_data)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
         self.Update.clicked.connect(self.update_data)
         # Инициализация переменной для отслеживания текущего индекса данных
@@ -40,21 +41,11 @@ class StatisticWidget(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # Размещаем виджеты в компоновке
-        layout = QVBoxLayout(self)
-        button_layout = QHBoxLayout(self)
-        button_layout2 = QHBoxLayout(self)
-        layout.addWidget(self.label)
-        layout.addWidget( self.table)
-        button_layout.addWidget(btn_back)
-        button_layout.addWidget(btn_forward)
-        button_layout2.addWidget(self.toExcel )
-        button_layout2.addWidget(self.Update)
-        layout.addLayout(button_layout)
-        layout.addLayout(button_layout2)
+ 
+       
         # layout.addWidget(btn_analysis)
 
-          # Список для хранения всех данных, которые вы хотите отобразить в таблице
+          # Список для хранения всех данных, которые  отобразить в таблице
         self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
                          self.analisNMCKReduce(),self.analyze_price_count()]
@@ -70,12 +61,65 @@ class StatisticWidget(QWidget):
             "Соотношение НМЦК и ЦКЕП и цены контракта, заключенного по результатам конкурса",
             "Анализ количества ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка"
         ]
+        self.buttons = []
+
+
+        for index, text in enumerate(self.label_texts):
+            button = QtWidgets.QPushButton(text)
+            button.setFixedSize(600, 30)
+            size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+            button.setSizePolicy(size_policy)
+            button.setStyleSheet("text-align: left;")
+            
+            # Подключите обработчик события к каждой кнопке, передавая индекс
+            button.clicked.connect(partial(self.show_specific_data, index))
+            
+            self.buttons.append(button)
         
-        # Первоначальное отображение данных
+        self.buttons_layout = QtWidgets.QVBoxLayout()
+
+        # Добавьте кнопки в вертикальный слой
+        for button in self.buttons:
+            self.buttons_layout.addWidget(button)
+
+        main_layout = QHBoxLayout(self)
+        scroll_area = QScrollArea(self)
+        scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        scroll_widget = QtWidgets.QWidget()
+        scroll_widget.setLayout(self.buttons_layout)
+      
+        scroll_area.setWidget(scroll_widget)
+        main_layout.addWidget(scroll_area)
+
+        
+
+        #  вертикальный слой для метки и таблицы
+        vertical_layout = QVBoxLayout(self)
+        vertical_layout.addWidget(self.label)
+        vertical_layout.addWidget(self.table)
+
+        # Добавьте вертикальный слой с меткой и таблицей в горизонтальный слой
+        main_layout.addLayout(vertical_layout)
+
+ #  вертикальный слой для кнопок внизу
+        button_layout = QVBoxLayout(self)
+        # button_layout.addWidget(btn_back)
+        # button_layout.addWidget(btn_forward)
+
+        #  вертикальный слой для кнопок внизу справа
+        button_layout2 = QVBoxLayout(self)
+        button_layout2.addWidget(self.toExcel)
+        button_layout2.addWidget(self.Update)
+        #  вертикальные слои с кнопками в горизонтальный слой
+        vertical_layout.addLayout(button_layout)
+        vertical_layout.addLayout(button_layout2)
+        #  основной макет для вашего виджета
+        self.setLayout(main_layout)
+        #  отображение данных
         self.show_current_data()
 
 
-        self.setLayout(layout)
+        self.setLayout(main_layout)
         # self.analisQueryCount()
         # self.analisPriceCount()
         # self.analyze_price_count()
@@ -581,12 +625,19 @@ class StatisticWidget(QWidget):
         [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4],
         'Данные статистики.xlsx'
     )
+    def show_specific_data(self, index):
+    # Проверка, что индекс находится в пределах допустимых значений
+        if 0 <= index < len(self.label_texts):
+            # Устанавливаем текущий индекс
+            self.current_data_index = index
+            self.show_current_data()
+            self.label.setText(self.label_texts[self.current_data_index])
 
-if __name__ == "__main__":
-    from PySide6.QtWidgets import QApplication
-    import sys
+# if __name__ == "__main__":
+#     from PySide6.QtWidgets import QApplication
+#     import sys
 
-    app = QApplication(sys.argv)
-    window = StatisticWidget()
-    window.show()
-    sys.exit(app.exec())
+#     app = QApplication(sys.argv)
+#     window = StatisticWidget()
+#     window.show()
+#     sys.exit(app.exec())
