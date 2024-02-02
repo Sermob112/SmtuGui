@@ -38,25 +38,21 @@ class Ui_MainWindow(QMainWindow):
         # app.setStyleSheet(stream.readAll())
 
         # Главный макет
-        self.centralwidget = QtWidgets.QWidget(self)
-        self.centralwidget.setObjectName("centralwidget")
+
+      
       
     
                 # Общий макет
-        self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
-
+   
         self.centralwidget = QtWidgets.QWidget(self)
         self.setCentralWidget(self.centralwidget)
-
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
-
         self.topLayout = QtWidgets.QHBoxLayout()
-
         # Статический виджет в центре
         self.centerWidget = QtWidgets.QWidget(self.centralwidget)
         self.centerLayout = QtWidgets.QVBoxLayout(self.centerWidget)
         self.topLayout.addWidget(self.centerWidget)
-        # Статический виджет справа (бывший правыйTopWidget)
+     
         self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
         self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
         # self.rightTopLayoutButton = QtWidgets.QHBoxLayout(self.rightTopWidget)
@@ -65,13 +61,13 @@ class Ui_MainWindow(QMainWindow):
         self.logoutButton = QPushButton("Выйти")
         self.logoutButton.setFixedWidth(150)
         self.logoutButton.clicked.connect(self.exit)
-        self.layoutBut.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignRight)
+       
         self.userLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.dbLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.dbLabel.setText("БД НМЦК и ЦК")
         self.userLabel.setText(f"Пользователь: {self.username}")
-        self.rightTopLayout.addWidget(self.userLabel, alignment=QtCore.Qt.AlignLeft)
-        self.rightTopLayout.addWidget(self.dbLabel, alignment=QtCore.Qt.AlignLeft)
+        self.rightTopLayout.addWidget(self.userLabel)
+        self.rightTopLayout.addWidget(self.dbLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.purchaseLabel2 = QtWidgets.QLabel(self.rightTopWidget)
         current_date = datetime.now()
@@ -79,12 +75,13 @@ class Ui_MainWindow(QMainWindow):
         self.purchaseLabel.setText(f"Закупок в БД: {count_total_records()}")
         self.purchaseLabel2.setText(f"Дата: {self.formatted_date}")
         self.updatePurchaseLabel()
-        self.rightTopLayout.addWidget(self.purchaseLabel, alignment=QtCore.Qt.AlignLeft)
-        self.rightTopLayout.addWidget(self.purchaseLabel2, alignment=QtCore.Qt.AlignLeft)
+        self.rightTopLayout.addWidget(self.purchaseLabel)
+        self.rightTopLayout.addWidget(self.purchaseLabel2)
   
-        # self.topLayout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.topLayout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         self.topLayout.addWidget(self.rightTopWidget)
-        self.topLayout.addLayout( self.layoutBut)
+        self.layoutBut.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignRight)
+        self.verticalLayout.addLayout( self.layoutBut)
         self.verticalLayout.addLayout(self.topLayout)
          # Добавляем вертикальную разделительную черту внизу
         line = QtWidgets.QFrame(self.centralwidget)
