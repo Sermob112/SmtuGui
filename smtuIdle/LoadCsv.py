@@ -109,6 +109,7 @@ class CsvLoaderWidget(QWidget):
                     self.curr_wind.populate_table()
                     self.purchaseViewerall.resetFilters()
                     reply = QMessageBox()
+                    self.update_second_table()
                     reply.setText("Найдены записи с валютами не в рублях. Изменить валюту?")
                     reply.addButton("нет", QMessageBox.NoRole)
                     reply.addButton("да", QMessageBox.YesRole)

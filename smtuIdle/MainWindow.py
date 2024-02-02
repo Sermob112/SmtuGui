@@ -278,7 +278,10 @@ class Ui_MainWindow(QMainWindow):
         self.user = f"Пользователь {self.username}"
         self.date = f"Дата {self.formatted_date}"
         return self.totalRecords,self.date, self.user
-    
+    def export_to_excel_all(self):
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(QFileDialog.Directory)
+        self.purchases = Purchase.select()
         if file_dialog.exec_():
             selected_file = file_dialog.selectedFiles()[0]
             selected_file = selected_file if selected_file else None
@@ -323,8 +326,9 @@ class Ui_MainWindow(QMainWindow):
                 #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
                 # )     
                 self.data = list(query.tuples())
+                records, data, user = self.return_variabels()
                 # print(self.data[0])
-                if export_to_excel_all(self.data ,f'{selected_file}/Все данные.xlsx') == True:
+                if export_to_excel_all(self.data ,f'{selected_file}/Все данные__{data}_{records}_{user}.xlsx') == True:
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
                 else:
                     QMessageBox.warning(self, "Ошибка", "Ошибка записи")

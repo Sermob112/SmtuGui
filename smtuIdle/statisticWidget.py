@@ -1,5 +1,6 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import *
+from PySide6.QtCore import Qt, QStringListModel,Signal
 import statistics
 from peewee import *
 import pandas as pd
@@ -35,11 +36,24 @@ class StatisticWidget(QWidget):
         # Создаем таблицу
         self.table = QTableWidget(self)
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Метод", "223-ФЗ","44-ФЗ","Общий итог"])
-        
+        self.table.setHorizontalHeaderLabels(["Метод", "223-ФЗ", "44-ФЗ", "Общий итог"])
+
+        self.table.setColumnWidth(0, 300)  # Ширина "Метод"
+        self.table.setColumnWidth(1, 100)  # Ширина "223-ФЗ"
+        self.table.setColumnWidth(2, 100)  # Ширина "44-ФЗ"
+        # Колонка "Общий итог" будет автоматически расширяться из-за QHeaderView.Stretch
+
         # Устанавливаем политику расширения таблицы
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        # Установите политику изменения размеров секций горизонтального заголовка
+        
+        self.table.horizontalHeader().setStretchLastSection(True)
+
+        # Установите политику изменения размеров колонок содержимого
+        self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+
+        
 
  
        
@@ -66,7 +80,7 @@ class StatisticWidget(QWidget):
 
         for index, text in enumerate(self.label_texts):
             button = QtWidgets.QPushButton(text)
-            button.setFixedSize(600, 30)
+            button.setFixedSize(800, 30)
             size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
             button.setSizePolicy(size_policy)
             button.setStyleSheet("text-align: left;")
