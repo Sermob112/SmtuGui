@@ -25,10 +25,11 @@ cursor = db.cursor()
 
 
 class PurchasesWidgetAll(QWidget):
-    def __init__(self):
+    def __init__(self,main):
         super().__init__()
         # self.main_win = main_window
         self.selected_text = None
+        self.main_window = main
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
         self.table.setColumnCount(9)
@@ -428,9 +429,11 @@ class PurchasesWidgetAll(QWidget):
                 #     .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
                 #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
                 # )     
+                records, data, user = self.main_window.return_variabels()
+                cleaned_filename = data.sub(r'[\\/*?:"<>| ]', '_', data)
                 self.data = list(query.tuples())
                 # print(self.data[0])
-                if export_to_excel(self.data ,f'{selected_file}/Отфильтрованные данные.xlsx',filters=filters ) == True:
+                if export_to_excel(self.data ,f'{selected_file}/Отфильтрованные данные {cleaned_filename} {records} {user}.xlsx',filters=filters ) == True:
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
                 else:
                     QMessageBox.warning(self, "Ошибка", "Ошибка записи")
@@ -448,8 +451,8 @@ class PurchasesWidgetAll(QWidget):
         
         
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    csv_loader_widget = PurchasesWidgetAll()
-    csv_loader_widget.show()
-    sys.exit(app.exec())
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     csv_loader_widget = PurchasesWidgetAll()
+#     csv_loader_widget.show()
+#     sys.exit(app.exec())
