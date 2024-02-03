@@ -14,6 +14,8 @@ from InsertWidgetCurrency import InsertWidgetCurrency
 from parserV3 import delete_records_by_id, export_to_excel
 from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
+import os
+import subprocess
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 
 
@@ -79,7 +81,7 @@ class PurchasesWidget(QWidget):
         layout = QVBoxLayout(self)
 
         # Создаем горизонтальный макет для минимальной и максимальной цены
-   
+        self.table.itemClicked.connect(self.open_file)
         # Добавляем таблицу и остальные элементы в макет
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
@@ -132,6 +134,8 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Начальная максимальная цена контракта", str(current_purchase.InitialMaxContractPrice))
             self.add_row_to_table("Валюта", current_purchase.Currency)
             self.add_row_to_table("Начальная максимальная цена контракта в валюте", str(current_purchase.InitialMaxContractPriceInCurrency))
+            self.add_row_to_table("Количество единиц", str(current_purchase.quantity_units))
+            self.add_row_to_table("НМЦК за единицу", str(current_purchase.nmck_per_unit))
             self.add_row_to_table("Валюта контракта", current_purchase.ContractCurrency)
             self.add_row_to_table("Классификация ОКДП", current_purchase.OKDPClassification)
             self.add_row_to_table("Классификация ОКПД", current_purchase.OKPDClassification)
@@ -146,6 +150,7 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Дата начала заявки", str(current_purchase.ApplicationStartDate))
             self.add_row_to_table("Дата окончания заявки", str(current_purchase.ApplicationEndDate))
             self.add_row_to_table("Дата аукциона", str(current_purchase.AuctionDate))
+            self.add_row_to_table("Извещение о закупке", str(current_purchase.notification_link))
             self.add_section_to_table("Определение НМЦК и ЦКЕИ")
             self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount))
             self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount))
@@ -249,7 +254,22 @@ class PurchasesWidget(QWidget):
             self.insert_cont = InsertWidgetContract(purchase_id,self)
             self.insert_cont.show()
     
-
+    def open_file(self, item):
+        column = item.column()
+        if column == 1:  # Проверяем, что кликнули по значению (колонка с путем к файлу)
+            file_path = item.text()
+            if os.path.isfile(file_path):
+                # subprocess.Popen(['start', 'excel', file_path], shell=True)  # Открываем файл
+                if file_path.lower().endswith(('.docx', '.doc')):
+                    subprocess.Popen(['start', 'winword', file_path], shell=True)
+                elif file_path.lower().endswith('.pdf'):
+                    subprocess.Popen(['start', 'winword', file_path], shell=True)
+                elif file_path.lower().endswith(('.xlsx', '.xls','.csv')):
+                    subprocess.Popen(['start', 'excel', file_path], shell=True)
+                else:
+                    self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
+            else:
+                self.show_warning("Файла не существует","Файла не существует")
     # def add_button_tkp_clicked(self):
     #     if len(self.purchases_list) != 0:
     #         self.current_purchase = self.purchases_list[self.current_position]
@@ -288,7 +308,8 @@ class PurchasesWidget(QWidget):
         self.show_current_purchase()
         
 
-        
+    def show_warning(self, title, text):
+        warning = QMessageBox.warning(self, title, text, QMessageBox.Ok)
         
 
 # if __name__ == '__main__':
