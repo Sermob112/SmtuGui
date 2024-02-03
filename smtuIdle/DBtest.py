@@ -73,8 +73,7 @@ class PurchasesWidget(QWidget):
         # button_layout2.addWidget(self.addButtonCIA)
         button_layout2.addWidget(self.addButtonCurrency)
 
-        
-
+   
 
  
        # Создаем горизонтальный макет и добавляем элементы
@@ -269,7 +268,9 @@ class PurchasesWidget(QWidget):
                 else:
                     self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
             else:
-                self.show_warning("Файла не существует","Файла не существует")
+               pass
+
+
     # def add_button_tkp_clicked(self):
     #     if len(self.purchases_list) != 0:
     #         self.current_purchase = self.purchases_list[self.current_position]

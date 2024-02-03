@@ -68,7 +68,10 @@ class InsertWidgetContract(QWidget):
         self.ReductionNMCPercent.setValidator(QDoubleValidator())
         self.SupplierProtocol = QLineEdit(self)
         self.ContractFile = QLineEdit(self)
-      
+           #файл диалог
+        self.notification_link_edit_contratc = QLineEdit(self)
+        browse_button_contratc = QPushButton("Обзор", self)
+        browse_button_contratc.clicked.connect(self.browse_file_contract)
 
         self.layout1 = QVBoxLayout(self)
         layout2 = QHBoxLayout(self)
@@ -136,7 +139,8 @@ class InsertWidgetContract(QWidget):
         layout16.addWidget(self.SupplierProtocol)
 
         layout17.addWidget(label17)
-        layout17.addWidget(self.ContractFile)
+        layout17.addWidget(self.notification_link_edit_contratc)
+        layout17.addWidget(browse_button_contratc)
          #НМЦК -ТКП
         labelNMCK1 = QLabel("1. Расчет НМЦК затратным методом")
         labelNMCK1.setAlignment(Qt.AlignCenter)
@@ -282,7 +286,7 @@ class InsertWidgetContract(QWidget):
             # key = f"ТКП {i + 1}"
             # self.tkp_data[key] = int(edit.text()) if edit.text() else 0
         # self.add_tkp_button = QPushButton("Добавить ТКП")
-        self.form_layout_NMCK.addWidget(self.add_tkp_button)
+        # self.form_layout_NMCK.addWidget(self.add_tkp_button)
         # self.add_tkp_button.clicked.connect(self.save_tkp_data)
         self.update()
     def save_tkp_data(self):
@@ -325,7 +329,7 @@ class InsertWidgetContract(QWidget):
                             StandardDeviation = standard_deviation if standard_deviation else 0,
                             CoefficientOfVariation = cv if cv else 0,
                             NMCKMarket = avg_tkp if avg_tkp else 0,
-                            notification_link=destination_path,
+                            notification_link=destination_path if destination_path else "нет данных",
                             ).where(Purchase.Id == self.purchase_id)
         #Контракты
         self.price_proposal = {}
@@ -353,6 +357,11 @@ class InsertWidgetContract(QWidget):
                 self.status[key_status] = status_edit.text() if status_edit.text() else "[]"
 
             j += 1
+        source_path_contract = self.notification_link_edit_contratc.text()
+        absolute_db_folder = os.path.abspath(self.db_folder)
+       
+        destination_path_contract = os.path.join(absolute_db_folder, os.path.basename(source_path_contract))
+        shutil.copy2(source_path, destination_path_contract)
         price_proposal_json = json.dumps(self.price_proposal,ensure_ascii=False)
         applicant_json = json.dumps(self.applicant,ensure_ascii=False)
         status_json = json.dumps(self.status,ensure_ascii=False)
@@ -372,7 +381,7 @@ class InsertWidgetContract(QWidget):
                             ReductionNMC=int(self.ReductionNMC.text()) if self.ReductionNMC.text() else 0,
                             ReductionNMCPercent=float(self.ReductionNMCPercent.text()) if self.ReductionNMCPercent.text() else 0,
                             SupplierProtocol=self.SupplierProtocol.text() if self.SupplierProtocol.text() else 0,
-                            ContractFile=self.ContractFile.text() if self.ContractFile.text() else 0,
+                            ContractFile= destination_path_contract if destination_path_contract else "нет данных",
                             PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
        
         try:
@@ -401,6 +410,15 @@ class InsertWidgetContract(QWidget):
         
         if file_path:
             self.notification_link_edit.setText(file_path)
+            self.db_folder = "файлы бд"
+            os.makedirs(self.db_folder, exist_ok=True)
+
+    def browse_file_contract(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+        
+        if file_path:
+            self.notification_link_edit_contratc.setText(file_path)
             self.db_folder = "файлы бд"
             os.makedirs(self.db_folder, exist_ok=True)
 
