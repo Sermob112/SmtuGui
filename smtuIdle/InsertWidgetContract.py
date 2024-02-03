@@ -8,6 +8,8 @@ from PySide6.QtGui import *
 import sys, json
 import statistics
 import pandas as pd
+import shutil
+import os
 db = SqliteDatabase('test.db')
 
 class InsertWidgetContract(QWidget):
@@ -18,7 +20,7 @@ class InsertWidgetContract(QWidget):
         self.db_window = db_wind
         # Создаем лейблы
         self.setWindowTitle("Окно ввода даных Контрактов")
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 1000, 800)
         
        
         #Контракт
@@ -141,7 +143,11 @@ class InsertWidgetContract(QWidget):
         labelNMCK2 = QLabel("Количество запросов ТКП:")
         labelNMCK3 = QLabel("Количество ответов ТКП:")
         labelNMCK4 = QLabel("Лимит финансирования, руб.:")
-
+        labelNMCK5 = QLabel("Выбирите файл извещения о закупке")
+         #файл диалог
+        self.notification_link_edit = QLineEdit(self)
+        browse_button = QPushButton("Обзор", self)
+        browse_button.clicked.connect(self.browse_file)
          # Создаем поля ввода
         self.editNMCK1 = QLineEdit(self)
         self.editNMCK1.setValidator(QIntValidator())
@@ -155,7 +161,7 @@ class InsertWidgetContract(QWidget):
         layoutNMCK2 = QHBoxLayout(self)
         layoutNMCK3 = QHBoxLayout(self)
         layoutNMCK4 = QHBoxLayout(self)
-
+        layoutNMCK5 = QHBoxLayout(self)
            # Добавляем лейбл и поле ввода в первую строку
         layoutNMCK2.addWidget(labelNMCK2)
         layoutNMCK2.addWidget(self.editNMCK1)
@@ -167,12 +173,16 @@ class InsertWidgetContract(QWidget):
         # Добавляем лейбл и поле ввода в третью строку
         layoutNMCK4.addWidget(labelNMCK4)
         layoutNMCK4.addWidget(self.editNMCK3)
+        layoutNMCK5.addWidget(labelNMCK5)
+        layoutNMCK5.addWidget(self.notification_link_edit)
+        layoutNMCK5.addWidget(browse_button)
         self.form_layout_NMCK = QVBoxLayout()
         # Добавляем все строки в вертикальный контейнер NMCK
         self.layout1.addWidget(labelNMCK1)
         self.layout1.addLayout(layoutNMCK2)
         self.layout1.addLayout(layoutNMCK3)
         self.layout1.addLayout(layoutNMCK4)
+        self.layout1.addLayout(layoutNMCK5)
         self.layout1.addLayout(self.form_layout_NMCK)
         # Добавляем все строки в вертикальный контейнер COntract
         self.layout1.addWidget(label1)
@@ -199,7 +209,10 @@ class InsertWidgetContract(QWidget):
         scroll_widget = QWidget()
         scroll_widget.setLayout(self.layout1)
         scroll_area.setWidget(scroll_widget)
-      
+
+
+       
+
         self.form_layout = QVBoxLayout ()
         self.layout1.addLayout(self.form_layout)
 
@@ -293,7 +306,14 @@ class InsertWidgetContract(QWidget):
                 standard_deviation = statistics.stdev(tkp_values_all)
                 cv = (standard_deviation / avg_tkp) * 100
      
-        
+        source_path = self.notification_link_edit.text()
+        absolute_db_folder = os.path.abspath(self.db_folder)
+       
+        destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+        shutil.copy2(source_path, destination_path)
+
+        # Сохранение пути файла в базе данных
+       
         purchase = Purchase.update(
                             TKPData=tkp_json,
                             QueryCount=int(self.edit1.text()) if self.edit1.text() else 0,
@@ -305,6 +325,7 @@ class InsertWidgetContract(QWidget):
                             StandardDeviation = standard_deviation if standard_deviation else 0,
                             CoefficientOfVariation = cv if cv else 0,
                             NMCKMarket = avg_tkp if avg_tkp else 0,
+                            notification_link=destination_path,
                             ).where(Purchase.Id == self.purchase_id)
         #Контракты
         self.price_proposal = {}
@@ -374,7 +395,19 @@ class InsertWidgetContract(QWidget):
         msg_box.setText(message)
         msg_box.exec()
   
+    def browse_file(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+        
+        if file_path:
+            self.notification_link_edit.setText(file_path)
+            self.db_folder = "файлы бд"
+            os.makedirs(self.db_folder, exist_ok=True)
 
+  
+       
+
+       
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
 #     window = InsertWidgetContract(3)

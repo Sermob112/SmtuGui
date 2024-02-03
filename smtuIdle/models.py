@@ -36,6 +36,10 @@ class Purchase(BaseModel):
     ApplicationStartDate = DateField(null=True, default="Нет данных", verbose_name="Дата начала заявки")
     ApplicationEndDate = DateField(null=True,  default="Нет данных", verbose_name="Дата окончания заявки")
     AuctionDate = DateField(null=True,  default="Нет данных", verbose_name="Дата аукциона")
+    notification_link = CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
+    quantity_units = IntegerField(null=True,verbose_name="Количество единиц")
+    nmck_per_unit = IntegerField(null=True,verbose_name="НМЦК за единицу")
+    
     # Добавленные поля
     TKPData = CharField(null=True, max_length=500, default="[]", verbose_name="Данные по ТКП")
     QueryCount = IntegerField(null=True,  default="Нет данных", verbose_name="Количество запросов")
@@ -49,6 +53,8 @@ class Purchase(BaseModel):
     FinancingLimit = FloatField(null=True, default="Нет данных", verbose_name="Лимит финансирования")
     PurchaseStatus = CharField(null=True, max_length=500, default="[]", verbose_name="Статус закупки")
     InitialMaxContractPriceOld = FloatField(null=True,  default="Нет данных", verbose_name="Начальная максимальная цена контракта старая")
+    
+    
     isChanged = BooleanField(null=True, verbose_name="Был изменен")
     def delete_instance(self, *args, **kwargs):
         # Добавьте каскадное удаление перед вызовом delete_instance
