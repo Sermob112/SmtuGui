@@ -198,7 +198,7 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page0)
         layout.addWidget(self.purchaseViewerall)
         #Загрузка виджета БД закупок
-        self.purchaseViewer = PurchasesWidget()
+        self.purchaseViewer = PurchasesWidget(self)
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
      
@@ -335,7 +335,7 @@ class Ui_MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
 
-
+ 
 
 # if __name__ == "__main__":
 #     import sys

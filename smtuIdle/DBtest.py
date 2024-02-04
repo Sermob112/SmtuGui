@@ -27,9 +27,9 @@ cursor = db.cursor()
 
 
 class PurchasesWidget(QWidget):
-    def __init__(self):
+    def __init__(self,main_window):
         super().__init__()
-        # self.main_win = main_window
+        self.main_win = main_window
         self.selected_text = None
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
@@ -40,7 +40,8 @@ class PurchasesWidget(QWidget):
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setVisible(False)
         self.current_position =0
-
+        self.BackButton = QPushButton("Назад", self)
+        self.BackButton.clicked.connect(self.go_back)
         self.addButtonContract = QPushButton("Добавить дополнительную информацию по закупке", self)
         # self.addButtonTKP = QPushButton("Добавить ТКП", self)
         # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
@@ -62,7 +63,9 @@ class PurchasesWidget(QWidget):
 
         button_layout = QHBoxLayout()
     
-
+        self.butlayout = QHBoxLayout()
+        self.butlayout.addWidget(self.BackButton )
+        self.butlayout.setAlignment(Qt.AlignLeft)
         button_layout.addWidget(self.label)
         self.label.setAlignment(Qt.AlignHCenter)
         # Создаем горизонтальный макет и добавляем элементы
@@ -82,6 +85,7 @@ class PurchasesWidget(QWidget):
         # Создаем горизонтальный макет для минимальной и максимальной цены
         self.table.itemClicked.connect(self.open_file)
         # Добавляем таблицу и остальные элементы в макет
+        layout.addLayout( self.butlayout)
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
         layout.addLayout(button_layout2)
@@ -284,7 +288,9 @@ class PurchasesWidget(QWidget):
     #         purchase_id = self.current_purchase.Id
     #         self.cia_shower = InsertWidgetCEIA(purchase_id)
     #         self.cia_shower.show()
-            
+    def go_back(self):
+        if self.window:
+            self.main_win.stackedWidget.setCurrentIndex(0)
      
 
     
