@@ -10,6 +10,7 @@ import statistics
 import pandas as pd
 import shutil
 import os
+from peewee import DoesNotExist
 db = SqliteDatabase('test.db')
 
 class InsertWidgetContract(QWidget):
@@ -57,7 +58,9 @@ class InsertWidgetContract(QWidget):
         self.RegistryNumber = QLineEdit(self)
         self.ContractNumber = QLineEdit(self)
         self.StartDate = QDateEdit(self)
+        self.StartDate.setCalendarPopup(True)
         self.EndDate = QDateEdit(self)
+        self.EndDate.setCalendarPopup(True)
         self.ContractPrice = QLineEdit(self)
         self.ContractPrice.setValidator(QIntValidator())
         self.AdvancePayment = QLineEdit(self)
@@ -219,7 +222,10 @@ class InsertWidgetContract(QWidget):
 
         self.form_layout = QVBoxLayout ()
         self.layout1.addLayout(self.form_layout)
+        self.add_tkp_button = QPushButton("Добавить Данные")
+        self.form_layout.addWidget(self.add_tkp_button)
 
+        self.add_tkp_button.clicked.connect(self.save_tkp_data)
         main_layout = QVBoxLayout(self)
         main_layout.addWidget(scroll_area)
 
@@ -270,19 +276,19 @@ class InsertWidgetContract(QWidget):
         num_fields = int(self.editNMCK1.text())
         if num_fields > 10:
             num_fields = 10
-        elif num_fields < 0:
-            num_fields = 1
+        elif num_fields <= 1:
+            num_fields = 2
 
         # Удаляем все существующие поля ввода из формы
         self.clear_layout(self.form_layout_NMCK)
 
         # Создаем и добавляем новые поля ввода в форму
         for i in range(num_fields):
-            label = QLabel(f"Ценовое предложение №{i + 1}:")
-            edit = QLineEdit(self)
-            edit.setValidator(QIntValidator())
-            self.form_layout_NMCK.addWidget(label)
-            self.form_layout_NMCK.addWidget(edit)
+            labelNMCK = QLabel(f"Ценовое предложение №{i + 1}:")
+            editNMCK = QLineEdit(self)
+            editNMCK.setValidator(QIntValidator())
+            self.form_layout_NMCK.addWidget(labelNMCK)
+            self.form_layout_NMCK.addWidget(editNMCK)
             # key = f"ТКП {i + 1}"
             # self.tkp_data[key] = int(edit.text()) if edit.text() else 0
         # self.add_tkp_button = QPushButton("Добавить ТКП")
@@ -291,13 +297,14 @@ class InsertWidgetContract(QWidget):
         self.update()
     def save_tkp_data(self):
         # TKP
- 
+        self.db_folder = "файлы бд"
+        os.makedirs(self.db_folder, exist_ok=True)
         self.tkp_data = {}
 
         # Заполняем словарь данными из динамических полей
-        for i in range(0,self.form_layout.count() - 1,2):  # -1, чтобы не включать кнопку
+        for i in range(0,self.form_layout_NMCK.count() - 1,2):  # -1, чтобы не включать кнопку
             key = f"ТКП {i}"
-            edit = self.form_layout.itemAt(i+1).widget()
+            edit = self.form_layout_NMCK.itemAt(i+1).widget()
             self.tkp_data[key] = int(edit.text()) if edit.text() else 0
 
         tkp_json = json.dumps(self.tkp_data,ensure_ascii=False)
@@ -306,24 +313,31 @@ class InsertWidgetContract(QWidget):
                 
                 max_tkp = max(tkp_values_all)
                 min_tkp = min(tkp_values_all)
-                avg_tkp = sum(tkp_values_all) / len(tkp_values_all)
-                standard_deviation = statistics.stdev(tkp_values_all)
-                cv = (standard_deviation / avg_tkp) * 100
-     
-        source_path = self.notification_link_edit.text()
-        absolute_db_folder = os.path.abspath(self.db_folder)
-       
-        destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
-        shutil.copy2(source_path, destination_path)
+                avg_tkp = sum(tkp_values_all) / len(tkp_values_all) 
+                standard_deviation = statistics.stdev(tkp_values_all) 
+                cv = (standard_deviation / avg_tkp) * 100 
+        else:
+    # Set default values if tkp_values_all is empty or None
+            max_tkp = min_tkp = avg_tkp = standard_deviation = cv = 0
+        try:
+            source_path = self.notification_link_edit.text()
+            absolute_db_folder = os.path.abspath(self.db_folder)
+        
+            destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+            shutil.copy2(source_path, destination_path)
+        except:
+            pass
 
         # Сохранение пути файла в базе данных
        
         purchase = Purchase.update(
                             TKPData=tkp_json,
-                            QueryCount=int(self.edit1.text()) if self.edit1.text() else 0,
-                            ResponseCount=int(self.edit2.text()) if self.edit2.text() else 0,
-                            FinancingLimit=int(self.edit3.text()) if self.edit3.text() else 0,
+                            QueryCount=int(self.editNMCK1.text()) if self.editNMCK1.text() else 0,
+                            ResponseCount=int(self.editNMCK2.text()) if self.editNMCK2.text() else 0,
+                            FinancingLimit=int(self.editNMCK3.text()) if self.editNMCK3.text() else 0,
+                            
                             AveragePrice = avg_tkp if avg_tkp else 0,
+                            
                             MinPrice = min_tkp if min_tkp else 0,
                             MaxPrice = max_tkp if max_tkp else 0,
                             StandardDeviation = standard_deviation if standard_deviation else 0,
@@ -357,37 +371,61 @@ class InsertWidgetContract(QWidget):
                 self.status[key_status] = status_edit.text() if status_edit.text() else "[]"
 
             j += 1
-        source_path_contract = self.notification_link_edit_contratc.text()
-        absolute_db_folder = os.path.abspath(self.db_folder)
-       
-        destination_path_contract = os.path.join(absolute_db_folder, os.path.basename(source_path_contract))
-        shutil.copy2(source_path, destination_path_contract)
+        try:
+            source_path_contract = self.notification_link_edit_contratc.text()
+            absolute_db_folder = os.path.abspath(self.db_folder)
+        
+            destination_path_contract = os.path.join(absolute_db_folder, os.path.basename(source_path_contract))
+            shutil.copy2(source_path, destination_path_contract)
+        except:
+            pass
         price_proposal_json = json.dumps(self.price_proposal,ensure_ascii=False)
         applicant_json = json.dumps(self.applicant,ensure_ascii=False)
         status_json = json.dumps(self.status,ensure_ascii=False)
-        contract = Contract(purchase=self.purchase_id,
-                            TotalApplications=int(self.edit1.text()) if self.edit1.text() else 0,
-                            AdmittedApplications=int(self.edit2.text()) if self.edit2.text() else 0,
-                            RejectedApplications=int(self.edit3.text()) if self.edit3.text() else 0,
-                            WinnerExecutor=self.WinnerExecutor.text() if self.WinnerExecutor.text() else 0,
-                            ContractingAuthority=self.ContractingAuthority.text() if self.ContractingAuthority.text() else 0,
-                            ContractIdentifier=self.ContractIdentifier.text() if self.ContractIdentifier.text() else 0,
-                            RegistryNumber=self.RegistryNumber.text() if self.RegistryNumber.text() else 0,
-                            ContractNumber=self.ContractNumber.text() if self.ContractNumber.text() else 0,
-                            StartDate=self.StartDate.text() if self.StartDate.text() else 0,
-                            EndDate=self.EndDate.text() if self.EndDate.text() else 0,
-                            ContractPrice=int(self.ContractPrice.text()) if self.ContractPrice.text() else 0,
-                            AdvancePayment=float(self.AdvancePayment.text()) if self.AdvancePayment.text() else 0,
-                            ReductionNMC=int(self.ReductionNMC.text()) if self.ReductionNMC.text() else 0,
-                            ReductionNMCPercent=float(self.ReductionNMCPercent.text()) if self.ReductionNMCPercent.text() else 0,
-                            SupplierProtocol=self.SupplierProtocol.text() if self.SupplierProtocol.text() else 0,
-                            ContractFile= destination_path_contract if destination_path_contract else "нет данных",
-                            PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
-       
+        try:
+            contract = Contract.get(Contract.Id == self.purchase_id)
+            contract = Contract.update(
+                                TotalApplications=int(self.edit1.text()) if self.edit1.text() else 0,
+                                AdmittedApplications=int(self.edit2.text()) if self.edit2.text() else 0,
+                                RejectedApplications=int(self.edit3.text()) if self.edit3.text() else 0,
+                                WinnerExecutor=self.WinnerExecutor.text() if self.WinnerExecutor.text() else 0,
+                                ContractingAuthority=self.ContractingAuthority.text() if self.ContractingAuthority.text() else 0,
+                                ContractIdentifier=self.ContractIdentifier.text() if self.ContractIdentifier.text() else 0,
+                                RegistryNumber=self.RegistryNumber.text() if self.RegistryNumber.text() else 0,
+                                ContractNumber=self.ContractNumber.text() if self.ContractNumber.text() else 0,
+                                StartDate=self.StartDate.text() if self.StartDate.text() else 0,
+                                EndDate=self.EndDate.text() if self.EndDate.text() else 0,
+                                ContractPrice=int(self.ContractPrice.text()) if self.ContractPrice.text() else 0,
+                                AdvancePayment=float(self.AdvancePayment.text()) if self.AdvancePayment.text() else 0,
+                                ReductionNMC=int(self.ReductionNMC.text()) if self.ReductionNMC.text() else 0,
+                                ReductionNMCPercent=float(self.ReductionNMCPercent.text()) if self.ReductionNMCPercent.text() else 0,
+                                SupplierProtocol=self.SupplierProtocol.text() if self.SupplierProtocol.text() else 0,
+                                ContractFile= destination_path_contract if destination_path_contract else "нет данных",
+                                PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json).where(Contract.Id == self.purchase_id).execute()
+        except DoesNotExist:
+                contract = Contract.create( purchase = self.purchase_id,
+
+                TotalApplications=int(self.edit1.text()) if self.edit1.text() else 0,
+                                AdmittedApplications=int(self.edit2.text()) if self.edit2.text() else 0,
+                                RejectedApplications=int(self.edit3.text()) if self.edit3.text() else 0,
+                                WinnerExecutor=self.WinnerExecutor.text() if self.WinnerExecutor.text() else 0,
+                                ContractingAuthority=self.ContractingAuthority.text() if self.ContractingAuthority.text() else 0,
+                                ContractIdentifier=self.ContractIdentifier.text() if self.ContractIdentifier.text() else 0,
+                                RegistryNumber=self.RegistryNumber.text() if self.RegistryNumber.text() else 0,
+                                ContractNumber=self.ContractNumber.text() if self.ContractNumber.text() else 0,
+                                StartDate=self.StartDate.text() if self.StartDate.text() else 0,
+                                EndDate=self.EndDate.text() if self.EndDate.text() else 0,
+                                ContractPrice=int(self.ContractPrice.text()) if self.ContractPrice.text() else 0,
+                                AdvancePayment=float(self.AdvancePayment.text()) if self.AdvancePayment.text() else 0,
+                                ReductionNMC=int(self.ReductionNMC.text()) if self.ReductionNMC.text() else 0,
+                                ReductionNMCPercent=float(self.ReductionNMCPercent.text()) if self.ReductionNMCPercent.text() else 0,
+                                SupplierProtocol=self.SupplierProtocol.text() if self.SupplierProtocol.text() else 0,
+                                ContractFile= destination_path_contract if destination_path_contract else "нет данных",
+                                PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
         try:
             # Попытка сохранения данных
             purchase.execute()
-            contract.save()
+            
             db.close()
             self.db_window.reload_data_id(self.purchase_id)
             self.db_window.show_current_purchase()
@@ -410,8 +448,7 @@ class InsertWidgetContract(QWidget):
         
         if file_path:
             self.notification_link_edit.setText(file_path)
-            self.db_folder = "файлы бд"
-            os.makedirs(self.db_folder, exist_ok=True)
+            
 
     def browse_file_contract(self):
         file_dialog = QFileDialog()
@@ -419,8 +456,7 @@ class InsertWidgetContract(QWidget):
         
         if file_path:
             self.notification_link_edit_contratc.setText(file_path)
-            self.db_folder = "файлы бд"
-            os.makedirs(self.db_folder, exist_ok=True)
+            
 
   
        

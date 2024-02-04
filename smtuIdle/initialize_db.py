@@ -8,6 +8,8 @@ def initialize_database():
     # Проверяем, существует ли файл маркера
     if not os.path.exists('database_initialized.marker'):
         db.connect()
+        db_folder = "файлы бд"
+        os.makedirs(db_folder, exist_ok=True)
         db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate ])
         admin_user = User.create(username='admin', password='sa')
         regular_user = User.create(username='user', password='sa')
