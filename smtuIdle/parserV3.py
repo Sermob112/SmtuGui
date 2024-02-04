@@ -5,7 +5,8 @@ import pandas as pd
 import os
 import django
 import sqlite3
-from models import Purchase
+from models import Purchase,Contract
+from peewee import SqliteDatabase
 # hostname = "localhost"
 # # hostname = "db"
 # username = "postgres"
@@ -14,7 +15,7 @@ from models import Purchase
 # port=5432
 # port = connection.settings_dict.get('PORT', '')
 # hostname = connection.settings_dict['HOST', '']
-
+db = SqliteDatabase('test.db')
 
 
 
@@ -123,8 +124,8 @@ def insert_in_table(csv_file_path):
                      )
                 cursor.execute(sql, data)
                 inserted_rows += cursor.rowcount
-
-      
+        
+        
         connection.commit()
     
     
@@ -226,15 +227,50 @@ def insert_in_table_full(csv_file_path):
                         # Handle errors or missing values as needed
                         pass
                 tkp_data_json = json.dumps(tkp_data_dict, ensure_ascii=False)
-                QueryCount = int(row[11]) if row[11] else 0
-                ResponseCount = int(row[12]) if row[12] else 0
-                AveragePrice = float(row[23]) if row[23] else 0
-                MinPrice = float(row[24]) if row[24] else 0
-                MaxPrice = float(row[25]) if row[25] else 0
-                StandardDeviation = float(row[26]) if row[26] else 0
-                CoefficientOfVariation = float(row[27]) if row[27] else 0
-                NMCKMarket = float(row[29]) if row[29] else 0
-                FinancingLimit = float(row[30]) if row[30] else 0
+                try:
+                    QueryCount = int(row[11]) if row[11] else 0
+                except ValueError:
+                    QueryCount = 0
+
+                try:
+                    ResponseCount = int(row[12]) if row[12] else 0
+                except ValueError:
+                    ResponseCount = 0
+
+                try:
+                    AveragePrice = float(row[23]) if row[23] else 0
+                except ValueError:
+                    AveragePrice = 0
+
+                try:
+                    MinPrice = float(row[24]) if row[24] else 0
+                except ValueError:
+                    MinPrice = 0
+
+                try:
+                    MaxPrice = float(row[25]) if row[25] else 0
+                except ValueError:
+                    MaxPrice = 0
+
+                try:
+                    StandardDeviation = float(row[26]) if row[26] else 0
+                except ValueError:
+                    StandardDeviation = 0
+
+                try:
+                    CoefficientOfVariation = float(row[27]) if row[27] else 0
+                except ValueError:
+                    CoefficientOfVariation = 0
+
+                try:
+                    NMCKMarket = float(row[29]) if row[29] else 0
+                except ValueError:
+                    NMCKMarket = 0
+
+                try:
+                    FinancingLimit = float(row[30]) if row[30] else 0
+                except ValueError:
+                    FinancingLimit = 0
                 PurchaseStatus = row[31][:max_length] if row[31] else 'Нет данных'
                 ############## CONTRACTS###############
                 TotalApplications = row[32] if row[32] else 0
@@ -293,9 +329,20 @@ def insert_in_table_full(csv_file_path):
                     endDate = datetime.datetime.strptime(EndDate, '%d.%m.%Y').date()
                 except ValueError:
                     endDate = None
-                AdvancePayment = float(row[61]) if row[61] else 0
-                ReductionNMCPercent = float(row[62]) if row[62] else 0
-                ReductionNMC  = float(row[68]) if row[68]  else None
+                try:
+                    AdvancePayment = float(row[61]) if row[61] else 0
+                except ValueError:
+                    AdvancePayment = 0
+
+                try:
+                    ReductionNMCPercent = float(row[62]) if row[62] else 0
+                except ValueError:
+                    ReductionNMCPercent = 0
+
+                try:
+                    ReductionNMC = float(row[68]) if row[68] else None
+                except ValueError:
+                    ReductionNMC = None
               # Вставка данных в таблицу purchase
                 sql = """
      
@@ -351,7 +398,19 @@ def insert_in_table_full(csv_file_path):
                 cursor.execute(sqlContract, dataContracts)
                 inserted_rows += cursor.rowcount
 
-      
+        with db.atomic():
+    # Iterate through all records and update fields with None values
+            for purchase in Purchase.select():
+                for field_name, field in Purchase._meta.fields.items():
+                    if getattr(purchase, field_name) is None:
+                        setattr(purchase, field_name, field.default if field.default is not None else "Нет данных")
+                purchase.save()
+
+            for contact in Contract.select():
+                for field_name, field in Purchase._meta.fields.items():
+                    if getattr(contact, field_name) is None:
+                        setattr(contact, field_name, field.default if field.default is not None else "Нет данных")
+                contact.save()
         connection.commit()
     
     
