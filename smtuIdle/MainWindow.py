@@ -127,9 +127,10 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5.setObjectName("pushButton5")
         self.leftPanelLayout.addWidget(self.pushButton5)
         self.leftPanelLayout.addSpacing(50)
-        self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton6.setObjectName("pushButton6")
-        self.leftPanelLayout.addWidget(self.pushButton6)
+        if self.username == "admin":
+            self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
+            self.pushButton6.setObjectName("pushButton6")
+            self.leftPanelLayout.addWidget(self.pushButton6)
   
         # Задаем фиксированную высоту и максимальное расстояние между кнопками
         button_height = 30  # Задайте желаемую высоту
@@ -141,7 +142,8 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton3.setFixedHeight(button_height)
         self.pushButton4.setFixedHeight(button_height)
         self.pushButton5.setFixedHeight(button_height)
-        self.pushButton6.setFixedHeight(button_height)
+        if self.username == "admin":
+            self.pushButton6.setFixedHeight(button_height)
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
@@ -187,10 +189,10 @@ class Ui_MainWindow(QMainWindow):
         # self.page5 = QtWidgets.QWidget()
         # self.label5 = QtWidgets.QLabel(self.page5)
         # self.stackedWidget.addWidget(self.page5)
-
-        self.page6 = QtWidgets.QWidget()
-        self.label6 = QtWidgets.QLabel(self.page6)
-        self.stackedWidget.addWidget(self.page6)
+        if self.username == "admin":
+            self.page6 = QtWidgets.QWidget()
+            self.label6 = QtWidgets.QLabel(self.page6)
+            self.stackedWidget.addWidget(self.page6)
 
 
          #Загрузка виджета БД 
@@ -202,10 +204,10 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
      
-
-        self.Debug = DebugWidget()
-        layout = QVBoxLayout(self.page6)
-        layout.addWidget(self.Debug)
+        if self.username == "admin":
+            self.Debug = DebugWidget()
+            layout = QVBoxLayout(self.page6)
+            layout.addWidget(self.Debug)
         
         #Загрузка виджета ввод данных валюты
         self.Insert = CurrencyWidget()
@@ -235,7 +237,8 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
         self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
-        self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
+        if self.username == "admin":
+            self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
         self.pushButton5.clicked.connect(self.export_to_excel_all)
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -249,7 +252,8 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
         self.pushButton5.setText(_translate("MainWindow", "Экспорт всех данных БД в Excel"))
-        self.pushButton6.setText(_translate("MainWindow", "Отладка"))
+        if self.username == "admin":
+            self.pushButton6.setText(_translate("MainWindow", "Отладка"))
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         # self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
