@@ -11,10 +11,11 @@ import pandas as pd
 db = SqliteDatabase('test.db')
 
 class InsertWidgetCEIA(QWidget):
-    def __init__(self, purchase_id):
+    def __init__(self, purchase_id,db_wind):
         super().__init__()
         self.tkp_data = {}
         self.purchase_id = purchase_id
+        self.db_window = db_wind
         self.setWindowTitle("Окно ввода даных ЦКЕИ")
         self.setGeometry(100, 100, 800, 400)
         # Создаем лейблы
@@ -135,7 +136,8 @@ class InsertWidgetCEIA(QWidget):
             # Попытка сохранения данных
             contract.save()
             db.close()
-
+            self.db_window.reload_data_id(self.purchase_id)
+            self.db_window.show_current_purchase()
             # Выводим сообщение об успешном сохранении
             self.show_message("Успех", "Данные успешно добавлены")
 
