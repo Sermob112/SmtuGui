@@ -217,6 +217,8 @@ class InsertWidgetContract(QWidget):
                 widget.deleteLater()
     def save_tkp_data(self):
         self.db_folder = "файлы бд"
+        
+        os.makedirs(self.db_folder, exist_ok=True)
         self.price_proposal = {}
         self.applicant = {}
         self.status = {}

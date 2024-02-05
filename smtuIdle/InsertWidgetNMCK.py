@@ -105,6 +105,7 @@ class InsertWidgetNMCK(QWidget):
     def save_tkp_data(self):
         # Преобразовываем словарь с данными в строку JSON
         self.db_folder = "файлы бд"
+        os.makedirs(self.db_folder, exist_ok=True)
         self.tkp_data = {}
         try:
             source_path = self.notification_link_edit.text()

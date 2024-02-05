@@ -273,7 +273,8 @@ class PurchasesWidget(QWidget):
                 else:
                     self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
             else:
-               pass
+                pass
+            #    self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
 
 
     def add_button_tkp_clicked(self):
