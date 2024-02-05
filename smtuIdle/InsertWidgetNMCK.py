@@ -8,23 +8,30 @@ from PySide6.QtGui import *
 import sys, json
 import statistics
 import pandas as pd
+import shutil
+import os
 db = SqliteDatabase('test.db')
 
 class InsertWidgetNMCK(QWidget):
-    def __init__(self,purchase_id):
+    def __init__(self,purchase_id,db_wind):
         
         super().__init__()
         self.tkp_data = {}
         self.purchase_id = purchase_id
+        self.db_window = db_wind
         self.setWindowTitle("Окно ввода даных НМЦК")
         self.setGeometry(100, 100, 600, 200)
         # Создаем лейблы
         label1 = QLabel("1. Ввод данных - Метод сопоставимых рыночных цен (анализ рынка)")
+        label1.setAlignment(Qt.AlignCenter)
         label2 = QLabel("Количество запросов ТКП:")
         label3 = QLabel("Количество ответов ТКП:")
         label4 = QLabel("Лимит финансирования, руб.:")
-
-
+        labelNMCK5 = QLabel("Выбирите файл извещения о закупке")
+        #файл диалог
+        self.notification_link_edit = QLineEdit(self)
+        browse_button = QPushButton("Обзор", self)
+        browse_button.clicked.connect(self.browse_file)
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
         self.edit1.setValidator(QIntValidator())
@@ -38,7 +45,7 @@ class InsertWidgetNMCK(QWidget):
         layout2 = QHBoxLayout(self)
         layout3 = QHBoxLayout(self)
         layout4 = QHBoxLayout(self)
-        layout5 = QVBoxLayout(self)
+        layout5 = QHBoxLayout(self)
 
         # Добавляем лейбл и поле ввода в первую строку
         layout2.addWidget(label2)
@@ -51,17 +58,26 @@ class InsertWidgetNMCK(QWidget):
         # Добавляем лейбл и поле ввода в третью строку
         layout4.addWidget(label4)
         layout4.addWidget(self.edit3)
-
+        layout5.addWidget(labelNMCK5)
+        layout5.addWidget(self.notification_link_edit)
+        layout5.addWidget(browse_button)
         # Добавляем все строки в вертикальный контейнер
         layout1.addWidget(label1)
         layout1.addLayout(layout2)
         layout1.addLayout(layout3)
         layout1.addLayout(layout4)
+        layout1.addLayout(layout5)
 
         self.form_layout = QVBoxLayout()
         layout1.addLayout(self.form_layout)
 
         self.setLayout(layout1)
+    def browse_file(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+        
+        if file_path:
+            self.notification_link_edit.setText(file_path)
 
     def update_fields(self):
         num_fields = int(self.edit1.text())
@@ -88,9 +104,16 @@ class InsertWidgetNMCK(QWidget):
         self.update()
     def save_tkp_data(self):
         # Преобразовываем словарь с данными в строку JSON
- 
+        self.db_folder = "файлы бд"
         self.tkp_data = {}
-
+        try:
+            source_path = self.notification_link_edit.text()
+            absolute_db_folder = os.path.abspath(self.db_folder)
+        
+            destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+            shutil.copy2(source_path, destination_path)
+        except:
+            pass
         # Заполняем словарь данными из динамических полей
         for i in range(0,self.form_layout.count() - 1,2):  # -1, чтобы не включать кнопку
             key = f"ТКП {i}"
@@ -119,13 +142,15 @@ class InsertWidgetNMCK(QWidget):
                             StandardDeviation = standard_deviation if standard_deviation else 0,
                             CoefficientOfVariation = cv if cv else 0,
                             NMCKMarket = avg_tkp if avg_tkp else 0,
+                            notification_link=destination_path if destination_path else "нет данных",
                             ).where(Purchase.Id == self.purchase_id)
         try:
             # Попытка сохранения данных
             purchase.execute()
         
             db.close()
-
+            self.db_window.reload_data_id(self.purchase_id)
+            self.db_window.show_current_purchase()
             # Выводим сообщение об успешном сохранении
             self.show_message("Успех", "Данные успешно добавлены")
 

@@ -42,17 +42,17 @@ class PurchasesWidget(QWidget):
         self.current_position =0
         self.BackButton = QPushButton("Назад", self)
         self.BackButton.clicked.connect(self.go_back)
-        self.addButtonContract = QPushButton("Добавить дополнительную информацию по закупке", self)
-        # self.addButtonTKP = QPushButton("Добавить ТКП", self)
-        # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
+        self.addButtonContract = QPushButton("Добавить Расчет НМЦК методом использования общедоступной информации", self)
+        self.addButtonTKP = QPushButton("Добавить Расчет НМЦК методом сопоставимых рыночных цен (анализ рынка)", self)
+        self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
         self.addButtonCurrency= QPushButton("Изменить Валюту", self)
 
 
 
          # Устанавливаем обработчики событий для кнопок
         self.addButtonContract.clicked.connect(self.add_button_contract_clicked)
-        # self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
-        # self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
+        self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
+        self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
 
         self.addButtonCurrency.clicked.connect(self.update_currency)
 
@@ -71,9 +71,10 @@ class PurchasesWidget(QWidget):
         # Создаем горизонтальный макет и добавляем элементы
         button_layout2 = QHBoxLayout()
 
+        
+        button_layout2.addWidget(self.addButtonTKP)
         button_layout2.addWidget(self.addButtonContract)
-        # button_layout2.addWidget(self.addButtonTKP)
-        # button_layout2.addWidget(self.addButtonCIA)
+        button_layout2.addWidget(self.addButtonCIA)
         button_layout2.addWidget(self.addButtonCurrency)
 
    
@@ -275,19 +276,19 @@ class PurchasesWidget(QWidget):
                pass
 
 
-    # def add_button_tkp_clicked(self):
-    #     if len(self.purchases_list) != 0:
-    #         self.current_purchase = self.purchases_list[self.current_position]
-    #         purchase_id = self.current_purchase.Id
-    #         self.tkp_shower = InsertWidgetNMCK(purchase_id)
-    #         self.tkp_shower.show()
+    def add_button_tkp_clicked(self):
+        if len(self.purchases_list) != 0:
+            self.current_purchase = self.purchases_list[self.current_position]
+            purchase_id = self.current_purchase.Id
+            self.tkp_shower = InsertWidgetNMCK(purchase_id,self)
+            self.tkp_shower.show()
     
-    # def add_button_cia_clicked(self):
-    #     if len(self.purchases_list) != 0:
-    #         self.current_purchase = self.purchases_list[self.current_position]
-    #         purchase_id = self.current_purchase.Id
-    #         self.cia_shower = InsertWidgetCEIA(purchase_id)
-    #         self.cia_shower.show()
+    def add_button_cia_clicked(self):
+        if len(self.purchases_list) != 0:
+            self.current_purchase = self.purchases_list[self.current_position]
+            purchase_id = self.current_purchase.Id
+            self.cia_shower = InsertWidgetCEIA(purchase_id,self)
+            self.cia_shower.show()
     def go_back(self):
         if self.window:
             self.main_win.stackedWidget.setCurrentIndex(0)

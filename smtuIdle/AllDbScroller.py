@@ -7,9 +7,6 @@ from PySide6.QtCore import Qt, QStringListModel,Signal
 from PySide6.QtGui import QColor
 import sys, json
 from peewee import JOIN
-from InsertWidgetContract import InsertWidgetContract
-from InsertWidgetNMCK import InsertWidgetNMCK
-from InsertWidgetCEIA import InsertWidgetCEIA
 from InsertWidgetCurrency import InsertWidgetCurrency
 from parserV3 import delete_records_by_id, export_to_excel
 from datetime import datetime
