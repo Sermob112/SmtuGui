@@ -402,6 +402,7 @@ class PurchasesWidgetAll(QWidget):
         Purchase.AuctionDate, Purchase.QueryCount, Purchase.ResponseCount, Purchase.AveragePrice,
         Purchase.MinPrice, Purchase.MaxPrice, Purchase.StandardDeviation, Purchase.CoefficientOfVariation,
         Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceOld,
+        Purchase.notification_link,Purchase.quantity_units,Purchase.nmck_per_unit,
         
         Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
         Contract.PriceProposal, Contract.Applicant, Contract.Applicant_satatus, Contract.WinnerExecutor,
