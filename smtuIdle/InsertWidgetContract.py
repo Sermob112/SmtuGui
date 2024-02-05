@@ -383,7 +383,7 @@ class InsertWidgetContract(QWidget):
             absolute_db_folder = os.path.abspath(self.db_folder)
         
             destination_path_contract = os.path.join(absolute_db_folder, os.path.basename(source_path_contract))
-            shutil.copy2(source_path, destination_path_contract)
+            shutil.copy2(source_path_contract, destination_path_contract)
         except:
             pass
         price_proposal_json = json.dumps(self.price_proposal,ensure_ascii=False)
