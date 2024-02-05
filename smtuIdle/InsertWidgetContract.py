@@ -14,7 +14,7 @@ from peewee import DoesNotExist
 db = SqliteDatabase('test.db')
 
 class InsertWidgetContract(QWidget):
-    def __init__(self, purchase_id, db_wind):
+    def __init__(self, purchase_id,db_wind):
         super().__init__()
         self.tkp_data = {}
         self.purchase_id = purchase_id
@@ -22,8 +22,26 @@ class InsertWidgetContract(QWidget):
         # Создаем лейблы
         self.setWindowTitle("Окно ввода даных Контрактов")
         self.setGeometry(100, 100, 1000, 800)
-        
-       
+        main_layout = QVBoxLayout(self)
+        self.layout1 = QVBoxLayout(self)
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        layout2 = QHBoxLayout(self)
+        layout3 = QHBoxLayout(self)
+        layout4 = QHBoxLayout(self)
+        layout5 = QHBoxLayout(self)
+        layout6 = QHBoxLayout(self)
+        layout7 = QHBoxLayout(self)
+        layout8 = QHBoxLayout(self)
+        layout9 = QHBoxLayout(self)
+        layout10 = QHBoxLayout(self)
+        layout11 = QHBoxLayout(self)
+        layout12 = QHBoxLayout(self)
+        layout13 = QHBoxLayout(self)
+        layout14 = QHBoxLayout(self)
+        layout15 = QHBoxLayout(self)
+        layout16 = QHBoxLayout(self)
+        layout17 = QHBoxLayout(self)
         #Контракт
         label1 = QLabel("2.Расчет НМЦК методом использования общедоступной информации")
         label1.setAlignment(Qt.AlignCenter)
@@ -45,54 +63,39 @@ class InsertWidgetContract(QWidget):
         label17 = QLabel("Договор:")
 
         # Создаем поля ввода
-        self.edit1 = QLineEdit(self)
-        self.edit1.setValidator(QIntValidator(QIntValidator(1, 1, self)))
+        self.edit1 = QLineEdit()
+        self.edit1.setValidator(QIntValidator())
         self.edit1.textChanged.connect(self.update_fields)
-        self.edit2 = QLineEdit(self)
+        self.edit2 = QLineEdit()
         self.edit2.setValidator(QIntValidator())
-        self.edit3 = QLineEdit(self)
+        self.edit3 = QLineEdit()
         self.edit3.setValidator(QIntValidator())
-        self.WinnerExecutor = QLineEdit(self)
-        self.ContractingAuthority = QLineEdit(self)
-        self.ContractIdentifier = QLineEdit(self)
-        self.RegistryNumber = QLineEdit(self)
-        self.ContractNumber = QLineEdit(self)
-        self.StartDate = QDateEdit(self)
+        self.WinnerExecutor = QLineEdit()
+        self.ContractingAuthority = QLineEdit()
+        self.ContractIdentifier = QLineEdit()
+        self.RegistryNumber = QLineEdit()
+        self.ContractNumber = QLineEdit()
+        self.StartDate = QDateEdit()
         self.StartDate.setCalendarPopup(True)
-        self.EndDate = QDateEdit(self)
+        self.EndDate = QDateEdit()
         self.EndDate.setCalendarPopup(True)
-        self.ContractPrice = QLineEdit(self)
+        self.ContractPrice = QLineEdit()
         self.ContractPrice.setValidator(QIntValidator())
-        self.AdvancePayment = QLineEdit(self)
+        self.AdvancePayment = QLineEdit()
         self.AdvancePayment.setValidator(QDoubleValidator())
-        self.ReductionNMC = QLineEdit(self)
+        self.ReductionNMC = QLineEdit()
         self.ReductionNMC.setValidator(QIntValidator())
-        self.ReductionNMCPercent = QLineEdit(self)
+        self.ReductionNMCPercent = QLineEdit()
         self.ReductionNMCPercent.setValidator(QDoubleValidator())
-        self.SupplierProtocol = QLineEdit(self)
-        self.ContractFile = QLineEdit(self)
+        self.SupplierProtocol = QLineEdit()
+        self.ContractFile = QLineEdit()
            #файл диалог
-        self.notification_link_edit_contratc = QLineEdit(self)
-        browse_button_contratc = QPushButton("Обзор", self)
+        self.notification_link_edit_contratc = QLineEdit()
+        browse_button_contratc = QPushButton("Обзор")
         browse_button_contratc.clicked.connect(self.browse_file_contract)
 
-        self.layout1 = QVBoxLayout(self)
-        layout2 = QHBoxLayout(self)
-        layout3 = QHBoxLayout(self)
-        layout4 = QHBoxLayout(self)
-        layout5 = QHBoxLayout(self)
-        layout6 = QHBoxLayout(self)
-        layout7 = QHBoxLayout(self)
-        layout8 = QHBoxLayout(self)
-        layout9 = QHBoxLayout(self)
-        layout10 = QHBoxLayout(self)
-        layout11 = QHBoxLayout(self)
-        layout12 = QHBoxLayout(self)
-        layout13 = QHBoxLayout(self)
-        layout14 = QHBoxLayout(self)
-        layout15 = QHBoxLayout(self)
-        layout16 = QHBoxLayout(self)
-        layout17 = QHBoxLayout(self)
+       
+      
 
         layout2.addWidget(label2)
         layout2.addWidget(self.edit1)
@@ -155,13 +158,13 @@ class InsertWidgetContract(QWidget):
         self.notification_link_edit = QLineEdit(self)
         browse_button = QPushButton("Обзор", self)
         browse_button.clicked.connect(self.browse_file)
-         # Создаем поля ввода
-        self.editNMCK1 = QLineEdit(self)
+        #  Создаем поля ввода
+        self.editNMCK1 = QLineEdit()
         self.editNMCK1.setValidator(QIntValidator())
         self.editNMCK1.textChanged.connect(self.update_fields_nmck)
-        self.editNMCK2 = QLineEdit(self)
+        self.editNMCK2 = QLineEdit()
         self.editNMCK2.setValidator(QIntValidator())
-        self.editNMCK3 = QLineEdit(self)
+        self.editNMCK3 = QLineEdit()
         self.editNMCK3.setValidator(QIntValidator())
 
     
@@ -177,7 +180,7 @@ class InsertWidgetContract(QWidget):
         layoutNMCK3.addWidget(labelNMCK3)
         layoutNMCK3.addWidget(self.editNMCK2)
 
-        # Добавляем лейбл и поле ввода в третью строку
+        # # Добавляем лейбл и поле ввода в третью строку
         layoutNMCK4.addWidget(labelNMCK4)
         layoutNMCK4.addWidget(self.editNMCK3)
         layoutNMCK5.addWidget(labelNMCK5)
@@ -210,9 +213,13 @@ class InsertWidgetContract(QWidget):
         self.layout1.addLayout(layout15)
         self.layout1.addLayout(layout16)
         self.layout1.addLayout(layout17)
-
-        scroll_area = QScrollArea(self)
-        scroll_area.setWidgetResizable(True)
+        
+        self.form_layout = QVBoxLayout ()
+        self.layout1.addLayout(self.form_layout)
+        self.add_tkp_button = QPushButton("Добавить Данные")
+        self.form_layout.addWidget(self.add_tkp_button)
+        self.add_tkp_button.clicked.connect(self.save_tkp_data)
+       
         scroll_widget = QWidget()
         scroll_widget.setLayout(self.layout1)
         scroll_area.setWidget(scroll_widget)
@@ -220,13 +227,13 @@ class InsertWidgetContract(QWidget):
 
        
 
-        self.form_layout = QVBoxLayout ()
-        self.layout1.addLayout(self.form_layout)
-        self.add_tkp_button = QPushButton("Добавить Данные")
-        self.form_layout.addWidget(self.add_tkp_button)
+        # self.form_layout = QVBoxLayout ()
+        # self.layout1.addLayout(self.form_layout)
+        # self.add_tkp_button = QPushButton("Добавить Данные")
+        # self.form_layout.addWidget(self.add_tkp_button)
 
-        self.add_tkp_button.clicked.connect(self.save_tkp_data)
-        main_layout = QVBoxLayout(self)
+        # self.add_tkp_button.clicked.connect(self.save_tkp_data)
+        
         main_layout.addWidget(scroll_area)
 
         self.setLayout(main_layout)
