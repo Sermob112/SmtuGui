@@ -191,31 +191,31 @@ def insert_in_table_full(csv_file_path):
                 try:
                     placementDate = datetime.datetime.strptime(PlacementDate, '%d.%m.%Y').date()
                 except ValueError:
-                    placementDate = None
+                    placementDate = 'Нет данных'
                 UpdateDate = row[1]
                 try:
                     updateDate = datetime.datetime.strptime(UpdateDate, '%d.%m.%Y').date()
                 except ValueError:
-                    updateDate =None
+                    updateDate ='Нет данных'
                 ProcurementStage = 'Нет данных'
                 ProcurementFeatures = 'Нет данных'
                 ApplicationStartDate = row[10] 
                 try:
                     applicationStartDate = datetime.datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
                 except ValueError:
-                    applicationStartDate = None
+                    applicationStartDate =  'Нет данных'
 
                 ApplicationEndDate = row[1]
                 try:
                     applicationEndDate = datetime.datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
                 except ValueError:
-                    applicationEndDate = None
+                    applicationEndDate = 'Нет данных'
 
                 auctionDate = row[1]
                 try:
                     AuctionDate = datetime.datetime.strptime(auctionDate, '%d.%m.%Y').date()
                 except ValueError:
-                    AuctionDate = None
+                    AuctionDate = 'Нет данных'
 
                 tkp_data_dict = {}
                 for i in range(10):
@@ -317,18 +317,22 @@ def insert_in_table_full(csv_file_path):
                 RegistryNumber = row[56] if row[56] else 0
                 ContractNumber = row[57] if row[57] else 0
                 ContractPrice = row[58] if row[58] else 0
-                 
+                quantity_units = 0
+                nmck_per_unit = 0
+                notification_link =  "Нет данных"
+                
+
                 StartDate = row[59]
                 try:
                     startDate = datetime.datetime.strptime(StartDate, '%d.%m.%Y').date()
                 except ValueError:
-                    startDate = None
+                    startDate = 'Нет данных'
 
                 EndDate = row[60]
                 try:
                     endDate = datetime.datetime.strptime(EndDate, '%d.%m.%Y').date()
                 except ValueError:
-                    endDate = None
+                    endDate = 'Нет данных'
                 try:
                     AdvancePayment = float(row[61]) if row[61] else 0
                 except ValueError:
@@ -340,9 +344,11 @@ def insert_in_table_full(csv_file_path):
                     ReductionNMCPercent = 0
 
                 try:
-                    ReductionNMC = float(row[68]) if row[68] else None
+                    ReductionNMC = float(row[68]) if row[68] else 0
                 except ValueError:
-                    ReductionNMC = None
+                    ReductionNMC = 0
+                ContractFile = 'Нет данных'
+                SupplierProtocol = 'Нет данных'
               # Вставка данных в таблицу purchase
                 sql = """
      
@@ -357,9 +363,9 @@ def insert_in_table_full(csv_file_path):
                             AuctionDate,TKPData,
                             QueryCount,ResponseCount, AveragePrice,MinPrice,
                             MaxPrice ,StandardDeviation, CoefficientOfVariation, NMCKMarket ,FinancingLimit,
-                            PurchaseStatus
+                            PurchaseStatus,quantity_units,nmck_per_unit,notification_link
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?, ?, ?, ?, ?, ?,?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?,?)
             """
                
                 data = (
@@ -371,10 +377,12 @@ def insert_in_table_full(csv_file_path):
                     updateDate,ProcurementStage,ProcurementFeatures,applicationStartDate, applicationEndDate,
                     datetime.datetime.strftime(AuctionDate, '%Y-%m-%d') if AuctionDate else None, tkp_data_json,
                     QueryCount,ResponseCount ,AveragePrice ,MinPrice ,MaxPrice, StandardDeviation, CoefficientOfVariation,
-                    NMCKMarket ,FinancingLimit,PurchaseStatus
+                    NMCKMarket ,FinancingLimit,PurchaseStatus,quantity_units,nmck_per_unit,notification_link
 
                      )
                 
+
+
                 sqlContract = """
      
                    
@@ -382,35 +390,35 @@ def insert_in_table_full(csv_file_path):
                            TotalApplications,AdmittedApplications,RejectedApplications,PriceProposal,Applicant,
                            Applicant_satatus,purchase_id,ContractingAuthority,WinnerExecutor,
                            ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,StartDate,
-                            EndDate,AdvancePayment,ReductionNMCPercent,ReductionNMC
+                            EndDate,AdvancePayment,ReductionNMCPercent,ReductionNMC,ContractFile,SupplierProtocol
                     )
-                    VALUES (?, ?, ?, ?, ?, ?,? , ?, ?, ?, ?, ?, ?,?, ?, ?, ? ,?)
+                    VALUES (?, ?, ?, ?, ?, ?,? , ?, ?, ?, ?, ?, ?,?, ?, ?, ? ,?, ? ,?)
             """
                 
                 dataContracts = (
                     TotalApplications,AdmittedApplications,RejectedApplications,price_proposal_json,applicant_json,
                            applicant_status_json,purchase_id,ContractingAuthority,WinnerExecutor,
                            ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,startDate,
-                            endDate,AdvancePayment,ReductionNMCPercent,ReductionNMC
+                            endDate,AdvancePayment,ReductionNMCPercent,ReductionNMC,ContractFile,SupplierProtocol
 
                      )
                 cursor.execute(sql, data)
                 cursor.execute(sqlContract, dataContracts)
                 inserted_rows += cursor.rowcount
 
-        with db.atomic():
-    # Iterate through all records and update fields with None values
-            for purchase in Purchase.select():
-                for field_name, field in Purchase._meta.fields.items():
-                    if getattr(purchase, field_name) is None:
-                        setattr(purchase, field_name, field.default if field.default is not None else "Нет данных")
-                purchase.save()
+    #     with db.atomic():
+    # # Iterate through all records and update fields with None values
+    #         for purchase in Purchase.select():
+    #             for field_name, field in Purchase._meta.fields.items():
+    #                 if getattr(purchase, field_name) is None:
+    #                     setattr(purchase, field_name, field.default if field.default is not None else "Нет данных")
+    #             purchase.save()
 
-            for contact in Contract.select():
-                for field_name, field in Purchase._meta.fields.items():
-                    if getattr(contact, field_name) is None:
-                        setattr(contact, field_name, field.default if field.default is not None else "Нет данных")
-                contact.save()
+    #         for contact in Contract.select():
+    #             for field_name, field in Purchase._meta.fields.items():
+    #                 if getattr(contact, field_name) is None:
+    #                     setattr(contact, field_name, field.default if field.default is not None else "Нет данных")
+    #             contact.save()
         connection.commit()
     
     
@@ -582,7 +590,8 @@ def export_to_excel(data, output_excel_path, filters):
                  "PlacementDate", "UpdateDate", "ProcurementStage", "ProcurementFeatures",
                 "ApplicationStartDate", "ApplicationEndDate", "AuctionDate","QueryCount","ResponseCount",
                 "AveragePrice","MinPrice","MaxPrice","StandardDeviation","CoefficientOfVariation","TKPData","NMCKMarket",
-                "FinancingLimit", "InitialMaxContractPriceOld",
+                "FinancingLimit", "InitialMaxContractPriceOld","notification_link","quantity_units",
+                "nmck_per_unit",
                 "TotalApplications", "AdmittedApplications", "RejectedApplications",
                 "PriceProposal", "Applicant", "Applicant_satatus", "WinnerExecutor",
                 "ContractingAuthority", "ContractIdentifier", "RegistryNumber_contract",
@@ -670,6 +679,9 @@ def export_to_excel(data, output_excel_path, filters):
         "DateValueChanged" :"Дата изменения значения валюты",
         "CurrencyRateDate" :"Дата курса валюты",
         "PreviousCurrency" :"Предыдущая валюта",
+        "notification_link":"Извещение о закупке",
+        "quantity_units":"Количество единиц",
+        "nmck_per_unit":"НМЦК за единицу",
 
     }
 
@@ -701,7 +713,8 @@ def export_to_excel_all(data, output_excel_path):
                  "PlacementDate", "UpdateDate", "ProcurementStage", "ProcurementFeatures",
                 "ApplicationStartDate", "ApplicationEndDate", "AuctionDate","QueryCount","ResponseCount",
                 "AveragePrice","MinPrice","MaxPrice","StandardDeviation","CoefficientOfVariation","TKPData","NMCKMarket",
-                "FinancingLimit", "InitialMaxContractPriceOld",
+                "FinancingLimit", "InitialMaxContractPriceOld","notification_link","quantity_units",
+                "nmck_per_unit",
                 "TotalApplications", "AdmittedApplications", "RejectedApplications",
                 "PriceProposal", "Applicant", "Applicant_satatus", "WinnerExecutor",
                 "ContractingAuthority", "ContractIdentifier", "RegistryNumber_contract",
@@ -789,6 +802,9 @@ def export_to_excel_all(data, output_excel_path):
         "DateValueChanged" :"Дата изменения значения валюты",
         "CurrencyRateDate" :"Дата курса валюты",
         "PreviousCurrency" :"Предыдущая валюта",
+         "notification_link":"Извещение о закупке",
+        "quantity_units":"Количество единиц",
+        "nmck_per_unit":"НМЦК за единицу",
 
     }
 

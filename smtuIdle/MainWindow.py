@@ -230,7 +230,14 @@ class Ui_MainWindow(QMainWindow):
         self.verticalLayout.addLayout(self.horizontalLayout)
 
         self.setCentralWidget(self.centralwidget)
-
+        self.buttons = [
+            self.pushButton0, self.pushButton1, self.pushButton2,
+            self.pushButton3, self.pushButton4, self.pushButton5
+        ]
+        if self.username == "admin":
+            self.buttons.append(self.pushButton6)
+        self.pushButton0.setStyleSheet("background-color: #4CAF50; color: white;")
+        self.stackedWidget.currentChanged.connect(self.update_button_style)
         # Подключение сигналов к слотам
         self.pushButton0.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
@@ -259,6 +266,13 @@ class Ui_MainWindow(QMainWindow):
         # self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         # self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
         # self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
+    def update_button_style(self, index):
+        for i, button in enumerate(self.buttons):
+            if i == index:
+                button.setStyleSheet("background-color: #4CAF50; color: white;")
+            else:
+                button.setStyleSheet("")
+    
     def exit(self):
         # MainWindow.close()
 
@@ -305,7 +319,7 @@ class Ui_MainWindow(QMainWindow):
         Purchase.AuctionDate, Purchase.QueryCount, Purchase.ResponseCount, Purchase.AveragePrice,
         Purchase.MinPrice, Purchase.MaxPrice, Purchase.StandardDeviation, Purchase.CoefficientOfVariation,
         Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceOld,
-        
+        Purchase.notification_link,Purchase.quantity_units,Purchase.nmck_per_unit,
         Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
         Contract.PriceProposal, Contract.Applicant, Contract.Applicant_satatus, Contract.WinnerExecutor,
         Contract.ContractingAuthority, Contract.ContractIdentifier, Contract.RegistryNumber,

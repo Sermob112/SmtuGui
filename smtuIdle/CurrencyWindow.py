@@ -40,11 +40,20 @@ class CurrencyWidget(QWidget):
     def populate_table(self):
         self.table.setRowCount(0)
         purchases = Purchase.select().where((Purchase.Currency != 'RUB') & (Purchase.Currency.is_null(False)) &(Purchase.Currency != 'Нет данных')  )
-        for purchase in purchases:
-            currency_value = purchase.Currency or "Нет данных"
-            registry_number = purchase.RegistryNumber or "Нет данных"
-            purch_id = str(purchase.Id) or "Нет данных"
-            self.add_row_to_table(purch_id,registry_number, currency_value)
+        
+        if not purchases:
+            # Если таблица пуста, добавляем надпись
+            self.table.setRowCount(1)
+            item = QTableWidgetItem("Вся валюта указана в рублях")
+            item.setTextAlignment(0x0004 | 0x0080)  # Выравнивание по центру
+            self.table.setItem(0, 0, item)
+            self.table.setSpan(0, 0, 1, 3)
+        else:
+            for purchase in purchases:
+                currency_value = purchase.Currency or "Нет данных"
+                registry_number = purchase.RegistryNumber or "Нет данных"
+                purch_id = str(purchase.Id) or "Нет данных"
+                self.add_row_to_table(purch_id,registry_number, currency_value)
         
     
     def add_row_to_table(self, purch_id, label_text, value_text):

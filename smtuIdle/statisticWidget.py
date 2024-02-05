@@ -189,7 +189,7 @@ class StatisticWidget(QWidget):
     def count_non_empty_values(self, dictionary):
         count = 0
         for key, value in dictionary.items():
-            if value == "Нет данных" :
+            if value != "Нет данных" :
                 count += 1
         return count
     # def analisPriceCount(self):
