@@ -69,6 +69,7 @@ class PurchasesWidgetAll(QWidget):
         self.max_price_input.setFixedWidth(100)
         self.toExcel = QPushButton("Экспорт в Excel", self)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
+        self.toExcel.setFixedWidth(400)
 
         self.min_data_label = QLabel("Начальная дата", self)
         self.min_data_input = QDateEdit(self)
@@ -81,6 +82,7 @@ class PurchasesWidgetAll(QWidget):
         self.max_data_input.setDate(self.max_data_input.date().currentDate())
         button_layout3 = QHBoxLayout()
         button_layout3.addWidget(self.toExcel)
+        button_layout3.setAlignment(Qt.AlignHCenter)
         self.max_data_input.setFixedWidth(150)
          #  кнопка "Сбросить фильтры" 
         self.reset_filters_button = QPushButton("Сбросить фильтры", self)
