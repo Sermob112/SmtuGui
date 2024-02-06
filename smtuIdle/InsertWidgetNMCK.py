@@ -19,7 +19,7 @@ class InsertWidgetNMCK(QWidget):
         self.tkp_data = {}
         self.purchase_id = purchase_id
         self.db_window = db_wind
-        self.setWindowTitle("Окно ввода даных НМЦК")
+        self.setWindowTitle("1. Ввод данных - Метод сопоставимых рыночных цен (анализ рынка)")
         self.setGeometry(100, 100, 600, 200)
         # Создаем лейблы
         label1 = QLabel("1. Ввод данных - Метод сопоставимых рыночных цен (анализ рынка)")

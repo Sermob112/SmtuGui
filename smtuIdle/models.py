@@ -54,8 +54,18 @@ class Purchase(BaseModel):
     FinancingLimit = FloatField(null=True, default="Нет данных", verbose_name="Лимит финансирования")
     PurchaseStatus = CharField(null=True, max_length=500, default="[]", verbose_name="Статус закупки")
     InitialMaxContractPriceOld = FloatField(null=True,  default="Нет данных", verbose_name="Начальная максимальная цена контракта старая")
+    #поля меты определения НМЦК
     
-    
+    NMCK_1 = CharField(null=True, max_length=500, default="[]", verbose_name="Ценовое предложение")
+    ContractCount = IntegerField(null=True,  default="Нет данных", verbose_name="Количество контрактов")
+    NMCK_2 = CharField(null=True, max_length=500, default="[]", verbose_name="Заявитель")
+    NMCK_3 = CharField(null=True, max_length=500, default="[]", verbose_name="Статус заявителя")
+    NMC_determ = FloatField(null=True,  default="Нет данных", verbose_name="Среднее значение цены")
+    NMC_coef_determ = FloatField(null=True,  default="Нет данных", verbose_name="Среднее значение цены")
+    organization_name =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
+    organization_name_date =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
+    organization_name_file =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
+    ########################
     isChanged = BooleanField(null=True, verbose_name="Был изменен")
     def delete_instance(self, *args, **kwargs):
         # Добавьте каскадное удаление перед вызовом delete_instance
