@@ -3,9 +3,10 @@ from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, Fl
 from playhouse.shortcuts import model_to_dict
 from datetime import date
 from models import Purchase, Contract, FinalDetermination,CurrencyRate
-from PySide6.QtCore import Qt, QStringListModel,Signal
+from PySide6.QtCore import *
 from PySide6.QtGui import QColor
 import sys, json
+from PySide6.QtGui import QFont
 from peewee import JOIN
 from insertPanel import InsertWidgetPanel
 from InsertWidgetContract import InsertWidgetContract
@@ -35,8 +36,10 @@ class PurchasesWidget(QWidget):
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
         self.table.setColumnCount(2)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents) # Устанавливаем первой колонке режим изменения размера по содержимому
+        self.table.horizontalHeader().setStretchLastSection(True) # Растягиваем вторую колонку на оставшееся пространство
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.table.setWordWrap(True) # Разрешаем перенос текста в ячейках
         self.table.setShowGrid(True)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setVisible(False)
@@ -44,6 +47,8 @@ class PurchasesWidget(QWidget):
         self.BackButton = QPushButton("Назад", self)
         self.BackButton.clicked.connect(self.go_back)
         self.addButtonContract = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
+        
+        self.addButtonContract.setMaximumWidth(700)
         # self.addButtonTKP = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
         # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
         # self.addButtonCurrency= QPushButton("Изменить Валюту", self)
@@ -74,7 +79,7 @@ class PurchasesWidget(QWidget):
 
         
         # button_layout2.addWidget(self.addButtonTKP)
-        button_layout2.addWidget(self.addButtonContract)
+        button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignCenter)
         # button_layout2.addWidget(self.addButtonCIA)
         # button_layout2.addWidget(self.addButtonCurrency)
 
@@ -127,7 +132,7 @@ class PurchasesWidget(QWidget):
 
             # Добавляем данные в виде "название поля - значение поля"
             self.add_section_to_table("Описание закупки")
-            self.add_row_to_table("Порядковый номер записи в БД", str(current_purchase.Id))
+            self.add_row_to_table("№ПП", str(current_purchase.Id))
             self.add_row_to_table("Закон", current_purchase.PurchaseOrder)
             self.add_row_to_table("Реестровый номер", current_purchase.RegistryNumber)
             self.add_row_to_table("Метод закупки", current_purchase.ProcurementMethod)
@@ -234,11 +239,25 @@ class PurchasesWidget(QWidget):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
 
-        label_item = QTableWidgetItem(label_text)
-        value_item = QTableWidgetItem(value_text)
+        label_item = QTableWidgetItem()
+        label_item.setText(label_text)
+        label_item.setFlags(label_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEditable)
+        label_font = QFont()
+        label_font.setPointSize(12)
+        label_item.setFont(label_font)
+
+        value_item = QTableWidgetItem()
+        value_item.setText(value_text)
+        value_item.setFlags(value_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEditable)
+        value_font = QFont()
+        value_font.setPointSize(12)
+        value_item.setFont(value_font)
 
         self.table.setItem(row_position, 0, label_item)
         self.table.setItem(row_position, 1, value_item)
+
+        # Adjust row height
+        self.table.resizeRowToContents(row_position)
 
     def add_section_to_table(self, section_text):
         row_position = self.table.rowCount()

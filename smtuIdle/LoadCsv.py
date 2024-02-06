@@ -27,10 +27,10 @@ class CsvLoaderWidget(QWidget):
      
 
         # Создаем кнопку
-        btn_load_csv = QPushButton('Загрузить CSV файл', self)
+        btn_load_csv = QPushButton('Загрузить*.CSV файл, полученный из ЕИС zakupki.gov.ru', self)
         btn_load_csv.clicked.connect(self.show_file_dialog)
-        btn_load_csv.setMaximumWidth(200)
-        btn_load_csv.setMinimumWidth(200)
+        btn_load_csv.setMaximumWidth(400)
+    
         h_layout.addWidget(btn_load_csv)
 
         # Пространство справа от кнопки
