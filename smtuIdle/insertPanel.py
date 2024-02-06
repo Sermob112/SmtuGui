@@ -47,17 +47,32 @@ class InsertWidgetPanel(QWidget):
         browse_button_protocol.clicked.connect(self.browse_file_protocol)
         # self.ContractFile = QLineEdit(self)
         
-
+        button_style_pressed = """
+        QPushButton:pressed {
+            background-color: #C8C8C8;
+        }
+        """
         # Устанавливаем максимальную ширину для кнопок
-        max = 900
-        button_NMCK_method_1.setMaximumWidth(max)
-        button_NMCK_method_2.setMaximumWidth(max)
-        button_NMCK_method_3.setMaximumWidth(max)
-        button_NMCK_method_4.setMaximumWidth(max)
-        browse_button_NMCK.setMaximumWidth(max)
-        browse_button_izvesh.setMaximumWidth(max)
-        browse_button_contract.setMaximumWidth(max)
-        browse_button_protocol.setMaximumWidth(max)
+        fixed_width = 800
+        button_NMCK_method_1.setFixedWidth(fixed_width)
+        button_NMCK_method_2.setFixedWidth(fixed_width)
+        button_NMCK_method_3.setFixedWidth(fixed_width)
+        button_NMCK_method_4.setFixedWidth(fixed_width)
+        browse_button_NMCK.setFixedWidth(fixed_width)
+        browse_button_izvesh.setFixedWidth(fixed_width)
+        browse_button_contract.setFixedWidth(fixed_width)
+        browse_button_protocol.setFixedWidth(fixed_width)
+        button_NMCK_method_1.setStyleSheet("text-align: left;")
+        button_NMCK_method_2.setStyleSheet("text-align: left;")
+        button_NMCK_method_3.setStyleSheet("text-align: left;")
+        button_NMCK_method_4.setStyleSheet("text-align: left;")
+        browse_button_NMCK.setStyleSheet("text-align: left;")
+        browse_button_izvesh.setStyleSheet("text-align: left;")
+        browse_button_contract.setStyleSheet("text-align: left;")
+        browse_button_protocol.setStyleSheet("text-align: left;")
+        
+
+        
         # Устанавливаем политику размера для автоматического изменения высоты кнопки
         # button_NMCK_method_1.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         # button_NMCK_method_2.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -246,9 +261,9 @@ class InsertWidgetPanel(QWidget):
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
         msg_box.exec()
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = InsertWidgetPanel(3)
-    window.show()
-    sys.exit(app.exec())
+# if __name__ == "__main__":
+#     app = QApplication(sys.argv)
+#     window = InsertWidgetPanel(3)
+#     window.show()
+#     sys.exit(app.exec())
         
