@@ -52,7 +52,7 @@ class PurchasesWidget(QWidget):
         self.addButtonContract.setMaximumWidth(700)
         # self.addButtonTKP = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
         # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
-        # self.addButtonCurrency= QPushButton("Изменить Валюту", self)
+        self.addButtonCurrency= QPushButton("Выгрузить в excel файл", self)
 
 
 
@@ -61,7 +61,7 @@ class PurchasesWidget(QWidget):
         # self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
         # self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
 
-        # self.addButtonCurrency.clicked.connect(self.update_currency)
+        self.addButtonCurrency.clicked.connect(self.update_currency)
 
          # Создаем метку
         self.label = QLabel("Текущая запись:", self)
@@ -82,7 +82,7 @@ class PurchasesWidget(QWidget):
         # button_layout2.addWidget(self.addButtonTKP)
         button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignCenter)
         # button_layout2.addWidget(self.addButtonCIA)
-        # button_layout2.addWidget(self.addButtonCurrency)
+        button_layout2.addWidget(self.addButtonCurrency)
 
    
 
