@@ -16,7 +16,7 @@ from peewee import DoesNotExist
 from InsertWidgetNMCK import InsertWidgetNMCK
 from InsertWidgetCEIA import InsertWidgetCEIA
 from InsertWidgetNMCK_2 import InsertWidgetNMCK_2
-from InsertWidgetCurrency import InsertWidgetCurrency
+from InsertWidgetNMCK_3 import InsertWidgetNMCK_3
 db = SqliteDatabase('test.db')
 
 class InsertWidgetPanel(QWidget):
@@ -147,7 +147,7 @@ class InsertWidgetPanel(QWidget):
     def add_button_cia_clicked(self):
   
             
-            self.cia_shower = InsertWidgetCEIA(self.purchase_id, self.db_window)
+            self.cia_shower = InsertWidgetNMCK_3(self.purchase_id, self.db_window)
             self.cia_shower.show()
 
     def add_button_contract_clicked(self):
