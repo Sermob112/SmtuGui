@@ -1,0 +1,250 @@
+from PySide6.QtWidgets import *
+from peewee import SqliteDatabase
+from playhouse.shortcuts import model_to_dict
+from datetime import date
+from models import Contract
+from PySide6.QtCore import Qt, QStringListModel
+from PySide6.QtGui import *
+import sys, json
+import statistics
+import pandas as pd
+from models import Purchase, Contract
+import os
+import shutil
+from peewee import DoesNotExist
+from InsertWidgetContract import InsertWidgetContract
+from InsertWidgetNMCK import InsertWidgetNMCK
+from InsertWidgetCEIA import InsertWidgetCEIA
+from InsertWidgetCurrency import InsertWidgetCurrency
+db = SqliteDatabase('test.db')
+
+class InsertWidgetPanel(QWidget):
+    def __init__(self, purchase_id,db_wind):
+        super().__init__()
+        self.tkp_data = {}
+        self.purchase_id = purchase_id
+        self.db_window = db_wind
+        # Создаем лейблы
+        self.setWindowTitle("Добавить НМЦК")
+        self.setGeometry(100, 100, 900, 300)
+        
+        label1 = QLabel("Добавить НМЦК")
+        label1.setAlignment(Qt.AlignCenter)
+ 
+     
+        button_NMCK_method_1= QPushButton("1.Добавить определение НМЦК методом сопоставимых рыночных цен")
+        button_NMCK_method_2= QPushButton("2.Добавить определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
+        button_NMCK_method_3= QPushButton("3.Добавить определение НМЦК затратный методом")
+        button_NMCK_method_4= QPushButton("4.Итоговое определение НМЦК с использованием нескольких методов")
+        browse_button_NMCK= QPushButton("Добавить файл НМЦК")
+        browse_button_izvesh= QPushButton("Добавить файл Извещения")
+        browse_button_contract= QPushButton("Добавить файл Контрактов")
+        browse_button_protocol= QPushButton("Добавить файл Протокол")
+        # Создаем поля ввода
+        browse_button_NMCK.clicked.connect(self.browse_file_NMCK)
+        browse_button_izvesh.clicked.connect(self.browse_file_izvesh)
+        browse_button_contract.clicked.connect(self.browse_file_contract)
+        browse_button_protocol.clicked.connect(self.browse_file_protocol)
+        # self.ContractFile = QLineEdit(self)
+        
+
+        # Устанавливаем максимальную ширину для кнопок
+        max = 900
+        button_NMCK_method_1.setMaximumWidth(max)
+        button_NMCK_method_2.setMaximumWidth(max)
+        button_NMCK_method_3.setMaximumWidth(max)
+        button_NMCK_method_4.setMaximumWidth(max)
+        browse_button_NMCK.setMaximumWidth(max)
+        browse_button_izvesh.setMaximumWidth(max)
+        browse_button_contract.setMaximumWidth(max)
+        browse_button_protocol.setMaximumWidth(max)
+        # Устанавливаем политику размера для автоматического изменения высоты кнопки
+        # button_NMCK_method_1.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        # button_NMCK_method_2.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        # button_NMCK_method_3.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        # button_NMCK_method_4.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        # browse_button_NMCK.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        # browse_button_izvesh.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        # browse_button_contract.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+        # browse_button_protocol.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
+
+
+        self.layout1 = QVBoxLayout(self)
+        layout2 = QHBoxLayout(self)
+        layout3 = QHBoxLayout(self)
+        layout4 = QHBoxLayout(self)
+        layout5 = QHBoxLayout(self)
+        layout6 = QHBoxLayout(self)
+        layout7 = QHBoxLayout(self)
+        layout8 = QHBoxLayout(self)
+        layout9 = QHBoxLayout(self)
+
+        # Выравниваем кнопки налево
+        layout2.addWidget(button_NMCK_method_1, alignment=Qt.AlignLeft)
+        layout3.addWidget(button_NMCK_method_2, alignment=Qt.AlignLeft)
+        layout4.addWidget(button_NMCK_method_3, alignment=Qt.AlignLeft)
+        layout5.addWidget(button_NMCK_method_4, alignment=Qt.AlignLeft)
+        layout6.addWidget(browse_button_NMCK, alignment=Qt.AlignLeft)
+        layout7.addWidget(browse_button_izvesh, alignment=Qt.AlignLeft)
+        layout8.addWidget(browse_button_contract, alignment=Qt.AlignLeft)
+        layout9.addWidget(browse_button_protocol, alignment=Qt.AlignLeft)
+        # Добавляем лейбл и поле ввода во вторую строку
+        
+        button_NMCK_method_1.clicked.connect(self.add_button_tkp_clicked)
+        button_NMCK_method_2.clicked.connect(self.add_button_contract_clicked)
+        button_NMCK_method_3.clicked.connect(self.add_button_cia_clicked)
+
+       
+ 
+        
+
+        # Добавляем все строки в вертикальный контейнер
+        self.layout1.addWidget(label1)
+        self.layout1.addLayout(layout2)
+        self.layout1.addLayout(layout3)
+        self.layout1.addLayout(layout4)
+        self.layout1.addLayout(layout5)
+        self.layout1.addLayout(layout6)
+        self.layout1.addLayout(layout7)
+        self.layout1.addLayout(layout8)
+        self.layout1.addLayout(layout9)
+
+        
+       
+        scroll_area = QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_widget = QWidget()
+        scroll_widget.setLayout(self.layout1)
+        scroll_area.setWidget(scroll_widget)
+        main_layout = QVBoxLayout(self)
+        main_layout.addWidget(scroll_area)
+
+        self.setLayout(main_layout)
+    
+
+    def add_button_tkp_clicked(self):
+       
+        
+            self.tkp_shower = InsertWidgetNMCK(self.purchase_id, self.db_window)
+            self.tkp_shower.show()
+    
+    def add_button_cia_clicked(self):
+  
+            
+            self.cia_shower = InsertWidgetCEIA(self.purchase_id, self.db_window)
+            self.cia_shower.show()
+
+    def add_button_contract_clicked(self):
+        
+        
+   
+            self.insert_cont = InsertWidgetContract(self.purchase_id, self.db_window)
+            self.insert_cont.show()
+
+    def browse_file_NMCK(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+        self.db_folder = "файлы бд"
+        
+        if file_path:
+            try:
+                source_path = file_path
+                absolute_db_folder = os.path.abspath(self.db_folder)
+            
+                destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                shutil.copy2(source_path, destination_path)
+            except:
+                pass
+            try:
+                Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
+                db.close()
+                self.db_window.reload_data_id(self.purchase_id)
+                self.db_window.show_current_purchase()
+                # Выводим сообщение об успешном сохранении
+                self.show_message("Успех", "Данные успешно добавлены")
+            except Exception as e:
+                self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
+
+    def browse_file_izvesh(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+        self.db_folder = "файлы бд"
+        
+        if file_path:
+            try:
+                source_path = file_path
+                absolute_db_folder = os.path.abspath(self.db_folder)
+            
+                destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                shutil.copy2(source_path, destination_path)
+            except:
+                pass
+            try:
+                Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
+                db.close()
+                self.db_window.reload_data_id(self.purchase_id)
+                self.db_window.show_current_purchase()
+                # Выводим сообщение об успешном сохранении
+                self.show_message("Успех", "Данные успешно добавлены")
+            except Exception as e:
+                self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
+
+    def browse_file_contract(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+        self.db_folder = "файлы бд"
+        
+        if file_path:
+            try:
+                source_path = file_path
+                absolute_db_folder = os.path.abspath(self.db_folder)
+            
+                destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                shutil.copy2(source_path, destination_path)
+            except:
+                pass
+            try:
+                Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
+                db.close()
+                self.db_window.reload_data_id(self.purchase_id)
+                self.db_window.show_current_purchase()
+                # Выводим сообщение об успешном сохранении
+                self.show_message("Успех", "Данные успешно добавлены")
+            except Exception as e:
+                self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
+
+    def browse_file_protocol(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+        self.db_folder = "файлы бд"
+        
+        if file_path:
+            try:
+                source_path = file_path
+                absolute_db_folder = os.path.abspath(self.db_folder)
+            
+                destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                shutil.copy2(source_path, destination_path)
+            except:
+                pass
+            try:
+                Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
+                db.close()
+                self.db_window.reload_data_id(self.purchase_id)
+                self.db_window.show_current_purchase()
+                # Выводим сообщение об успешном сохранении
+                self.show_message("Успех", "Данные успешно добавлены")
+            except Exception as e:
+                self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
+               
+    def show_message(self, title, message):
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle(title)
+        msg_box.setText(message)
+        msg_box.exec()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    window = InsertWidgetPanel(3)
+    window.show()
+    sys.exit(app.exec())
+        

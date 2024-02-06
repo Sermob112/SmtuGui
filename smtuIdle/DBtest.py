@@ -7,6 +7,7 @@ from PySide6.QtCore import Qt, QStringListModel,Signal
 from PySide6.QtGui import QColor
 import sys, json
 from peewee import JOIN
+from insertPanel import InsertWidgetPanel
 from InsertWidgetContract import InsertWidgetContract
 from InsertWidgetNMCK import InsertWidgetNMCK
 from InsertWidgetCEIA import InsertWidgetCEIA
@@ -42,19 +43,19 @@ class PurchasesWidget(QWidget):
         self.current_position =0
         self.BackButton = QPushButton("Назад", self)
         self.BackButton.clicked.connect(self.go_back)
-        self.addButtonContract = QPushButton("Добавить Расчет НМЦК методом использования общедоступной информации", self)
-        self.addButtonTKP = QPushButton("Добавить Расчет НМЦК методом сопоставимых рыночных цен (анализ рынка)", self)
-        self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
-        self.addButtonCurrency= QPushButton("Изменить Валюту", self)
+        self.addButtonContract = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
+        # self.addButtonTKP = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
+        # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
+        # self.addButtonCurrency= QPushButton("Изменить Валюту", self)
 
 
 
          # Устанавливаем обработчики событий для кнопок
         self.addButtonContract.clicked.connect(self.add_button_contract_clicked)
-        self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
-        self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
+        # self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
+        # self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
 
-        self.addButtonCurrency.clicked.connect(self.update_currency)
+        # self.addButtonCurrency.clicked.connect(self.update_currency)
 
          # Создаем метку
         self.label = QLabel("Текущая запись:", self)
@@ -72,10 +73,10 @@ class PurchasesWidget(QWidget):
         button_layout2 = QHBoxLayout()
 
         
-        button_layout2.addWidget(self.addButtonTKP)
+        # button_layout2.addWidget(self.addButtonTKP)
         button_layout2.addWidget(self.addButtonContract)
-        button_layout2.addWidget(self.addButtonCIA)
-        button_layout2.addWidget(self.addButtonCurrency)
+        # button_layout2.addWidget(self.addButtonCIA)
+        # button_layout2.addWidget(self.addButtonCurrency)
 
    
 
@@ -255,7 +256,7 @@ class PurchasesWidget(QWidget):
         if len(self.purchases_list) != 0:
             self.current_purchase = self.purchases_list[self.current_position]
             purchase_id = self.current_purchase.Id
-            self.insert_cont = InsertWidgetContract(purchase_id,self)
+            self.insert_cont = InsertWidgetPanel(purchase_id,self)
             self.insert_cont.show()
     
     def open_file(self, item):

@@ -40,7 +40,7 @@ class InsertWidgetContract(QWidget):
         label14 = QLabel("Снижение НМЦК, руб.:")
         label15 = QLabel("Снижение НМЦК, %:")
         label16 = QLabel("Протоколы определения поставщика (выписка):")
-        label17 = QLabel("Договор:")
+        # label17 = QLabel("Договор:")
 
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
@@ -85,10 +85,10 @@ class InsertWidgetContract(QWidget):
         layout14 = QHBoxLayout(self)
         layout15 = QHBoxLayout(self)
         layout16 = QHBoxLayout(self)
-        layout17 = QHBoxLayout(self)
-        self.notification_link_edit_contratc = QLineEdit()
-        browse_button_contratc = QPushButton("Обзор")
-        browse_button_contratc.clicked.connect(self.browse_file_contract)
+        # layout17 = QHBoxLayout(self)
+        # self.notification_link_edit_contratc = QLineEdit()
+        # browse_button_contratc = QPushButton("Обзор")
+        # browse_button_contratc.clicked.connect(self.browse_file_contract)
         layout2.addWidget(label2)
         layout2.addWidget(self.edit1)
         
@@ -136,9 +136,9 @@ class InsertWidgetContract(QWidget):
         layout16.addWidget(label16)
         layout16.addWidget(self.SupplierProtocol)
 
-        layout17.addWidget(label17)
-        layout17.addWidget(self.notification_link_edit_contratc)
-        layout17.addWidget(browse_button_contratc)
+        # layout17.addWidget(label17)
+        # layout17.addWidget(self.notification_link_edit_contratc)
+        # layout17.addWidget(browse_button_contratc)
 
         # Добавляем все строки в вертикальный контейнер
         self.layout1.addWidget(label1)
@@ -158,7 +158,7 @@ class InsertWidgetContract(QWidget):
         self.layout1.addLayout(layout14)
         self.layout1.addLayout(layout15)
         self.layout1.addLayout(layout16)
-        self.layout1.addLayout(layout17)
+        # self.layout1.addLayout(layout17)
        
         scroll_area = QScrollArea(self)
         scroll_area.setWidgetResizable(True)
@@ -216,9 +216,9 @@ class InsertWidgetContract(QWidget):
                 widget.setParent(None)
                 widget.deleteLater()
     def save_tkp_data(self):
-        self.db_folder = "файлы бд"
+        # self.db_folder = "файлы бд"
         
-        os.makedirs(self.db_folder, exist_ok=True)
+        # os.makedirs(self.db_folder, exist_ok=True)
         self.price_proposal = {}
         self.applicant = {}
         self.status = {}
@@ -244,14 +244,14 @@ class InsertWidgetContract(QWidget):
                 self.status[key_status] = status_edit.text() if status_edit.text() else "[]"
 
             j += 1
-        try:
-            source_path_contract = self.notification_link_edit_contratc.text()
-            absolute_db_folder = os.path.abspath(self.db_folder)
+        # try:
+        #     source_path_contract = self.notification_link_edit_contratc.text()
+        #     absolute_db_folder = os.path.abspath(self.db_folder)
         
-            destination_path_contract = os.path.join(absolute_db_folder, os.path.basename(source_path_contract))
-            shutil.copy2(source_path_contract, destination_path_contract)
-        except:
-            pass
+        #     destination_path_contract = os.path.join(absolute_db_folder, os.path.basename(source_path_contract))
+        #     shutil.copy2(source_path_contract, destination_path_contract)
+        # except:
+        #     pass
         price_proposal_json = json.dumps(self.price_proposal,ensure_ascii=False)
         applicant_json = json.dumps(self.applicant,ensure_ascii=False)
         status_json = json.dumps(self.status,ensure_ascii=False)
@@ -273,7 +273,7 @@ class InsertWidgetContract(QWidget):
                                 ReductionNMC=int(self.ReductionNMC.text()) if self.ReductionNMC.text() else 0,
                                 ReductionNMCPercent=float(self.ReductionNMCPercent.text()) if self.ReductionNMCPercent.text() else 0,
                                 SupplierProtocol=self.SupplierProtocol.text() if self.SupplierProtocol.text() else 0,
-                                ContractFile= destination_path_contract if destination_path_contract else "нет данных",
+                                # ContractFile= destination_path_contract if destination_path_contract else "нет данных",
                                 PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json).where(Contract.purchase == self.purchase_id).execute()
         except DoesNotExist:
                 Contract.create( purchase = self.purchase_id,
@@ -293,7 +293,7 @@ class InsertWidgetContract(QWidget):
                                 ReductionNMC=int(self.ReductionNMC.text()) if self.ReductionNMC.text() else 0,
                                 ReductionNMCPercent=float(self.ReductionNMCPercent.text()) if self.ReductionNMCPercent.text() else 0,
                                 SupplierProtocol=self.SupplierProtocol.text() if self.SupplierProtocol.text() else 0,
-                                ContractFile= destination_path_contract if destination_path_contract else "нет данных",
+                                # ContractFile= destination_path_contract if destination_path_contract else "нет данных",
                                 PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
         try:
             # Попытка сохранения данных
@@ -313,12 +313,12 @@ class InsertWidgetContract(QWidget):
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
         msg_box.exec()
-    def browse_file_contract(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+    # def browse_file_contract(self):
+    #     file_dialog = QFileDialog()
+    #     file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
         
-        if file_path:
-            self.notification_link_edit_contratc.setText(file_path)
+    #     if file_path:
+    #         self.notification_link_edit_contratc.setText(file_path)
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
 #     window = InsertWidgetContract(3)
