@@ -156,7 +156,7 @@ class InsertWidgetPanel(QWidget):
             except:
                 pass
             try:
-                Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
+                Purchase.update(nmck_file=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
                 db.close()
                 self.db_window.reload_data_id(self.purchase_id)
                 self.db_window.show_current_purchase()
@@ -204,7 +204,11 @@ class InsertWidgetPanel(QWidget):
             except:
                 pass
             try:
-                Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
+                try:
+                    Contract.get(Contract.purchase == self.purchase_id)
+                    Contract.update(ContractFile= destination_path if destination_path else "нет данных").where(Contract.purchase == self.purchase_id).execute()
+                except DoesNotExist:
+                    Contract.create( purchase = self.purchase_id,ContractFile= destination_path if destination_path else "нет данных")
                 db.close()
                 self.db_window.reload_data_id(self.purchase_id)
                 self.db_window.show_current_purchase()
@@ -228,7 +232,7 @@ class InsertWidgetPanel(QWidget):
             except:
                 pass
             try:
-                Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
+                Purchase.update(protocol_file=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
                 db.close()
                 self.db_window.reload_data_id(self.purchase_id)
                 self.db_window.show_current_purchase()
