@@ -18,6 +18,7 @@ from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
 import os
 import subprocess
+from openpyxl import Workbook
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 
 
@@ -39,7 +40,7 @@ class PurchasesWidget(QWidget):
         # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents) # Устанавливаем первой колонке режим изменения размера по содержимому
         self.table.horizontalHeader().setStretchLastSection(True) # Растягиваем вторую колонку на оставшееся пространство
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.table.setColumnWidth(0, 300)
+        self.table.setColumnWidth(0, 500)
         self.table.setWordWrap(True) # Разрешаем перенос текста в ячейках
         self.table.setShowGrid(True)
         self.table.verticalHeader().setVisible(False)
@@ -49,11 +50,11 @@ class PurchasesWidget(QWidget):
         self.BackButton.clicked.connect(self.go_back)
         self.addButtonContract = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
         
-        self.addButtonContract.setMaximumWidth(700)
+        self.addButtonContract.setMaximumWidth(400)
         # self.addButtonTKP = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
         # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
-        self.addButtonCurrency= QPushButton("Выгрузить в excel файл", self)
-
+        self.addButtonCurrency= QPushButton("Экспорт в excel файл", self)
+        self.addButtonCurrency.setMaximumWidth(300)
 
 
          # Устанавливаем обработчики событий для кнопок
@@ -61,8 +62,8 @@ class PurchasesWidget(QWidget):
         # self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
         # self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
 
-        self.addButtonCurrency.clicked.connect(self.update_currency)
-
+        self.addButtonCurrency.clicked.connect(self.show_current_purchase_to_excel)
+        
          # Создаем метку
         self.label = QLabel("Текущая запись:", self)
         # Устанавливаем обработчики событий для кнопок
@@ -80,10 +81,10 @@ class PurchasesWidget(QWidget):
 
         
         # button_layout2.addWidget(self.addButtonTKP)
-        button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignCenter)
+        button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignLeft)
         # button_layout2.addWidget(self.addButtonCIA)
-        button_layout2.addWidget(self.addButtonCurrency)
-
+        button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignLeft)
+        button_layout2.setAlignment(Qt.AlignLeft)
    
 
  
@@ -272,15 +273,15 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("ЦКЕИ на основе метода сопоставимых рыночных цен )", str(det.CEICostMethod))
                 self.add_row_to_table("ЦКЕИ, полученная с применением двух методов", str(det.CEIMethodsTwo))
           
-            if current_purchase.isChanged == True:
-                self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
-                for curr in self.currency:
-                    self.add_section_to_table("Изминения валюты")
-                    self.add_row_to_table("Значение валюты", str(curr.CurrencyValue))
-                    self.add_row_to_table("Текущая валюта", str(curr.CurrentCurrency))
-                    self.add_row_to_table("Дата изменения значения валюты", str(curr.DateValueChanged))
-                    self.add_row_to_table("Дата курса валюты", str(curr.CurrencyRateDate))
-                    self.add_row_to_table("Предыдущая валюта", str(curr.PreviousCurrency))
+            # if current_purchase.isChanged == True:
+            #     self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
+            #     for curr in self.currency:
+            #         self.add_section_to_table("Изминения валюты")
+            #         self.add_row_to_table("Значение валюты", str(curr.CurrencyValue))
+            #         self.add_row_to_table("Текущая валюта", str(curr.CurrentCurrency))
+            #         self.add_row_to_table("Дата изменения значения валюты", str(curr.DateValueChanged))
+            #         self.add_row_to_table("Дата курса валюты", str(curr.CurrencyRateDate))
+            #         self.add_row_to_table("Предыдущая валюта", str(curr.PreviousCurrency))
         else:
             self.label.setText("Нет записей")
 
@@ -369,13 +370,18 @@ class PurchasesWidget(QWidget):
             self.main_win.stackedWidget.setCurrentIndex(0)
      
 
-    
-    def update_currency(self):
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-            self.curr_shower = InsertWidgetCurrency(purchase_id)
-            self.curr_shower.show()
+    # def file_exit(self):
+    #     if len(self.purchases_list) != 0:
+    #         self.current_purchase = self.purchases_list[self.current_position]
+    #         purchase_id = self.current_purchase.Id
+    #         self.curr_shower = InsertWidgetCurrency(purchase_id)
+    #         self.curr_shower.show()
+    # def update_currency(self):
+    #     if len(self.purchases_list) != 0:
+    #         self.current_purchase = self.purchases_list[self.current_position]
+    #         purchase_id = self.current_purchase.Id
+    #         self.curr_shower = InsertWidgetCurrency(purchase_id)
+    #         self.curr_shower.show()
     
         
     def reload_data(self):
@@ -393,7 +399,28 @@ class PurchasesWidget(QWidget):
 
     def show_warning(self, title, text):
         warning = QMessageBox.warning(self, title, text, QMessageBox.Ok)
+    def show_current_purchase_to_excel(self):
+        wb = Workbook()
+        ws = wb.active
         
+        for row in range(self.table.rowCount()):
+            label_item = self.table.item(row, 0)
+            value_item = self.table.item(row, 1)
+            if label_item is not None and value_item is not None:
+                label_text = label_item.text()
+                value_text = value_item.text()
+                if label_text and value_text:  # Проверка на пустую строку
+                    ws.append([label_text, value_text])
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(QFileDialog.Directory)
+        self.purchases = Purchase.select()
+        if file_dialog.exec_():
+            selected_file = file_dialog.selectedFiles()[0]
+            selected_file = selected_file if selected_file else None
+            if selected_file:
+                wb.save(f'{selected_file}\данные_по_закупке №{self.current_purchase.RegistryNumber}.xlsx')
+                QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
+       
 
 # if __name__ == '__main__':
 #     app = QApplication(sys.argv)
