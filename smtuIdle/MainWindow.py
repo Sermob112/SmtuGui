@@ -66,14 +66,15 @@ class Ui_MainWindow(QMainWindow):
         self.dbLabel = QtWidgets.QLabel(self.rightTopWidget)
         current_date = datetime.now()
         self.formatted_date = current_date.strftime("%d-%m-%Y")
-        self.dbLabel.setText("БД НМЦК и ЦК")
-        self.user = f"Пользователь: {self.username}"
-        self.date = f"Дата: {self.formatted_date}"
-        self.totalRecords = f"Закупок в БД: {count_total_records()}"
+        self.dbLabel.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
+        
+        self.user = f"Пользователь: <b>{self.username}</b>"
+        self.date = f"Дата: <b>{self.formatted_date}</b>"
+        self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
         
         self.userLabel.setText(self.user)
-        self.rightTopLayout.addWidget(self.userLabel)
         self.rightTopLayout.addWidget(self.dbLabel)
+        self.rightTopLayout.addWidget(self.userLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.purchaseLabel2 = QtWidgets.QLabel(self.rightTopWidget)
         
@@ -282,19 +283,17 @@ class Ui_MainWindow(QMainWindow):
         self.auth_window.show()
         self.close()
     def updatePurchaseLabel(self):
-        self.user = f"Пользователь: {self.username}"
-        self.date = f"Дата: {self.formatted_date}"
-        self.totalRecords = f"Закупок в БД: {count_total_records()}"
-        self.purchaseLabel.setText(self.totalRecords)
-        self.purchaseLabel2.setText(self.date)
+        srecords, data, user = self.return_variabels()
+        self.purchaseLabel.setText(srecords)
+        self.purchaseLabel2.setText(data)
     def export_to_excel_all(self):
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
         self.purchases = Purchase.select()
     def return_variabels(self):
-        self.totalRecords = f"Закупок в БД {count_total_records()}"
-        self.user = f"Пользователь {self.username}"
-        self.date = f"Дата {self.formatted_date}"
+        self.user = f"Пользователь: <b>{self.username}</b>"
+        self.date = f"Дата: <b>{self.formatted_date}</b>"
+        self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
         return self.totalRecords,self.date, self.user
     def export_to_excel_all(self):
         file_dialog = QFileDialog(self)
