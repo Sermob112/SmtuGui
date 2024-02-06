@@ -27,11 +27,11 @@ class InsertWidgetNMCK(QWidget):
         label2 = QLabel("Количество запросов ТКП:")
         label3 = QLabel("Количество ответов ТКП:")
         label4 = QLabel("Лимит финансирования, руб.:")
-        labelNMCK5 = QLabel("Выбирите файл извещения о закупке")
+        # labelNMCK5 = QLabel("Выбирите файл извещения о закупке")
         #файл диалог
-        self.notification_link_edit = QLineEdit(self)
-        browse_button = QPushButton("Обзор", self)
-        browse_button.clicked.connect(self.browse_file)
+        # self.notification_link_edit = QLineEdit(self)
+        # browse_button = QPushButton("Обзор", self)
+        # browse_button.clicked.connect(self.browse_file)
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
         self.edit1.setValidator(QIntValidator())
@@ -58,9 +58,9 @@ class InsertWidgetNMCK(QWidget):
         # Добавляем лейбл и поле ввода в третью строку
         layout4.addWidget(label4)
         layout4.addWidget(self.edit3)
-        layout5.addWidget(labelNMCK5)
-        layout5.addWidget(self.notification_link_edit)
-        layout5.addWidget(browse_button)
+        # layout5.addWidget(labelNMCK5)
+        # layout5.addWidget(self.notification_link_edit)
+        # layout5.addWidget(browse_button)
         # Добавляем все строки в вертикальный контейнер
         layout1.addWidget(label1)
         layout1.addLayout(layout2)
@@ -72,12 +72,12 @@ class InsertWidgetNMCK(QWidget):
         layout1.addLayout(self.form_layout)
 
         self.setLayout(layout1)
-    def browse_file(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+    # def browse_file(self):
+    #     file_dialog = QFileDialog()
+    #     file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
         
-        if file_path:
-            self.notification_link_edit.setText(file_path)
+    #     if file_path:
+    #         self.notification_link_edit.setText(file_path)
 
     def update_fields(self):
         num_fields = int(self.edit1.text())
@@ -104,17 +104,17 @@ class InsertWidgetNMCK(QWidget):
         self.update()
     def save_tkp_data(self):
         # Преобразовываем словарь с данными в строку JSON
-        self.db_folder = "файлы бд"
-        os.makedirs(self.db_folder, exist_ok=True)
+        # self.db_folder = "файлы бд"
+        # os.makedirs(self.db_folder, exist_ok=True)
         self.tkp_data = {}
-        try:
-            source_path = self.notification_link_edit.text()
-            absolute_db_folder = os.path.abspath(self.db_folder)
+        # try:
+        #     source_path = self.notification_link_edit.text()
+        #     absolute_db_folder = os.path.abspath(self.db_folder)
         
-            destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
-            shutil.copy2(source_path, destination_path)
-        except:
-            pass
+        #     destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+        #     shutil.copy2(source_path, destination_path)
+        # except:
+        #     pass
         # Заполняем словарь данными из динамических полей
         for i in range(0,self.form_layout.count() - 1,2):  # -1, чтобы не включать кнопку
             key = f"ТКП {i}"
@@ -143,7 +143,7 @@ class InsertWidgetNMCK(QWidget):
                             StandardDeviation = standard_deviation if standard_deviation else 0,
                             CoefficientOfVariation = cv if cv else 0,
                             NMCKMarket = avg_tkp if avg_tkp else 0,
-                            notification_link=destination_path if destination_path else "нет данных",
+                            # notification_link=destination_path if destination_path else "нет данных",
                             ).where(Purchase.Id == self.purchase_id)
         try:
             # Попытка сохранения данных

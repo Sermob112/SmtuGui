@@ -10,7 +10,7 @@ class AuthWindow(QWidget):
         super(AuthWindow, self).__init__()
 
         self.setWindowTitle("Окно авторизации")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1000, 600)
         self.auth = AuthManager()
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
