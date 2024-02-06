@@ -36,9 +36,10 @@ class PurchasesWidget(QWidget):
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
         self.table.setColumnCount(2)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents) # Устанавливаем первой колонке режим изменения размера по содержимому
+        # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents) # Устанавливаем первой колонке режим изменения размера по содержимому
         self.table.horizontalHeader().setStretchLastSection(True) # Растягиваем вторую колонку на оставшееся пространство
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.table.setColumnWidth(0, 300)
         self.table.setWordWrap(True) # Разрешаем перенос текста в ячейках
         self.table.setShowGrid(True)
         self.table.verticalHeader().setVisible(False)
@@ -208,6 +209,22 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Наименование организации", str(current_purchase.organization_name) if current_purchase.organization_name else "нет данных")
             self.add_row_to_table("Дата расчета", str(current_purchase.organization_name_date) if current_purchase.organization_name_date else "нет данных")
             self.add_row_to_table("Файл расчета", str(current_purchase.organization_name_file) if current_purchase.organization_name_file else "нет данных")
+            self.add_section_to_table("4.Итоговое определение НМЦК с использованием нескольких методов")
+            self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации потенциальным исполнителям", 
+                      str(current_purchase.method_direction_requests) if current_purchase.method_direction_requests else "нет данных")
+            self.add_row_to_table("Способ использования общедоступной информации при осуществлении поиска ценовой информации в реестре государственных контрактов", 
+                      str(current_purchase.method_usage_information) if current_purchase.method_usage_information else "нет данных")
+            self.add_row_to_table("НМЦК, полученный различными способами в рамках метода сопостовимых рыночных цен", 
+                      str(current_purchase.nmc_various_methods) if current_purchase.nmc_various_methods else "нет данных")
+            self.add_row_to_table("НМЦК на основе затратного метода", 
+                      str(current_purchase.nmc_cost_method) if current_purchase.nmc_cost_method else "нет данных")
+            self.add_row_to_table("Цена сравнимой продукции, приведенная в соответствие к условиям закупки судна, НМЦК которого определяется", 
+                      str(current_purchase.comparable_product_price) if current_purchase.comparable_product_price else "нет данных")
+            self.add_row_to_table("НМЦК, полученная с применением двух методов: метода сопоставимых рыночных цен и затратного метода", 
+                      str(current_purchase.nmc_two_methods) if current_purchase.nmc_two_methods else "нет данных")
+            self.add_row_to_table("Файл 4 метода", 
+                      str(current_purchase.file_4) if current_purchase.file_4 else "нет данных")
+
             # Получаем связанные записи из модели Contract
             self.contracts = Contract.select().where(Contract.purchase == current_purchase)
             for contract in self.contracts:
@@ -243,17 +260,17 @@ class PurchasesWidget(QWidget):
             self.finalDetermination = FinalDetermination.select().where(FinalDetermination.purchase == current_purchase)
             for det in self.finalDetermination:
         
-                self.add_section_to_table("Итоговое определение НМЦК с использованием нескольких методов. НМЦК с учетом метода и способа расчета")
+                self.add_section_to_table("Итоговое определение НМЦК с использованием нескольких методов.")
                 self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации", str(det.RequestMethod))
                 self.add_row_to_table("Способ использования общедоступной информации", str(det.PublicInformationMethod))
                 self.add_row_to_table("НМЦК, полученная различными способами", str(det.NMCObtainedMethods))
-                self.add_section_to_table("НМЦК, полученная различными способами в рамках метода сопоставимых рыночных цен (анализа рынка), руб. (при применении нескольких способов)")
+                self.add_section_to_table("НМЦК, полученная различными способами в рамках метода сопоставимых рыночных цен (анализа рынка),")
                 self.add_row_to_table("НМЦК на основе затратного метода, руб. (в случае его применения)", str(det.CostMethodNMC))
-                self.add_row_to_table("Цена сравнимой продукции, приведенная в соответствие к условиям закупки судна, НМЦК которого определяется, руб. (при наличии)", str(det.ComparablePrice))
+                self.add_row_to_table("Цена сравнимой продукции, приведенная в соответствие к условиям закупки судна", str(det.ComparablePrice))
                 self.add_row_to_table("НМЦК, полученная с применением двух методов", str(det.NMCMethodsTwo))
-                self.add_section_to_table("Итоговое определение ЦКЕИ с использованием нескольких методов ЦКЕИ с учетом метода расчета")
+                self.add_section_to_table("Итоговое определение ЦКЕИ с использованием нескольких методов ЦКЕИ ")
                 self.add_row_to_table("ЦКЕИ на основе метода сопоставимых рыночных цен )", str(det.CEICostMethod))
-                self.add_row_to_table("ЦКЕИ, полученная с применением двух методов: метода сопоставимых рыночных цен (анализа рынка) и затратного метода", str(det.CEIMethodsTwo))
+                self.add_row_to_table("ЦКЕИ, полученная с применением двух методов", str(det.CEIMethodsTwo))
           
             if current_purchase.isChanged == True:
                 self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
@@ -291,8 +308,8 @@ class PurchasesWidget(QWidget):
 
         # # Adjust row height
         self.table.resizeRowsToContents()
-        max_height = 40  # Установите желаемую максимальную высоту здесь
-        self.table.setRowHeight(row_position, min(max_height, self.table.rowHeight(row_position)))
+        # max_height = 40  # Установите желаемую максимальную высоту здесь
+        # self.table.setRowHeight(row_position, min(max_height, self.table.rowHeight(row_position)))
 
     def add_section_to_table(self, section_text):
         row_position = self.table.rowCount()

@@ -12,22 +12,26 @@ import shutil
 import os
 db = SqliteDatabase('test.db')
 
-class InsertWidgetNMCK_3(QWidget):
+class InsertWidgetNMCK_4(QWidget):
     def __init__(self,purchase_id,db_wind):
         
         super().__init__()
         self.tkp_data = {}
         self.purchase_id = purchase_id
         self.db_window = db_wind
-        self.setWindowTitle("3.Определение НМЦК затратным методом")
+        self.setWindowTitle("4.Итоговое определение НМЦК с использованием нескольких методов")
         self.setGeometry(100, 100, 600, 200)
         # Создаем лейблы
-        label1 = QLabel("3. Ввод данных - Определение НМЦК затратным методом")
+        label1 = QLabel("4. Ввод данных - Итоговое определение НМЦК с использованием нескольких методов")
         label1.setAlignment(Qt.AlignCenter)
-        label2 = QLabel("Наименование организации, производившей расчет")
-        label3 = QLabel("Дата расчета")
-         
-        
+        label2 = QLabel("НМЦК с учетом метода и способа расчета")
+        label2.setAlignment(Qt.AlignCenter)
+        label3 = QLabel("Способ направление запросов о предоставлении ценовой информации<br>потенциальным исполнителям")
+        label4 = QLabel("Способ использования общедоступной информации при осуществлении<br>поиска ценовой информации в реестре государственных контрактов")
+        label5 = QLabel("НМЦК, полученный различными способами в рамках<br>метода сопостовимых рыночных цен")
+        label6 = QLabel("НМЦК на основе затратного метода")
+        label7 = QLabel("Цена сравнимой продукции, приведенная в соответствие к условиям<br>закупки судна, НМЦК которого определяется")
+        label8 = QLabel("НМЦК, полученная с приминенем двух методов: метода<br>соспостовимых рыночных цен и затратного метода")
         labelNMCK5 = QLabel("Выбирите файл")
         #файл диалог
         self.notification_link_edit = QLineEdit(self)
@@ -35,8 +39,12 @@ class InsertWidgetNMCK_3(QWidget):
         browse_button.clicked.connect(self.browse_file)
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
-        self.edit2 = QDateEdit(self)
-        self.edit2.setCalendarPopup(True)
+        self.edit2 = QLineEdit(self)
+        self.edit3 = QLineEdit(self)
+        self.edit4 = QLineEdit(self)
+        self.edit5 = QLineEdit(self)
+        self.edit6 = QLineEdit(self)
+    
         # self.edit3 = QLineEdit(self)
         # self.edit3.setValidator(QIntValidator())
 
@@ -44,23 +52,36 @@ class InsertWidgetNMCK_3(QWidget):
         layout2 = QHBoxLayout(self)
         layout3 = QHBoxLayout(self)
         layout4 = QHBoxLayout(self)
-        # layout5 = QHBoxLayout(self)
-
+        layout5 = QHBoxLayout(self)
+        layout6 = QHBoxLayout(self)
+        layout7 = QHBoxLayout(self)
+        layout8 = QHBoxLayout(self)
         # Добавляем лейбл и поле ввода в первую строку
-        layout2.addWidget(label2)
+        layout2.addWidget(label3)
         layout2.addWidget(self.edit1)
-        layout3.addWidget(label3)
+        layout3.addWidget(label4)
         layout3.addWidget(self.edit2)
-
-    
-        layout4.addWidget(labelNMCK5)
-        layout4.addWidget(self.notification_link_edit)
-        layout4.addWidget(browse_button)
+        layout4.addWidget(label5)
+        layout4.addWidget(self.edit3)
+        layout5.addWidget(label6)
+        layout5.addWidget(self.edit4)
+        layout6.addWidget(label7)
+        layout6.addWidget(self.edit5)
+        layout7.addWidget(label8)
+        layout7.addWidget(self.edit6)
+        layout8.addWidget(labelNMCK5)
+        layout8.addWidget(self.notification_link_edit)
+        layout8.addWidget(browse_button)
         # Добавляем все строки в вертикальный контейнер
         layout1.addWidget(label1)
+        layout1.addWidget(label2)
         layout1.addLayout(layout2)
         layout1.addLayout(layout3)
         layout1.addLayout(layout4)
+        layout1.addLayout(layout5)
+        layout1.addLayout(layout6)
+        layout1.addLayout(layout7)
+        layout1.addLayout(layout8)
         # layout1.addLayout(layout5)
 
         self.form_layout = QVBoxLayout()
@@ -132,9 +153,13 @@ class InsertWidgetNMCK_3(QWidget):
         purchase = Purchase.update(
                             
                             
-                            organization_name = self.edit1.text() if self.edit1.text() else 0,
-                            organization_name_date = self.edit2.text() if self.edit2.text() else 0,
-                            organization_name_file = destination_path
+                            method_direction_requests = self.edit1.text() if self.edit1.text() else "нет данных",
+                            method_usage_information = self.edit2.text() if self.edit2.text() else "нет данных",
+                            file_4 = destination_path,
+                            nmc_various_methods = self.edit3.text() if self.edit3.text() else "нет данных",
+                            nmc_cost_method = self.edit4.text() if self.edit4.text() else "нет данных",
+                            comparable_product_price = self.edit5.text() if self.edit5.text() else "нет данных",
+                            nmc_two_methods = self.edit6.text() if self.edit6.text() else "нет данных"
                             # ResponseCount=int(self.edit2.text()) if self.edit2.text() else 0,
                             # FinancingLimit=int(self.edit3.text()) if self.edit3.text() else 0,
                             # AveragePrice = avg_tkp if avg_tkp else 0,

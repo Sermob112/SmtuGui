@@ -17,6 +17,7 @@ from InsertWidgetNMCK import InsertWidgetNMCK
 from InsertWidgetCEIA import InsertWidgetCEIA
 from InsertWidgetNMCK_2 import InsertWidgetNMCK_2
 from InsertWidgetNMCK_3 import InsertWidgetNMCK_3
+from InsertWidgetNMCK_4 import InsertWidgetNMCK_4
 db = SqliteDatabase('test.db')
 
 class InsertWidgetPanel(QWidget):
@@ -109,7 +110,7 @@ class InsertWidgetPanel(QWidget):
         button_NMCK_method_1.clicked.connect(self.add_button_tkp_clicked)
         button_NMCK_method_2.clicked.connect(self.add_button_contract_clicked)
         button_NMCK_method_3.clicked.connect(self.add_button_cia_clicked)
-
+        button_NMCK_method_4.clicked.connect(self.add_button_4_clicked)
        
  
         
@@ -155,6 +156,10 @@ class InsertWidgetPanel(QWidget):
         
    
             self.insert_cont = InsertWidgetNMCK_2(self.purchase_id, self.db_window)
+            self.insert_cont.show()
+    def add_button_4_clicked(self):
+
+            self.insert_cont = InsertWidgetNMCK_4(self.purchase_id, self.db_window)
             self.insert_cont.show()
 
     def browse_file_NMCK(self):

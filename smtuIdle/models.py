@@ -65,6 +65,13 @@ class Purchase(BaseModel):
     organization_name =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
     organization_name_date =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
     organization_name_file =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
+    method_direction_requests = CharField(null=True, max_length=255, default="Нет данных", verbose_name="Способ направления запросов о предоставлении ценовой информации потенциальным исполнителям")
+    method_usage_information = CharField(null=True, max_length=255, default="Нет данных", verbose_name="Способ использования общедоступной информации при осуществлении поиска ценовой информации в реестре государственных контрактов")
+    nmc_various_methods = CharField(null=True, max_length=255, default="Нет данных", verbose_name="НМЦК, полученный различными способами в рамках метода сопостовимых рыночных цен")
+    nmc_cost_method = CharField(null=True, max_length=255, default="Нет данных", verbose_name="НМЦК на основе затратного метода")
+    comparable_product_price = CharField(null=True, max_length=255, default="Нет данных", verbose_name="Цена сравнимой продукции, приведенная в соответствие к условиям закупки судна, НМЦК которого определяется")
+    nmc_two_methods = CharField(null=True, max_length=255, default="Нет данных", verbose_name="НМЦК, полученная с применением двух методов: метода сопоставимых рыночных цен и затратного метода")
+    file_4 = CharField(null=True, max_length=255, default="Нет данных", verbose_name="Файл 4 метода")
     ########################
     isChanged = BooleanField(null=True, verbose_name="Был изменен")
     def delete_instance(self, *args, **kwargs):
