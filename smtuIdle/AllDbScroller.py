@@ -32,7 +32,7 @@ class PurchasesWidgetAll(QWidget):
         self.table.setColumnCount(9)
 
         # Устанавливаем заголовки колонок
-        column_headers = ["Порядковый номер записи в БД", "Закон", "Реестровый номер",
+        column_headers = ["№ПП", "Закон", "Реестровый номер",
                           "Наименование закупки", "Предмет аукциона", "Начальная максимальная цена контракта",
                           "Валюта", "Наименование заказчика", "Дата размещения"]
         self.table.resizeColumnsToContents()
@@ -53,10 +53,11 @@ class PurchasesWidgetAll(QWidget):
                                     "Сортировать по Дате (Убывание)","Сортировать по Дате (возростание)"])
          # Устанавливаем обработчик событий для выпадающего меню
        
-
+        self.sort_options.setFixedWidth(250)
         unique_purchase_orders = Purchase.select(Purchase.PurchaseOrder).distinct()
         self.sort_by_putch_order = QComboBox(self)
         self.sort_by_putch_order.addItem("Сортировать по Закону")
+        self.sort_by_putch_order.setFixedWidth(250)
         for order in unique_purchase_orders:
             self.sort_by_putch_order.addItem(str(order.PurchaseOrder))
         # Создаем метки и поля для ввода минимальной и максимальной цены
@@ -83,12 +84,14 @@ class PurchasesWidgetAll(QWidget):
         self.max_data_input.setFixedWidth(150)
          #  кнопка "Сбросить фильтры" 
         self.reset_filters_button = QPushButton("Сбросить фильтры", self)
+        self.reset_filters_button.setFixedWidth(150)
         self.reset_filters_button.clicked.connect(self.resetFilters)
         # Создаем поле ввода для поиска
         
         self.search_input = QLineEdit(self)
         self.search_input.setPlaceholderText("Поиск по Реестровому номеру, заказчику, наименованию объекта или организации")
         self.unique_values_query = self.findUnic()
+        self.search_input.setFixedWidth(300)
         completer = QCompleter(self.unique_values_query )
         completer.setCaseSensitivity(Qt.CaseInsensitive)
 
@@ -106,6 +109,7 @@ class PurchasesWidgetAll(QWidget):
         # Добавляем кнопку "Применить фильтр"
         self.apply_filter_button = QPushButton("Применить фильтр", self)
         self.apply_filter_button.clicked.connect(self.apply_filter)
+        self.apply_filter_button.setFixedWidth(150)
 
  
     
