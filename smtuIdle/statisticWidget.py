@@ -85,8 +85,9 @@ class StatisticWidget(QWidget):
             button.setSizePolicy(size_policy)
             button.setStyleSheet("text-align: left;")
             
+            
             # Подключите обработчик события к каждой кнопке, передавая индекс
-            button.clicked.connect(partial(self.show_specific_data, index))
+            button.clicked.connect(partial(self.show_specific_data, index, button))
             
             self.buttons.append(button)
         
@@ -639,8 +640,16 @@ class StatisticWidget(QWidget):
         [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4],
         'Данные статистики.xlsx'
     )
-    def show_specific_data(self, index):
+    def show_specific_data(self, index, button):
     # Проверка, что индекс находится в пределах допустимых значений
+        for btn in self.buttons:
+            btn.setStyleSheet("text-align: left;")
+
+        # Подсвечиваем только нажатую кнопку
+        button.setStyleSheet("text-align: left; background-color: lightGreen;")
+
+        # Обновляем текущую активную кнопку
+        self.active_button = button
         if 0 <= index < len(self.label_texts):
             # Устанавливаем текущий индекс
             self.current_data_index = index
