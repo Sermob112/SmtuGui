@@ -243,21 +243,24 @@ class PurchasesWidget(QWidget):
         label_item.setText(label_text)
         label_item.setFlags(label_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEditable)
         label_font = QFont()
-        label_font.setPointSize(12)
+        label_font.setPointSize(10)
         label_item.setFont(label_font)
 
         value_item = QTableWidgetItem()
         value_item.setText(value_text)
         value_item.setFlags(value_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEditable)
         value_font = QFont()
-        value_font.setPointSize(12)
+        value_font.setPointSize(10)
         value_item.setFont(value_font)
+       
 
         self.table.setItem(row_position, 0, label_item)
         self.table.setItem(row_position, 1, value_item)
 
-        # Adjust row height
-        self.table.resizeRowToContents(row_position)
+        # # Adjust row height
+        self.table.resizeRowsToContents()
+        max_height = 40  # Установите желаемую максимальную высоту здесь
+        self.table.setRowHeight(row_position, min(max_height, self.table.rowHeight(row_position)))
 
     def add_section_to_table(self, section_text):
         row_position = self.table.rowCount()

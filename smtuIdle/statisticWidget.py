@@ -284,7 +284,8 @@ class StatisticWidget(QWidget):
             'Цена контракта 500 000-  1 000 000 тыс.руб.',
             'Цена контракта 200 000 - 500 000 тыс.руб.',
             'Цена контракта 100 000 - 200 000 тыс.руб.',
-            'Менее 100 тыс.руб'
+            'Менее 100 тыс.руб',
+            'Цены нет'
         ]
         # Создаем DataFrame
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.InitialMaxContractPrice) for purchase in purchases],
@@ -540,9 +541,7 @@ class StatisticWidget(QWidget):
         sum_value_total = sums.get('223-ФЗ', 0) + sums.get('44-ФЗ', 0)
         self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
 
-    def determine_price_range(self,row):
-    
-       pass
+
 
 
     def determine_NMCK_range(self,row):
@@ -555,7 +554,7 @@ class StatisticWidget(QWidget):
                 return 'Цена контракта ниже НМЦК и ЦКЕП на 1-5%'
             elif 5 <= row['ReductionNMC'] * 100<= 10:
                 return 'Цена контракта ниже НМЦК и ЦКЕП на 5-10%'
-            elif 10 <= row['ReductionNMC'] * 100<= 20:
+            elif 10 <= row['ReductionNMC'] * 100 <= 20:
                 return 'Цена контракта ниже НМЦК и ЦКЕП на 10-20%'
             else:
                 return 'Цена контракта ниже НМЦК и ЦКЕП более 20%'
@@ -596,8 +595,10 @@ class StatisticWidget(QWidget):
             return 'Цена контракта 200 000 - 500 000 тыс.руб.'
         elif 100000 <= row['InitialMaxContractPrice'] <= 200000:
             return 'Цена контракта 100 000 - 200 000 тыс.руб.'
-        else:
+        elif 100000 <= row['InitialMaxContractPrice']:
             return 'Менее 100 тыс.руб'
+        else:
+            return 'Нет цены'
         
     def show_current_data(self):
         # Очистка таблицы перед обновлением
