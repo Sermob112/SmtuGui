@@ -39,7 +39,8 @@ class Purchase(BaseModel):
     notification_link = CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
     quantity_units = IntegerField(null=True,verbose_name="Количество единиц")
     nmck_per_unit = IntegerField(null=True,verbose_name="НМЦК за единицу")
-    
+    nmck_file = CharField(null=True,verbose_name="Файл НМЦК", max_length=255)
+    protocol_file = CharField(null=True,verbose_name="Файл Протокола", max_length=255)
     # Добавленные поля
     TKPData = CharField(null=True, max_length=500, default="[]", verbose_name="Данные по ТКП")
     QueryCount = IntegerField(null=True,  default="Нет данных", verbose_name="Количество запросов")

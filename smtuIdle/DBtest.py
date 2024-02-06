@@ -156,6 +156,8 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Дата окончания заявки", str(current_purchase.ApplicationEndDate))
             self.add_row_to_table("Дата аукциона", str(current_purchase.AuctionDate))
             self.add_row_to_table("Извещение о закупке", str(current_purchase.notification_link))
+            self.add_row_to_table("файл НМЦК", str(current_purchase.nmck_file))
+            self.add_row_to_table("файл протокола", str(current_purchase.protocol_file))
             self.add_section_to_table("Определение НМЦК и ЦКЕИ")
             self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount))
             self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount))
