@@ -164,6 +164,10 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("файл НМЦК", str(current_purchase.nmck_file))
             self.add_row_to_table("файл протокола", str(current_purchase.protocol_file))
             self.add_section_to_table("Определение НМЦК и ЦКЕИ")
+            self.add_section_to_table("1.Определение НМЦК методом сопоставимых рыночных цен")
+            tkp_proposal_dict = json.loads(current_purchase.TKPData)
+            for key, value in tkp_proposal_dict.items():
+                    self.add_row_to_table(key, str(value))
             self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount))
             self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount))
             self.add_row_to_table("Среднее значение цены", str(current_purchase.AveragePrice))
@@ -173,9 +177,37 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Коэффициент вариации", str(current_purchase.CoefficientOfVariation))
             self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
             self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
-            
-           
-
+            self.add_section_to_table("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
+            nmc_1_proposal_dict = {}
+            if current_purchase.NMCK_1:
+                nmc_1_proposal_dict = json.loads(current_purchase.NMCK_1)
+            if not nmc_1_proposal_dict:
+                self.add_row_to_table("Цена судна приведенная к уровню цен года его поставки", "нет данных")
+            else:
+                for key, value in nmc_1_proposal_dict.items():
+                    self.add_row_to_table(key, str(value))
+                    
+            nmc_2_proposal_dict = {}
+            if current_purchase.NMCK_2:
+                nmc_2_proposal_dict = json.loads(current_purchase.NMCK_2)
+            if not nmc_2_proposal_dict:
+                self.add_row_to_table("Цена судна приведенная к уровню цен первого года периода строительства судна", "нет данных")
+            else:
+                for key, value in nmc_2_proposal_dict.items():
+                    self.add_row_to_table(key, str(value))
+                
+            nmc_3_proposal_dict = {}
+            if current_purchase.NMCK_3:
+                nmc_3_proposal_dict = json.loads(current_purchase.NMCK_3)
+            if not nmc_3_proposal_dict:
+                self.add_row_to_table("Цена судна приведенная к уровню цен текущих лет на периода строительства судна", "нет данных")
+            else:
+                for key, value in nmc_3_proposal_dict.items():
+                    self.add_row_to_table(key, str(value))
+            self.add_section_to_table("3.Определение НМЦК затратным методом")
+            self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
+            self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
+            self.add_section_to_table("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
             # Получаем связанные записи из модели Contract
             self.contracts = Contract.select().where(Contract.purchase == current_purchase)
             for contract in self.contracts:
