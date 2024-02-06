@@ -404,13 +404,27 @@ class PurchasesWidget(QWidget):
         ws = wb.active
         
         for row in range(self.table.rowCount()):
-            label_item = self.table.item(row, 0)
-            value_item = self.table.item(row, 1)
-            if label_item is not None and value_item is not None:
-                label_text = label_item.text()
-                value_text = value_item.text()
-                if label_text and value_text:  # Проверка на пустую строку
-                    ws.append([label_text, value_text])
+            item = self.table.item(row, 0)
+            if item is not None:
+                item_text = item.text()
+                if item_text.startswith("Описание закупки") or \
+                item_text.startswith("Определение НМЦК и ЦКЕИ") or \
+                item_text.startswith("Определение победителя") or \
+                item_text.startswith("Заключение контракта") or \
+                item_text.startswith("1.Определение НМЦК методом сопоставимых рыночных цен") or \
+                item_text.startswith("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании") or \
+                item_text.startswith("3.Определение НМЦК затратным методом") or \
+                item_text.startswith("4.Итоговое определение НМЦК с использованием нескольких методов"):
+                    ws.append([item_text])  # Добавляем заголовок раздела
+                else:
+                    label_item = self.table.item(row, 0)
+                    value_item = self.table.item(row, 1)
+                    if label_item is not None and value_item is not None:
+                        label_text = label_item.text()
+                        value_text = value_item.text()
+                        if label_text and value_text:  # Проверка на пустую строку
+                            ws.append([label_text, value_text])
+        
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
         self.purchases = Purchase.select()

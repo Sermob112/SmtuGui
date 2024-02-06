@@ -283,17 +283,15 @@ class Ui_MainWindow(QMainWindow):
         self.auth_window.show()
         self.close()
     def updatePurchaseLabel(self):
-        srecords, data, user = self.return_variabels()
-        self.purchaseLabel.setText(srecords)
-        self.purchaseLabel2.setText(data)
-    def export_to_excel_all(self):
-        file_dialog = QFileDialog(self)
-        file_dialog.setFileMode(QFileDialog.Directory)
-        self.purchases = Purchase.select()
-    def return_variabels(self):
         self.user = f"Пользователь: <b>{self.username}</b>"
         self.date = f"Дата: <b>{self.formatted_date}</b>"
         self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
+        self.purchaseLabel.setText(self.totalRecords)
+        self.purchaseLabel2.setText(self.date)
+    def return_variabels(self):
+        self.user = f"Пользователь {self.username}"
+        self.date = f"Дата {self.formatted_date}"
+        self.totalRecords = f"Закупок в БД {count_total_records()}"
         return self.totalRecords,self.date, self.user
     def export_to_excel_all(self):
         file_dialog = QFileDialog(self)
