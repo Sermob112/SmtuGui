@@ -205,9 +205,9 @@ class PurchasesWidget(QWidget):
                 for key, value in nmc_3_proposal_dict.items():
                     self.add_row_to_table(key, str(value))
             self.add_section_to_table("3.Определение НМЦК затратным методом")
-            self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket))
-            self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit))
-            self.add_section_to_table("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
+            self.add_row_to_table("Наименование организации", str(current_purchase.organization_name) if current_purchase.organization_name else "нет данных")
+            self.add_row_to_table("Дата расчета", str(current_purchase.organization_name_date) if current_purchase.organization_name_date else "нет данных")
+            self.add_row_to_table("Файл расчета", str(current_purchase.organization_name_file) if current_purchase.organization_name_file else "нет данных")
             # Получаем связанные записи из модели Contract
             self.contracts = Contract.select().where(Contract.purchase == current_purchase)
             for contract in self.contracts:
