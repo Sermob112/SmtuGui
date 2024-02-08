@@ -369,23 +369,24 @@ class PurchasesWidgetAll(QWidget):
             purchase_id = self.current_purchase.Id
             self.curr_shower = InsertWidgetCurrency(purchase_id)
             self.curr_shower.show()
+    
     def export_to_excel_clicked(self ):
         current_sort_option = self.sort_options.currentText()
-        search_input = self.selected_text if self.selected_text is not None else None
-        sort_options  = current_sort_option if current_sort_option is not None  else None
-        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order is not None  else None
-        min_date = self.min_data_input.date().toPython() if self.min_data_input.date().toPython() is not None  else None
-        max_date = self.max_data_input.date().toPython() if self.max_data_input.date().toPython() is not None  else None
-        min_price = self.min_price_input.text() if self.min_price_input.text() is not None  else None
-        max_price = self.max_price_input.text()  if self.max_price_input.text() is not None  else None
+        self.search_input = self.selected_text if self.selected_text is not None else None
+        self.sort_options  = current_sort_option if current_sort_option is not None  else None
+        self.sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order is not None  else None
+        self.min_date = self.min_data_input.date().toPython() if self.min_data_input.date().toPython() is not None  else None
+        self.max_date = self.max_data_input.date().toPython() if self.max_data_input.date().toPython() is not None  else None
+        self.min_price = self.min_price_input.text() if self.min_price_input.text() is not None  else None
+        self.max_price = self.max_price_input.text()  if self.max_price_input.text() is not None  else None
         filters = {
-        'search_input': search_input,
-        'filter_criteria': sort_options ,
-        'purchase_order': sort_by_putch_order,
-        'start_date': min_date,
-        'end_date': max_date,
-        'min_price': min_price,
-        'max_price': max_price,
+        'search_input': self.search_input,
+        'filter_criteria': self.sort_options ,
+        'purchase_order': self.sort_by_putch_order,
+        'start_date': self.min_date,
+        'end_date': self.max_date,
+        'min_price': self.min_price,
+        'max_price': self.max_price,
         
     }   
     
@@ -454,7 +455,15 @@ class PurchasesWidgetAll(QWidget):
         self.purchases_list = list(self.purchases)
         self.update()
         self.show_all_purchases()
-        
+    def return_filters_variabels(self):
+    
+        # search_input = self.selected_text if self.selected_text is not None else ""
+        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order.currentText() != "Сортировать по Закону"  else "Фильтр не приминен"
+        min_date = self.min_data_input.date().toPython() if self.min_data_input.date().toPython() is not None  else "Фильтр не применен"
+        max_date = self.max_data_input.date().toPython() if self.max_data_input.date().toPython() is not None  else "Фильтр не применен"
+        min_price = self.min_price_input.text() if self.min_price_input.text() is not None  else "Фильтр не применен"
+        max_price = self.max_price_input.text()  if self.max_price_input.text() is not None  else "Фильтр не применен"
+        return sort_by_putch_order,min_date,max_date,min_price,max_price
 
         
         
