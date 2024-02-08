@@ -264,7 +264,7 @@ class PurchasesWidgetAll(QWidget):
             )
         
         self.purchases = purchases_query_combined.order_by(order_by)
- 
+        
 
         self.purchases_list = list(self.purchases)
        
