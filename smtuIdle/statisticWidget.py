@@ -18,6 +18,9 @@ class StatisticWidget(QWidget):
         # Создаем лейбл
         self.label_text = "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП"
         self.label = QLabel(self.label_text)
+        self.label_filter_order = QLabel("Фильтры: ")
+        self.label_filter_data = QLabel("Фильтры: ")
+        self.label_filter_price = QLabel("Фильтры: ")
          # Создаем кнопки "Назад" и "Вперед"
         # btn_back = QPushButton("Назад", self)
         # btn_forward = QPushButton("Вперед", self)
@@ -60,9 +63,11 @@ class StatisticWidget(QWidget):
         # layout.addWidget(btn_analysis)
 
           # Список для хранения всех данных, которые  отобразить в таблице
-        self.all_data = []
-        self.update_data()
-
+        self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
+                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),
+                         self.analisNMCKReduce(),self.analyze_price_count(),self.analisOKPD2()]
+        
+        
         self.label_texts = [
             "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП",
             "Анализ формулировок, применяемых государственными заказчиками, при объявлении закупки",
@@ -109,12 +114,14 @@ class StatisticWidget(QWidget):
         
 
         #  вертикальный слой для метки и таблицы
-        vertical_layout = QVBoxLayout(self)
-        vertical_layout.addWidget(self.label)
-        vertical_layout.addWidget(self.table)
+        self.vertical_layout = QVBoxLayout(self)
+        self.filter_layout = QHBoxLayout(self)
+        self.vertical_layout.addLayout(self.filter_layout)
+        self.vertical_layout.addWidget(self.label)
+        self.vertical_layout.addWidget(self.table)
 
         # Добавьте вертикальный слой с меткой и таблицей в горизонтальный слой
-        main_layout.addLayout(vertical_layout)
+        main_layout.addLayout(self.vertical_layout)
 
  #  вертикальный слой для кнопок внизу
         button_layout = QVBoxLayout(self)
@@ -126,8 +133,8 @@ class StatisticWidget(QWidget):
         button_layout2.addWidget(self.toExcel)
         button_layout2.addWidget(self.Update)
         #  вертикальные слои с кнопками в горизонтальный слой
-        vertical_layout.addLayout(button_layout)
-        vertical_layout.addLayout(button_layout2)
+        self.vertical_layout.addLayout(button_layout)
+        self.vertical_layout.addLayout(button_layout2)
         #  основной макет для вашего виджета
         self.setLayout(main_layout)
         #  отображение данных
@@ -139,13 +146,22 @@ class StatisticWidget(QWidget):
         # self.analisPriceCount()
         # self.analyze_price_count()
         
-
+        
     def update_data(self):
-        self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
-                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count(),self.analisOKPD2()]
+        
         self.show_current_data()
         self.query = self.all_purchase.return_filtered_purchase()
+        sort_by_putch_order, min_date, max_date, min_price, max_price = self.all_purchase.return_filters_variabels()
+    
+       
+        
+        self.filter_layout.addWidget(self.label_filter_data)
+        self.filter_layout.addWidget(self.label_filter_order)
+        self.filter_layout.addWidget(self.label_filter_price)
+        
+        self.label_filter_data.setText(f"Фильтр по дате: с {min_date} по {max_date}")
+        self.label_filter_order.setText(f"Фильтр по закону:{sort_by_putch_order}")
+        self.label_filter_price.setText(f"Фильтр по цене:{min_price} - {max_price}")
 
     def analyze_price_count(self):
         coeff_range_order = [
