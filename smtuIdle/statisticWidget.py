@@ -9,9 +9,9 @@ import json
 from functools import partial
 
 class StatisticWidget(QWidget):
-    def __init__(self):
+    def __init__(self, all_purches):
         super().__init__()
-
+        self.all_purchase = all_purches
         self.init_ui()
 
     def init_ui(self):
@@ -60,9 +60,8 @@ class StatisticWidget(QWidget):
         # layout.addWidget(btn_analysis)
 
           # Список для хранения всех данных, которые  отобразить в таблице
-        self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
-                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count()]
+        self.all_data = []
+        self.update_data()
 
         self.label_texts = [
             "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП",
@@ -73,7 +72,8 @@ class StatisticWidget(QWidget):
             "Количество допущенных заявок на участие в закупке",
             "Количество отклоненных заявок на участие в закупке",
             "Соотношение НМЦК и ЦКЕП и цены контракта, заключенного по результатам конкурса",
-            "Анализ количества ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка"
+            "Анализ количества ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
+            "Анализ по классификации ОКП2"
         ]
         self.buttons = []
 
@@ -138,13 +138,14 @@ class StatisticWidget(QWidget):
         # self.analisQueryCount()
         # self.analisPriceCount()
         # self.analyze_price_count()
-    
+        
 
     def update_data(self):
         self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count()]
+                         self.analisNMCKReduce(),self.analyze_price_count(),self.analisOKPD2()]
         self.show_current_data()
+        
 
     def analyze_price_count(self):
         coeff_range_order = [
@@ -248,8 +249,9 @@ class StatisticWidget(QWidget):
       
       
     def analis(self):
+        query = self.all_purchase.return_filtered_purchase()
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
-        purchases = Purchase.select()
+        purchases = query.select()
         df = pd.DataFrame([(purchase.ProcurementMethod, purchase.PurchaseOrder) for purchase in purchases], columns=['ProcurementMethod', 'PurchaseOrder'])
         pivot_table = df.pivot_table(index='ProcurementMethod', columns='PurchaseOrder', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
@@ -258,13 +260,29 @@ class StatisticWidget(QWidget):
         pivot_table['Общий итог'] = row_totals
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
-
+    
         return pivot_table, column_sums 
+    
+    
     def analisNMSK(self):
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
         purchases = Purchase.select()
         df = pd.DataFrame([(purchase.AuctionSubject, purchase.PurchaseOrder) for purchase in purchases], columns=['AuctionSubject', 'PurchaseOrder'])
         pivot_table = df.pivot_table(index='AuctionSubject', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        column_sums = pivot_table.sum()
+        
+        row_totals = pivot_table.sum(axis=1)
+        pivot_table['Общий итог'] = row_totals
+        total_purchase_counts = column_sums.sum()
+        column_sums['Суммы'] = total_purchase_counts
+
+        return pivot_table, column_sums
+    
+    def analisOKPD2(self):
+        #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
+        purchases = Purchase.select()
+        df = pd.DataFrame([(purchase.OKPD2Classification, purchase.PurchaseOrder) for purchase in purchases], columns=['OKPD2Classification', 'PurchaseOrder'])
+        pivot_table = df.pivot_table(index='OKPD2Classification', columns='PurchaseOrder', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
         
         row_totals = pivot_table.sum(axis=1)
@@ -530,16 +548,7 @@ class StatisticWidget(QWidget):
         self.table.insertRow(row_position)
         self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
 
-        # Добавляем суммы значений из столбцов '223-ФЗ' и '44-ФЗ'
-        for col_index in range(1, self.table.columnCount() - 1):
-            column_name = self.table.horizontalHeaderItem(col_index).text()
-            sum_value = sums.get(column_name, 0)
-            self.table.setItem(row_position, col_index, QTableWidgetItem(str(sum_value)))
 
-        # Добавляем сумму значений '223-ФЗ' и '44-ФЗ' в последний столбец 'Общий итог'
-        last_col_index = self.table.columnCount() - 1
-        sum_value_total = sums.get('223-ФЗ', 0) + sums.get('44-ФЗ', 0)
-        self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
 
 
 
@@ -634,11 +643,12 @@ class StatisticWidget(QWidget):
         pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
         pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
         pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
+        pivot_tables_max_price5, column_sums_max_price5= self.analisOKPD2()
         self.save_to_excel_combined(
         [pivot_tables_purchase1, pivot_tables_purchase2, pivot_tables_purchase3, pivot_tables_purchase4, pivot_tables_purchase5],
         [column_sums_purchase1, column_sums_purchase2, column_sums_purchase3, column_sums_purchase4, column_sums_purchase5],
-        [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4],
-        [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4],
+        [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4,pivot_tables_max_price5],
+        [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4,column_sums_max_price5],
         'Данные статистики.xlsx'
     )
     def show_specific_data(self, index, button):

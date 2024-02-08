@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
-from playhouse.shortcuts import model_to_dict
+
 from datetime import date
 from models import Contract
 from PySide6.QtCore import Qt, QStringListModel
@@ -140,21 +140,14 @@ class InsertWidgetPanel(QWidget):
     
 
     def add_button_tkp_clicked(self):
-       
-        
             self.tkp_shower = InsertWidgetNMCK(self.purchase_id, self.db_window)
             self.tkp_shower.show()
     
-    def add_button_cia_clicked(self):
-  
-            
+    def add_button_cia_clicked(self):   
             self.cia_shower = InsertWidgetNMCK_3(self.purchase_id, self.db_window)
             self.cia_shower.show()
 
     def add_button_contract_clicked(self):
-        
-        
-   
             self.insert_cont = InsertWidgetNMCK_2(self.purchase_id, self.db_window)
             self.insert_cont.show()
     def add_button_4_clicked(self):

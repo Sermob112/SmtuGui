@@ -167,9 +167,14 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("файл протокола", str(current_purchase.protocol_file))
             self.add_section_to_table("Определение НМЦК и ЦКЕИ")
             self.add_section_to_table("1.Определение НМЦК методом сопоставимых рыночных цен")
-            tkp_proposal_dict = json.loads(current_purchase.TKPData)
-            for key, value in tkp_proposal_dict.items():
-                    self.add_row_to_table(key, str(value))
+            tkp_proposal_dict = {}
+            if current_purchase.TKPData:
+                tkp_proposal_dict = json.loads(current_purchase.TKPData)
+            if not tkp_proposal_dict:
+                self.add_row_to_table("ТКП", "нет данных")
+            else:
+                for key, value in tkp_proposal_dict.items():
+                        self.add_row_to_table(key, str(value))
             self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount))
             self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount))
             self.add_row_to_table("Среднее значение цены", str(current_purchase.AveragePrice))
