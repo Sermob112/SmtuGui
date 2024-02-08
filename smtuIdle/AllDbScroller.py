@@ -318,6 +318,10 @@ class PurchasesWidgetAll(QWidget):
         # Обработка выбора элемента из автозаполнения
         self.selected_text = text
 
+
+    def return_filtered_purchase(self):
+        return self.purchases
+
     def resetFilters(self):
         # Очищаем все поля ввода
         self.min_price_input.clear()

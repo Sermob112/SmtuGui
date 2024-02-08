@@ -220,7 +220,7 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page1)
         layout.addWidget(self.loadCsv)
           #Загрузка виджета статистического анализа
-        self.Statistic = StatisticWidget()
+        self.Statistic = StatisticWidget(self.purchaseViewerall)
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.Statistic)
 
