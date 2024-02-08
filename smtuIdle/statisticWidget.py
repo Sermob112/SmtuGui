@@ -260,7 +260,8 @@ class StatisticWidget(QWidget):
         pivot_table['Общий итог'] = row_totals
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
-    
+        # print(column_sums)
+        # print(pivot_table)
         return pivot_table, column_sums 
     
     
@@ -529,27 +530,90 @@ class StatisticWidget(QWidget):
     def clear_table(self):
         self.table.setRowCount(0)
 
-    def populate_table(self, data, sums):
-        # Очищаем таблицу перед обновлением
-        self.clear_table()
+    # def populate_table(self, data, sums):
+    #     # Очищаем таблицу перед обновлением
+    #     self.clear_table()
        
+    #     # Добавляем строки в таблицу
+    #     for index, row in data.iterrows():
+    #         row_position = self.table.rowCount()
+    #         self.table.insertRow(row_position)
+
+    #         # Заполняем ячейки в строке
+    #         self.table.setItem(row_position, 0, QTableWidgetItem(index))
+    #         for col_index, value in enumerate(row):
+    #             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
+
+    #     # Добавляем строку с суммами
+    #     row_position = self.table.rowCount()
+    #     self.table.insertRow(row_position)
+    #     self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
+
+    #     # Добавляем суммы значений из столбцов '223-ФЗ' и '44-ФЗ'
+    #     for col_index in range(1, self.table.columnCount() - 1):
+    #         column_name = self.table.horizontalHeaderItem(col_index).text()
+    #         sum_value = sums.get(column_name, 0)
+    #         self.table.setItem(row_position, col_index, QTableWidgetItem(str(sum_value)))
+
+    #     # Добавляем сумму значений '223-ФЗ' и '44-ФЗ' в последний столбец 'Общий итог'
+    #     last_col_index = self.table.columnCount() - 1
+    #     sum_value_total = sums.get('223-ФЗ', 0) + sums.get('44-ФЗ', 0)
+    #     self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
+
+    def populate_table(self, data, sums):
+    # Очищаем таблицу перед обновлением
+        self.clear_table()
+
+        # Получаем список всех уникальных законов
+        all_purchase_orders = set(data.columns.tolist())
+        all_purchase_orders.remove('Общий итог')
+
+        # Устанавливаем количество столбцов в таблице
+        num_columns = len(all_purchase_orders) + 2  # Плюс два для "Метод" и "Общий итог"
+        self.table.setColumnCount(num_columns)
+        
+        # Устанавливаем заголовки столбцов
+        header_labels = ["Метод"] + list(all_purchase_orders) + ["Общий итог"]
+        self.table.setHorizontalHeaderLabels(header_labels)
+
         # Добавляем строки в таблицу
         for index, row in data.iterrows():
             row_position = self.table.rowCount()
             self.table.insertRow(row_position)
 
             # Заполняем ячейки в строке
-            self.table.setItem(row_position, 0, QTableWidgetItem(index))
-            for col_index, value in enumerate(row):
+            self.table.setItem(row_position, 0, QTableWidgetItem(index))  # Метод
+            for col_index, purchase_order in enumerate(all_purchase_orders):
+                value = row.get(purchase_order, 0)  # Получаем значение из DataFrame, если оно есть, иначе 0
                 self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
+        for row_index, row_sum in enumerate(data['Общий итог']):
+            item = QTableWidgetItem(str(row_sum))
+            self.table.setItem(row_index, self.table.columnCount() - 1, item)
 
+      
         # Добавляем строку с суммами
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
         self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
 
+        # Инициализируем переменную для хранения общей суммы
+        sum_value_total = 0
 
+        # Проходим по всем столбцам, начиная со второго (индекс 1)
+        for col_index in range(1, self.table.columnCount()):
+            # Получаем заголовок столбца
+            column_name = self.table.horizontalHeaderItem(col_index).text()
+            # Получаем сумму для данного столбца из словаря с суммами
+            sum_value = sums.get(column_name, 0)
+            # Добавляем сумму к общей сумме
+            sum_value_total += sum_value
+            # Устанавливаем значение суммы для данного столбца в ячейку таблицы
+            self.table.setItem(row_position, col_index, QTableWidgetItem(str(sum_value)))
 
+        # Добавляем общую сумму значений в последний столбец 'Общий итог'
+        last_col_index = self.table.columnCount() - 1
+        self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
+    
 
 
 
