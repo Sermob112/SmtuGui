@@ -458,9 +458,9 @@ class PurchasesWidgetAll(QWidget):
     def return_filters_variabels(self):
     
         # search_input = self.selected_text if self.selected_text is not None else ""
-        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order.currentText() != "Сортировать по Закону"  else "Фильтр не приминен"
-        min_date = self.min_data_input.date().toPython() if self.min_data_input.date().toPython() is not None  else "Фильтр не применен"
-        max_date = self.max_data_input.date().toPython() if self.max_data_input.date().toPython() is not None  else "Фильтр не применен"
+        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order.currentText() != "Сортировать по Закону"  else "-"
+        min_date = self.min_data_input.date().toPython() if self.min_data_input.date().toPython() is not None  else "-"
+        max_date = self.max_data_input.date().toPython() if self.max_data_input.date().toPython() is not None  else "-"
         min_price = self.min_price_input.text() if self.min_price_input.text() is not None  else "Фильтр не применен"
         max_price = self.max_price_input.text()  if self.max_price_input.text() is not None  else "Фильтр не применен"
         return sort_by_putch_order,min_date,max_date,min_price,max_price

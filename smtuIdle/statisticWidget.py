@@ -139,7 +139,7 @@ class StatisticWidget(QWidget):
         self.setLayout(main_layout)
         #  отображение данных
         self.show_current_data()
-
+        self.highlight_first_button()
 
         self.setLayout(main_layout)
         # self.analisQueryCount()
@@ -148,13 +148,12 @@ class StatisticWidget(QWidget):
         
         
     def update_data(self):
-        
+        self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
+                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),
+                         self.analisNMCKReduce(),self.analyze_price_count(),self.analisOKPD2()]
         self.show_current_data()
         self.query = self.all_purchase.return_filtered_purchase()
         sort_by_putch_order, min_date, max_date, min_price, max_price = self.all_purchase.return_filters_variabels()
-    
-       
-        
         self.filter_layout.addWidget(self.label_filter_data)
         self.filter_layout.addWidget(self.label_filter_order)
         self.filter_layout.addWidget(self.label_filter_price)
@@ -730,12 +729,27 @@ class StatisticWidget(QWidget):
         pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
         pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
         pivot_tables_max_price5, column_sums_max_price5= self.analisOKPD2()
+        sort_by_putch_order, min_date, max_date, min_price, max_price = self.all_purchase.return_filters_variabels()
+        filters = []
+
+# Проверяем каждый фильтр на пустоту и добавляем непустые значения в список filters
+        if sort_by_putch_order:
+            filters.append("Фильтр по закону " + sort_by_putch_order)
+        if min_date:
+            filters.append("Фильтр по дате " + str(min_date))  # Преобразуем datetime.date в строку
+        if max_date:
+            filters.append(str(max_date))
+        if min_price:
+            filters.append("Фильтр по цене " + min_price)
+        if max_price:
+            filters.append(max_price)
+        file_name = 'Данные статистики по ' + ' '.join(filters) + '.xlsx'
         self.save_to_excel_combined(
         [pivot_tables_purchase1, pivot_tables_purchase2, pivot_tables_purchase3, pivot_tables_purchase4, pivot_tables_purchase5],
         [column_sums_purchase1, column_sums_purchase2, column_sums_purchase3, column_sums_purchase4, column_sums_purchase5],
         [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4,pivot_tables_max_price5],
         [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4,column_sums_max_price5],
-        'Данные статистики.xlsx'
+        file_name
     )
     def show_specific_data(self, index, button):
     # Проверка, что индекс находится в пределах допустимых значений
@@ -752,7 +766,11 @@ class StatisticWidget(QWidget):
             self.current_data_index = index
             self.show_current_data()
             self.label.setText(self.label_texts[self.current_data_index])
-
+    def highlight_first_button(self):
+    # Вызываем метод для подсветки первой кнопки
+        if self.buttons:
+            first_button = self.buttons[0]
+            self.show_specific_data(0, first_button)
 # if __name__ == "__main__":
 #     from PySide6.QtWidgets import QApplication
 #     import sys
