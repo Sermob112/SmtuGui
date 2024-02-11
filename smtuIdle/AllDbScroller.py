@@ -4,7 +4,7 @@ from playhouse.shortcuts import model_to_dict
 from datetime import date
 from models import Purchase, Contract, FinalDetermination,CurrencyRate
 from PySide6.QtCore import Qt, QStringListModel,Signal
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor,QIcon
 import sys, json
 from peewee import JOIN
 from InsertWidgetCurrency import InsertWidgetCurrency
@@ -106,12 +106,16 @@ class PurchasesWidgetAll(QWidget):
     
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.label)
+        icon_path = "C:/Users/Sergey/Desktop/Работа/SmtuGui/Pics/icons8-фильтр-ios-17-32.png"
         self.label.setAlignment(Qt.AlignHCenter)
-
+        icon = QIcon(icon_path)
+        
         # Добавляем кнопку "Применить фильтр"
         self.apply_filter_button = QPushButton("Применить фильтр", self)
+        self.apply_filter_button.setIcon(icon)
         self.apply_filter_button.clicked.connect(self.apply_filter)
         self.apply_filter_button.setFixedWidth(150)
+        
 
  
     
