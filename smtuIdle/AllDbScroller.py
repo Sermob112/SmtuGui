@@ -60,6 +60,15 @@ class PurchasesWidgetAll(QWidget):
         self.sort_by_putch_order.setFixedWidth(250)
         for order in unique_purchase_orders:
             self.sort_by_putch_order.addItem(str(order.PurchaseOrder))
+
+
+      
+        unique_purchase_OKPD2 = Purchase.select(Purchase.OKPD2Classification).distinct()
+        self.sort_by_putch_okpd2 = QComboBox(self)
+        self.sort_by_putch_okpd2.addItem("Сортировать по ОКПД2")
+        self.sort_by_putch_okpd2.setFixedWidth(250)
+        for order in unique_purchase_OKPD2:
+            self.sort_by_putch_okpd2.addItem(str(order.OKPD2Classification))
         # Создаем метки и поля для ввода минимальной и максимальной цены
         self.min_price_label = QLabel("Минимальная цена", self)
         self.min_price_input = QLineEdit(self)
@@ -106,7 +115,7 @@ class PurchasesWidgetAll(QWidget):
     
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.label)
-        icon_path = "C:/Users/Sergey/Desktop/Работа/SmtuGui/Pics/icons8-фильтр-ios-17-32.png"
+        icon_path = "Pics/icons8-фильтр-ios-17-32.png"
         self.label.setAlignment(Qt.AlignHCenter)
         icon = QIcon(icon_path)
         
@@ -127,6 +136,7 @@ class PurchasesWidgetAll(QWidget):
         # Добавляем выпадающее меню
         layout.addWidget(self.sort_options)
         layout.addWidget(self.sort_by_putch_order)
+        layout.addWidget(self.sort_by_putch_okpd2)
         # Создаем горизонтальный макет для минимальной и максимальной цены
         price_layout = QGridLayout()
         # Добавляем их в сетку
@@ -253,7 +263,11 @@ class PurchasesWidgetAll(QWidget):
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.PurchaseOrder ==  self.selected_order
             )
-       
+        self.selected_okpd = self.sort_by_putch_okpd2.currentText()
+        if  self.selected_okpd != "Сортировать по ОКПД2":
+            purchases_query_combined = purchases_query_combined.where(
+                Purchase.OKPD2Classification ==  self.selected_okpd
+            )
    
         keyword = self.selected_text
         
