@@ -3,7 +3,7 @@ from auth import *
 from PySide6.QtWidgets import *
 from initialize_db import initialize_database
 from MainWindow import Ui_MainWindow
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont,QIcon
 from PySide6.QtCore import Qt,QRect,QCoreApplication
 class AuthWindow(QWidget):
     def __init__(self):
@@ -38,7 +38,9 @@ class AuthWindow(QWidget):
         self.username_edit = QLineEdit("")
         self.username_edit.setPlaceholderText("Введите ваше имя пользователя")
         self.username_edit.setMaximumWidth(200)  # Установите максимальную ширину
-
+        lock_icon = QIcon("Pics/icons8-пользователь-30.png")  # Путь к вашей иконке
+        self.username_edit.addAction(lock_icon, QLineEdit.LeadingPosition)
+        
         self.password_label = QLabel("Пароль:")
         self.password_edit = QLineEdit()
         self.password_edit.setEchoMode(QLineEdit.Password)
@@ -48,6 +50,11 @@ class AuthWindow(QWidget):
         self.login_button = QPushButton("Войти")
         self.login_button.clicked.connect(self.authenticate)
         self.login_button.setFixedWidth(300)
+        lock_icon = QIcon("Pics/icons8-пароль-30.png")  # Путь к вашей иконке
+        self.password_edit.addAction(lock_icon, QLineEdit.LeadingPosition)
+        login_icon = QIcon("Pics/icons8-вход-в-систему,-в-кружке,-стрелка-вправо-30.png")
+        self.login_button.setIcon(login_icon)
+
         label_layout.addWidget(self.label)
         label_layout.setAlignment(Qt.AlignCenter)
         self.label.move(0, -100)

@@ -183,7 +183,7 @@ def insert_in_table_full(csv_file_path):
                 ContractCurrency =   row[63] if row[63]  else 'Нет данных'
                 OKDPClassification =  'Нет данных'
                 OKPDClassification =  'Нет данных'
-                OKPD2Classification = 'Нет данных'
+                OKPD2Classification = row[64] if row[64]  else 'Нет данных'
                 PositionCode = 'Нет данных'
                 CustomerName = row[5][:max_length] if row[5] else 'Нет данных'
                 ProcurementOrganization = 'Нет данных'
