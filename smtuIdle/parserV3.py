@@ -1,9 +1,8 @@
-import psycopg2
+
 import csv, json
 import datetime
 import pandas as pd
 import os
-import django
 import sqlite3
 from models import Purchase,Contract
 from peewee import SqliteDatabase

@@ -275,13 +275,22 @@ class Ui_MainWindow(QMainWindow):
                 button.setStyleSheet("")
     
     def exit(self):
-        # MainWindow.close()
+    # Записываем лог выхода пользователя
+        try:
+            user_log = UserLog.select().where(UserLog.username == self.username, UserLog.logout_time == None).get()
+            user_log.logout_time = datetime.now()
+            user_log.save()
+        except UserLog.DoesNotExist:
+            # Если запись о входе пользователя не найдена, не делаем ничего
+            pass
 
+        # Закрываем текущее главное окно
+        self.close()
+
+    # Открываем окно аутентификации
         from start import AuthWindow
         self.auth_window = AuthWindow()
-        self.close()
         self.auth_window.show()
-        self.close()
     def updatePurchaseLabel(self):
         self.user = f"Пользователь: <b>{self.username}</b>"
         self.date = f"Дата: <b>{self.formatted_date}</b>"
@@ -350,7 +359,27 @@ class Ui_MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
 
- 
+    def closeEvent(self, event):
+        # Обработка события закрытия главного окна
+        reply = QMessageBox.question(self, 'Message', "Вы уверены, что хотите закрыть приложение?",
+                                     QMessageBox.StandardButtons.Yes | QMessageBox.StandardButtons.No)
+
+        if reply == QMessageBox.StandardButton.Yes:
+            # Если пользователь подтвердил закрытие приложения, записываем лог выхода
+            self.write_logout_log()
+            event.accept()
+        else:
+            event.ignore()
+
+    def write_logout_log(self):
+        # Запись лога выхода пользователя при закрытии приложения
+        try:
+            last_login = UserLog.select().where(UserLog.username == self.username, UserLog.logout_time == None).get()
+            last_login.logout_time = datetime.now()
+            last_login.save()
+        except UserLog.DoesNotExist:
+            # Если запись о входе пользователя не найдена, не делаем ничего
+            pass
 
 # if __name__ == "__main__":
 #     import sys

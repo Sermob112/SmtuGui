@@ -1,4 +1,4 @@
-from peewee import Model, SqliteDatabase, BooleanField, AutoField, CharField, IntegerField, FloatField, DateField, ForeignKeyField, ManyToManyField
+from peewee import *
 from datetime import date
 from random import randint, uniform
 import sqlite3
@@ -163,6 +163,14 @@ class UserRole(Model):
     class Meta:
         database = db
 
+class UserLog(Model):
+    Id = AutoField(primary_key=True, verbose_name="Идентификатор")
+    username = CharField()
+    login_time = DateTimeField()
+    logout_time = DateTimeField(null=True)
+
+    class Meta:
+        database = db
 
 # db.connect()
 # db.create_tables([Purchase])

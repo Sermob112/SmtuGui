@@ -10,7 +10,7 @@ def initialize_database():
         db.connect()
         db_folder = "файлы бд"
         os.makedirs(db_folder, exist_ok=True)
-        db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate ])
+        db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate,UserLog ])
         admin_user = User.create(username='admin', password='sa')
         regular_user = User.create(username='user', password='sa')
         admin_role = Role.create(name='Администратор')
