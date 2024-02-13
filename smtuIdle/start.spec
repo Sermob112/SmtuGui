@@ -10,7 +10,7 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['statistic'],
+    excludes=[],
     noarchive=False,
 )
 pyz = PYZ(a.pure)
@@ -34,4 +34,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['C:\\Users\\Sergey\\Desktop\\Работа\\Иконки\\BD.ico'],
 )

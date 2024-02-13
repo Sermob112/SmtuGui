@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt, QStringListModel,Signal
-import statistics
+
 from peewee import *
 import pandas as pd
 from models import Purchase, Contract
