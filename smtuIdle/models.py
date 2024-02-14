@@ -148,7 +148,6 @@ class User(Model):
 class Role(BaseModel):
     id = AutoField(primary_key=True, verbose_name="Идентификатор")
     name = CharField(max_length=100)
-
     class Meta:
         database = db
 
@@ -157,8 +156,9 @@ class Role(BaseModel):
 
 
 class UserRole(Model):
-    user = ForeignKeyField(User, backref='roles')
-    role = ForeignKeyField(Role, backref='users')
+    id = AutoField(primary_key=True, verbose_name="Идентификатор")
+    user = ForeignKeyField(User, backref='roles',on_delete='CASCADE' )
+    role = ForeignKeyField(Role, backref='users',on_delete='CASCADE')
 
     class Meta:
         database = db
