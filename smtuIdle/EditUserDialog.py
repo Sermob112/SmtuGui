@@ -15,15 +15,10 @@ class EditUserDialog(QDialog):
         layout.addWidget(label1)
         layout.addWidget(self.role_combo)
 
-        label2 = QLabel("Введите имя пользователя")
+        label2 = QLabel("Изменить имя пользователя")
         self.username_edit = QLineEdit()
         layout.addWidget(label2)
         layout.addWidget(self.username_edit)
-
-        label3 = QLabel("Введите пароль")
-        self.upassword_edit = QLineEdit()
-        layout.addWidget(label3)
-        layout.addWidget(self.upassword_edit)
 
         self.edit_button = QPushButton('Редактировать')
         self.edit_button.clicked.connect(self.edit_user)
@@ -53,13 +48,10 @@ class EditUserDialog(QDialog):
         selected_role_id = self.role_combo.currentData()
         selected_role = Role.get(Role.id == selected_role_id)
         username = self.username_edit.text()
-        password = self.upassword_edit.text()
 
         if username:
-            # Обновите пользователя
             user = User.get(User.id == self.user_id)
             user.username = username
-            # Дополнительно обновите пароль, если это необходимо
             user.save()
 
             # Обновите роль пользователя
