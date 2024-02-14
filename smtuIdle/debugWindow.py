@@ -202,24 +202,27 @@ class DebugWidget(QWidget):
             self.load_user_roles()
 
     def edit_user_dialog(self):
-        dialog = EditUserDialog(self,user_id = 1)
-        user_id = 1
+        selected_rows = set(index.row() for index in self.users_table_widget.selectionModel().selectedIndexes())
+        if selected_rows:
+            selected_row = selected_rows.pop()
+            user_id_item = self.users_table_widget.item(selected_row, 0)
+            user_id = int(user_id_item.text())  
+        dialog = EditUserDialog(user_id)
         if dialog.exec() == QDialog.Accepted:
             self.load_user_roles()
 
     def delete_user(self):
-        selected_items = self.users_table_widget.selectedItems()
-        if selected_items:
-            # Получаем ID пользователя из первого столбца выбранной строки
-            selected_row = selected_items[0].row()
+        selected_rows = set(index.row() for index in self.users_table_widget.selectionModel().selectedIndexes())
+        if selected_rows:
+            selected_row = selected_rows.pop()
             user_id_item = self.users_table_widget.item(selected_row, 0)
-            user_id = int(user_id_item.text())  # Преобразуем текст в целочисленный ID пользователя
-            print(user_id)
-            # Здесь вы должны выполнить удаление пользователя с использованием полученного user_id
-            # Например, если вы используете Peewee ORM, это может выглядеть так:
+            user_id = int(user_id_item.text())  
             try:
                 user = User.get(User.id == user_id)
-                user.delete_instance()  # Удаляем пользователя из базы данных
+                # Находим и удаляем все связанные записи в таблице UserRole
+                UserRole.delete().where(UserRole.user == user).execute()
+                # Удаляем пользователя из базы данных
+                user.delete_instance()
                 # Обновляем отображение таблицы
                 self.load_user_roles()
                 QMessageBox.information(self, "Успешно", "Пользователь успешно удален.")
