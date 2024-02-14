@@ -66,7 +66,7 @@ class Ui_MainWindow(QMainWindow):
         self.dbLabel = QtWidgets.QLabel(self.rightTopWidget)
         current_date = datetime.now()
         self.formatted_date = current_date.strftime("%d-%m-%Y")
-        self.dbLabel.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
+        self.dbLabel.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
         
         self.user = f"Пользователь: <b>{self.username}</b>"
         self.date = f"Дата: <b>{self.formatted_date}</b>"
@@ -128,10 +128,10 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5.setObjectName("pushButton5")
         self.leftPanelLayout.addWidget(self.pushButton5)
         self.leftPanelLayout.addSpacing(50)
-        if self.username == "admin":
-            self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
-            self.pushButton6.setObjectName("pushButton6")
-            self.leftPanelLayout.addWidget(self.pushButton6)
+        
+        self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton6.setObjectName("pushButton6")
+        self.leftPanelLayout.addWidget(self.pushButton6)
   
         # Задаем фиксированную высоту и максимальное расстояние между кнопками
         button_height = 30  # Задайте желаемую высоту
@@ -143,8 +143,8 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton3.setFixedHeight(button_height)
         self.pushButton4.setFixedHeight(button_height)
         self.pushButton5.setFixedHeight(button_height)
-        if self.username == "admin":
-            self.pushButton6.setFixedHeight(button_height)
+     
+        self.pushButton6.setFixedHeight(button_height)
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
@@ -190,10 +190,10 @@ class Ui_MainWindow(QMainWindow):
         # self.page5 = QtWidgets.QWidget()
         # self.label5 = QtWidgets.QLabel(self.page5)
         # self.stackedWidget.addWidget(self.page5)
-        if self.username == "admin":
-            self.page6 = QtWidgets.QWidget()
-            self.label6 = QtWidgets.QLabel(self.page6)
-            self.stackedWidget.addWidget(self.page6)
+        
+        self.page6 = QtWidgets.QWidget()
+        self.label6 = QtWidgets.QLabel(self.page6)
+        self.stackedWidget.addWidget(self.page6)
 
 
          #Загрузка виджета БД 
@@ -205,10 +205,10 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
      
-        if self.username == "admin":
-            self.Debug = DebugWidget()
-            layout = QVBoxLayout(self.page6)
-            layout.addWidget(self.Debug)
+        
+        self.Debug = DebugWidget()
+        layout = QVBoxLayout(self.page6)
+        layout.addWidget(self.Debug)
         
         #Загрузка виджета ввод данных валюты
         self.Insert = CurrencyWidget()
@@ -233,10 +233,10 @@ class Ui_MainWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
         self.buttons = [
             self.pushButton0, self.pushButton1, self.pushButton2,
-            self.pushButton3, self.pushButton4, self.pushButton5
+            self.pushButton3, self.pushButton4, self.pushButton6,self.pushButton5
         ]
-        if self.username == "admin":
-            self.buttons.append(self.pushButton6)
+        
+       
         self.pushButton0.setStyleSheet("background-color: #4CAF50; color: white;")
         self.stackedWidget.currentChanged.connect(self.update_button_style)
         # Подключение сигналов к слотам
@@ -245,23 +245,21 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
         self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
-        if self.username == "admin":
-            self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
+        self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
         self.pushButton5.clicked.connect(self.export_to_excel_all)
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
         self.pushButton0.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton1.setText(_translate("MainWindow", "Ввод Закупок"))
         self.pushButton2.setText(_translate("MainWindow", "Просмотр закупок БД"))
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
         self.pushButton5.setText(_translate("MainWindow", "Экспорт всех данных БД в Excel"))
-        if self.username == "admin":
-            self.pushButton6.setText(_translate("MainWindow", "Отладка"))
+        self.pushButton6.setText(_translate("MainWindow", "Отладка"))
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         # self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
