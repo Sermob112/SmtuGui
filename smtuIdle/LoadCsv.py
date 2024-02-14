@@ -7,11 +7,12 @@ from parserV3 import *
 from PySide6.QtWidgets import QStyleFactory
 from CurrencyWindow import CurrencyWidget
 class CsvLoaderWidget(QWidget):
-    def __init__(self, main_window, curr_win , purchaseViewerallparent, parent=None):
+    def __init__(self, main_window, curr_win , purchaseViewerallparent,role, parent=None):
         super(CsvLoaderWidget, self).__init__(parent)
         self.main_window = main_window
         self.curr_wind = curr_win
         self.purchaseViewerall = purchaseViewerallparent
+        self.role = role
         # Добавляем счетчик новых записей как атрибут класса
         self.inserted_rows_count = 0
         self.repeat_count = 0
@@ -86,6 +87,14 @@ class CsvLoaderWidget(QWidget):
         self.update_second_table()
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+
+        if self.role == "Гость" or self.role == "Пользователь":
+            btn_delete_selected.hide()
+            btn_load_csv.hide()
+        else:
+            btn_delete_selected.show()
+            btn_load_csv.show()
     def show_file_dialog(self):
         file_dialog = QFileDialog(self)
         file_dialog.setNameFilter("CSV files (*.csv);;All files (*.*)")
