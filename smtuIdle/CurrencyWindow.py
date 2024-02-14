@@ -16,11 +16,12 @@ from PySide6.QtWidgets import QSizePolicy
 db = SqliteDatabase('test.db')
 cursor = db.cursor()
 class CurrencyWidget(QWidget):
-    def __init__(self):
+    def __init__(self, role):
         super().__init__()
         self.setWindowTitle("Окно ввода даных валюты")
         self.setGeometry(100, 100, 600, 400)
         self.selected_text = None
+        self.role = role
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
         self.table.setColumnCount(3)
@@ -30,13 +31,16 @@ class CurrencyWidget(QWidget):
         self.table.setShowGrid(True)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setVisible(True)
-        self.table.cellClicked.connect(self.handle_table_click)
+
+       
         self.populate_table()
            # Размещаем таблицу в вертикальном layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.table)
         self.setLayout(layout)
-
+        if self.role != "Гость":
+            self.table.cellClicked.connect(self.handle_table_click)
+ 
     def populate_table(self):
         self.table.setRowCount(0)
         purchases = Purchase.select().where((Purchase.Currency != 'RUB') & (Purchase.Currency.is_null(False)) &(Purchase.Currency != 'Нет данных')  )

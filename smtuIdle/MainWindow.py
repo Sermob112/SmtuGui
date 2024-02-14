@@ -43,7 +43,7 @@ class Ui_MainWindow(QMainWindow):
       
     
                 # Общий макет
-   
+    
         self.centralwidget = QtWidgets.QWidget(self)
         self.setCentralWidget(self.centralwidget)
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -63,18 +63,24 @@ class Ui_MainWindow(QMainWindow):
         self.logoutButton.clicked.connect(self.exit)
        
         self.userLabel = QtWidgets.QLabel(self.rightTopWidget)
+        self.RolLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.dbLabel = QtWidgets.QLabel(self.rightTopWidget)
         current_date = datetime.now()
         self.formatted_date = current_date.strftime("%d-%m-%Y")
         self.dbLabel.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
-        
+        user = User.get(User.username == self.username)
+        user_roles = UserRole.select().where(UserRole.user == user)
+        self.users_roles = [user_role.role.name for user_role in user_roles]
         self.user = f"Пользователь: <b>{self.username}</b>"
+        self.role = f"Роль: <b>{self.users_roles[0]}</b>"
         self.date = f"Дата: <b>{self.formatted_date}</b>"
         self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
         
         self.userLabel.setText(self.user)
+        self.RolLabel.setText(self.role)
         self.rightTopLayout.addWidget(self.dbLabel)
         self.rightTopLayout.addWidget(self.userLabel)
+        self.rightTopLayout.addWidget(self.RolLabel)
         self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
         self.purchaseLabel2 = QtWidgets.QLabel(self.rightTopWidget)
         
@@ -197,11 +203,11 @@ class Ui_MainWindow(QMainWindow):
 
 
          #Загрузка виджета БД 
-        self.purchaseViewerall = PurchasesWidgetAll(self)
+        self.purchaseViewerall = PurchasesWidgetAll(self,self.users_roles[0])
         layout = QVBoxLayout(self.page0)
         layout.addWidget(self.purchaseViewerall)
         #Загрузка виджета БД закупок
-        self.purchaseViewer = PurchasesWidget(self)
+        self.purchaseViewer = PurchasesWidget(self,self.users_roles[0])
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
      
@@ -211,16 +217,16 @@ class Ui_MainWindow(QMainWindow):
         layout.addWidget(self.Debug)
         
         #Загрузка виджета ввод данных валюты
-        self.Insert = CurrencyWidget()
+        self.Insert = CurrencyWidget(self.users_roles[0])
         layout = QVBoxLayout(self.page4)
         layout.addWidget(self.Insert)
 
             #Загрузка виджета CSV
-        self.loadCsv = CsvLoaderWidget(self, self.Insert,self.purchaseViewerall )
+        self.loadCsv = CsvLoaderWidget(self, self.Insert,self.purchaseViewerall,self.users_roles[0] )
         layout = QVBoxLayout(self.page1)
         layout.addWidget(self.loadCsv)
           #Загрузка виджета статистического анализа
-        self.Statistic = StatisticWidget(self.purchaseViewerall)
+        self.Statistic = StatisticWidget(self.purchaseViewerall,self.users_roles[0])
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.Statistic)
 
@@ -249,6 +255,16 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5.clicked.connect(self.export_to_excel_all)
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
+
+        if self.users_roles[0] == "Администратор":
+            self.pushButton6.show()
+        else:
+            self.pushButton6.hide()
+        
+        if self.users_roles[0] == "Гость":
+            self.pushButton5.hide()
+        else:
+            self.pushButton5.show()
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate

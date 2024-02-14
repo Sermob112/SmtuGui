@@ -22,11 +22,12 @@ cursor = db.cursor()
 
 
 class PurchasesWidgetAll(QWidget):
-    def __init__(self,main):
+    def __init__(self,main, role):
         super().__init__()
         # self.main_win = main_window
         self.selected_text = None
         self.main_window = main
+        self.role = role
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
         self.table.setColumnCount(9)
@@ -189,6 +190,11 @@ class PurchasesWidgetAll(QWidget):
         # self.purchases_list = list(self.purchases)
         # self.purchases_list = list(self.purchases)
         # self.show_current_purchase()
+
+        if self.role == "Гость":
+            self.toExcel.hide()
+        else:
+            self.toExcel.show()
     def show_all_purchases(self):
     # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)

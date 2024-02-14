@@ -9,11 +9,12 @@ import json
 from functools import partial
 
 class StatisticWidget(QWidget):
-    def __init__(self, all_purches):
+    def __init__(self, all_purches,role):
         super().__init__()
         self.all_purchase = all_purches
+        self.role = role
         self.init_ui()
-
+        
     def init_ui(self):
         # Создаем лейбл
         self.label_text = "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП"
@@ -44,24 +45,12 @@ class StatisticWidget(QWidget):
         self.table.setColumnWidth(0, 300)  # Ширина "Метод"
         self.table.setColumnWidth(1, 100)  # Ширина "223-ФЗ"
         self.table.setColumnWidth(2, 100)  # Ширина "44-ФЗ"
-        # Колонка "Общий итог" будет автоматически расширяться из-за QHeaderView.Stretch
-
         # Устанавливаем политику расширения таблицы
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-
         # Установите политику изменения размеров секций горизонтального заголовка
-        
         self.table.horizontalHeader().setStretchLastSection(True)
-
         # Установите политику изменения размеров колонок содержимого
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-
-        
-
- 
-       
-        # layout.addWidget(btn_analysis)
-
           # Список для хранения всех данных, которые  отобразить в таблице
         self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
@@ -145,7 +134,10 @@ class StatisticWidget(QWidget):
         # self.analisQueryCount()
         # self.analisPriceCount()
         # self.analyze_price_count()
-        
+        if self.role == "Гость":
+            self.toExcel.hide()
+        else:
+            self.toExcel.show()
         
     def update_data(self):
         self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 

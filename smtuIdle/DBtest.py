@@ -30,10 +30,11 @@ cursor = db.cursor()
 
 
 class PurchasesWidget(QWidget):
-    def __init__(self,main_window):
+    def __init__(self,main_window,role):
         super().__init__()
         self.main_win = main_window
         self.selected_text = None
+        self.role = role
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
         self.table.setColumnCount(2)
@@ -116,6 +117,17 @@ class PurchasesWidget(QWidget):
         # self.purchases_list = list(self.purchases)
         # self.purchases_list = list(self.purchases)
         # self.show_current_purchase()
+
+        if self.role == "Гость":
+            self.addButtonCurrency.hide()
+        else:
+            self.addButtonCurrency.show()
+
+        if self.role == "Гость" or self.role == "Пользователь":
+            self.addButtonContract.hide()
+        else:
+            self.addButtonCurrency.show()
+
     def show_current_purchase(self):
      
         if len(self.purchases_list) != 0:
