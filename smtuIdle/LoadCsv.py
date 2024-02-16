@@ -6,13 +6,16 @@ from statisticWidget import StatisticWidget
 from parserV3 import *
 from PySide6.QtWidgets import QStyleFactory
 from CurrencyWindow import CurrencyWidget
+from models import *
 class CsvLoaderWidget(QWidget):
-    def __init__(self, main_window, curr_win , purchaseViewerallparent,role, parent=None):
+    def __init__(self, main_window, curr_win , purchaseViewerallparent,role,user,changer, parent=None):
         super(CsvLoaderWidget, self).__init__(parent)
         self.main_window = main_window
         self.curr_wind = curr_win
         self.purchaseViewerall = purchaseViewerallparent
         self.role = role
+        self.user = user
+        self.changer = changer
         # Добавляем счетчик новых записей как атрибут класса
         self.inserted_rows_count = 0
         self.repeat_count = 0
@@ -101,24 +104,27 @@ class CsvLoaderWidget(QWidget):
 
         if file_dialog.exec_():
             selected_file = file_dialog.selectedFiles()[0]
-            self.inserted_rows_count, insert_errors = insert_in_table(selected_file)
+            self.inserted_rows_count, insert_errors = insert_in_table(selected_file,self.user,self.role)
             self.all_count = count_total_records()
             if not insert_errors:
                 QMessageBox.information(self, "Успех", "Данные успешно загружены")
                 self.update_table()
 
-                purchases = Purchase.select().where((Purchase.Currency != "RUB"))
-                if purchases:
+               
+                
                     # reply = QMessageBox.question(self, "Внимание", "Найдены записи с валютами не в рублях. Изменить валюту?", 
                     #                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                     
                     # if reply == QMessageBox.Yes:
                     #     self.cur = CurrencyWidget()
                     #     self.cur.show()
-                    self.curr_wind.populate_table()
-                    self.purchaseViewerall.resetFilters()
-                    reply = QMessageBox()
-                    self.update_second_table()
+                self.curr_wind.populate_table()
+                self.purchaseViewerall.resetFilters()
+                self.changer.populate_table()
+                reply = QMessageBox()
+                self.update_second_table()
+                purchases = Purchase.select().where((Purchase.Currency != "RUB"))
+                if purchases:
                     reply.setText("Найдены записи с валютами не в рублях. Изменить валюту?")
                     reply.addButton("нет", QMessageBox.NoRole)
                     reply.addButton("да", QMessageBox.YesRole)
@@ -128,7 +134,7 @@ class CsvLoaderWidget(QWidget):
                         self.cur.populate_table()
                         self.cur.show()
                     else:
-                       pass
+                        pass
 
                 
                 
@@ -199,7 +205,7 @@ class CsvLoaderWidget(QWidget):
         result = reply.exec()
         if result == 1:
             # if self.selected_ids:
-                success = delete_records_by_id(self.selected_ids)
+                success = delete_records_by_id(self.selected_ids, self.user,self.role)
                 if success:
                     QMessageBox.information(self, "Успех", f"Успешно удалены записи с номерами:, {self.selected_ids}")
                     # print("Успешно удалены записи с Id:", self.selected_ids)
@@ -211,6 +217,8 @@ class CsvLoaderWidget(QWidget):
                     self.update_table()
                     self.purchaseViewerall.resetFilters()
                     self.main_window.updatePurchaseLabel()
+                    self.changer.populate_table()
+
                 else:
                     QMessageBox.information(self, "Ошибка", "Ошибка при удалении записей")
                     # print("Ошибка при удалении записей")
