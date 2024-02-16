@@ -172,6 +172,17 @@ class UserLog(Model):
     class Meta:
         database = db
 
+class ChangedDate(Model):
+    id = AutoField(primary_key=True, verbose_name="Идентификатор")
+    RegistryNumber = CharField()
+    username = CharField()
+    chenged_time = DateTimeField()
+    PurchaseName = CharField(null=True)
+    Role = CharField(null=True)
+    Type = CharField(null=True)
+    class Meta:
+        database = db
+
 # db.connect()
 # db.create_tables([Purchase])
 # db.create_tables([Contract])

@@ -98,11 +98,12 @@ class DebugWidget(QWidget):
         btn_load_csv = QPushButton('Загрузить CSV файл отладки', self)
         btn_load_csv.setFixedWidth(300)  # Устанавливаем минимальную ширину кнопки
         buttonLAyout.addWidget(btn_load_csv, alignment=Qt.AlignTop)  # Устанавливаем выравнивание кнопки вверх
-
+        btn_load_csv.clicked.connect(self.show_file_dialog)
         # Кнопка удаления всех данных
         btn_delete_data = QPushButton('Удалить все данные БД', self)
         btn_delete_data.setFixedWidth(300)  # Устанавливаем минимальную ширину кнопки
-        buttonLAyout.addWidget(btn_delete_data, alignment=Qt.AlignTop)  # Устанавливаем выравнивание кнопки вверх
+        buttonLAyout.addWidget(btn_delete_data, alignment=Qt.AlignTop)
+        btn_delete_data.clicked.connect(self.delete_all_data)  # Устанавливаем выравнивание кнопки вверх
         layout.addLayout(buttonLAyout)
         return tab
 

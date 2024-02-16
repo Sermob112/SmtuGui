@@ -12,6 +12,7 @@ from statisticWidget import StatisticWidget
 from CurrencyWindow import CurrencyWidget
 from debugWindow import DebugWidget
 from AllDbScroller import PurchasesWidgetAll
+from ChangeLogWindow import ChangeLogWindow
 from parserV3 import count_total_records
 from datetime import datetime
 from parserV3 import export_to_excel_all
@@ -134,6 +135,9 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5.setObjectName("pushButton5")
         self.leftPanelLayout.addWidget(self.pushButton5)
         self.leftPanelLayout.addSpacing(50)
+        self.pushButton5_1 = QtWidgets.QPushButton(self.centralwidget)
+        self.leftPanelLayout.addWidget(self.pushButton5_1)
+        self.leftPanelLayout.addSpacing(50)
         
         self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton6.setObjectName("pushButton6")
@@ -149,7 +153,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton3.setFixedHeight(button_height)
         self.pushButton4.setFixedHeight(button_height)
         self.pushButton5.setFixedHeight(button_height)
-     
+        self.pushButton5_1.setFixedHeight(button_height)
         self.pushButton6.setFixedHeight(button_height)
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
@@ -193,9 +197,9 @@ class Ui_MainWindow(QMainWindow):
         self.label4 = QtWidgets.QLabel(self.page4)
         self.stackedWidget.addWidget(self.page4)
 
-        # self.page5 = QtWidgets.QWidget()
-        # self.label5 = QtWidgets.QLabel(self.page5)
-        # self.stackedWidget.addWidget(self.page5)
+        self.page5 = QtWidgets.QWidget()
+        self.label5 = QtWidgets.QLabel(self.page5)
+        self.stackedWidget.addWidget(self.page5)
         
         self.page6 = QtWidgets.QWidget()
         self.label6 = QtWidgets.QLabel(self.page6)
@@ -220,9 +224,12 @@ class Ui_MainWindow(QMainWindow):
         self.Insert = CurrencyWidget(self.users_roles[0])
         layout = QVBoxLayout(self.page4)
         layout.addWidget(self.Insert)
-
+         #Загрузка виджета изминений бд
+        self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
+        layout = QVBoxLayout(self.page5)
+        layout.addWidget(self.ChangeWindow)
             #Загрузка виджета CSV
-        self.loadCsv = CsvLoaderWidget(self, self.Insert,self.purchaseViewerall,self.users_roles[0] )
+        self.loadCsv = CsvLoaderWidget(self, self.Insert,self.purchaseViewerall,self.users_roles[0],self.username,self.ChangeWindow )
         layout = QVBoxLayout(self.page1)
         layout.addWidget(self.loadCsv)
           #Загрузка виджета статистического анализа
@@ -230,6 +237,7 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.Statistic)
 
+       
 
         self.purchaseViewerall.window = self
         self.horizontalLayout.addWidget(self.stackedWidget)
@@ -239,7 +247,7 @@ class Ui_MainWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
         self.buttons = [
             self.pushButton0, self.pushButton1, self.pushButton2,
-            self.pushButton3, self.pushButton4, self.pushButton6,self.pushButton5
+            self.pushButton3, self.pushButton4,self.pushButton5_1, self.pushButton6,self.pushButton5
         ]
         
        
@@ -251,8 +259,10 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
         self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
-        self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
+        
         self.pushButton5.clicked.connect(self.export_to_excel_all)
+        self.pushButton5_1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
+        self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(6))
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -275,6 +285,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
         self.pushButton5.setText(_translate("MainWindow", "Экспорт всех данных БД в Excel"))
+        self.pushButton5_1.setText(_translate("MainWindow", "Панель изминений"))
         self.pushButton6.setText(_translate("MainWindow", "Отладка"))
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))

@@ -4,7 +4,7 @@ import datetime
 import pandas as pd
 import os
 import sqlite3
-from models import Purchase,Contract
+from models import *
 from peewee import SqliteDatabase
 # hostname = "localhost"
 # # hostname = "db"
@@ -21,7 +21,7 @@ db = SqliteDatabase('test.db')
 def connector():
     connection = sqlite3.connect('test.db')
     return connection
-def insert_in_table(csv_file_path):
+def insert_in_table(csv_file_path, user,role):
     errors = []
     inserted_rows = 0 
     try:
@@ -110,7 +110,7 @@ def insert_in_table(csv_file_path):
                     )
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
-               
+                
                 data = (
                     purchase_date, registry_number, procurement_method, purchase_name,
                     auction_subject, purchase_identification_code, lot_number, lot_name,
@@ -121,6 +121,16 @@ def insert_in_table(csv_file_path):
                     datetime.datetime.strftime(AuctionDate, '%Y-%m-%d') if AuctionDate else None
 
                      )
+                
+                changed_date = ChangedDate(
+                    RegistryNumber=registry_number,
+                    username=user,
+                    chenged_time=datetime.datetime.now(),
+                    PurchaseName=purchase_name,
+                    Role=role,
+                    Type='Добавлены новая запись'
+                )
+                changed_date.save()
                 cursor.execute(sql, data)
                 inserted_rows += cursor.rowcount
         
@@ -908,7 +918,7 @@ def count_total_records():
 
 
 # print(count_total_records())
-def delete_records_by_id(record_ids):
+def delete_records_by_id(record_ids, user,role):
     try:
         # Подключение к базе данных
         connection = connector()
@@ -917,6 +927,16 @@ def delete_records_by_id(record_ids):
         query = Purchase.delete().where(Purchase.Id.in_(record_ids))
         for record_id in record_ids:
             purchase = Purchase.get(Purchase.Id == record_id)
+
+            changed_date = ChangedDate(
+                    RegistryNumber=purchase.RegistryNumber,
+                    username=user,
+                    chenged_time=datetime.datetime.now(),
+                    PurchaseName=purchase.PurchaseName,
+                    Role=role,
+                    Type='Удалена запись'
+                )
+            changed_date.save()
             purchase.delete_instance(recursive=True)
         query.execute()
 
