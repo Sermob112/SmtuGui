@@ -2,7 +2,8 @@ from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 from datetime import date
-from models import Purchase
+from models import Purchase,ChangedDate
+import datetime
 from PySide6.QtCore import Qt, QStringListModel
 from PySide6.QtGui import *
 import sys, json
@@ -10,15 +11,19 @@ import statistics
 import pandas as pd
 import shutil
 import os
+
 db = SqliteDatabase('test.db')
 
 class InsertWidgetNMCK(QWidget):
-    def __init__(self,purchase_id,db_wind):
+    def __init__(self,purchase_id,db_wind,role,user,changer):
         
         super().__init__()
         self.tkp_data = {}
         self.purchase_id = purchase_id
         self.db_window = db_wind
+        self.role = role
+        self.user = user
+        self.changer = changer
         self.setWindowTitle("1. Ввод данных - Метод сопоставимых рыночных цен (анализ рынка)")
         self.setGeometry(100, 100, 600, 200)
         # Создаем лейблы
@@ -84,7 +89,7 @@ class InsertWidgetNMCK(QWidget):
         if num_fields > 10:
             num_fields = 10
         elif num_fields < 0:
-            num_fields = 1
+            num_fields = 2
 
         # Удаляем все существующие поля ввода из формы
         self.clear_layout(self.form_layout)
@@ -146,6 +151,8 @@ class InsertWidgetNMCK(QWidget):
                             # notification_link=destination_path if destination_path else "нет данных",
                             ).where(Purchase.Id == self.purchase_id)
         try:
+            self.updateLog()
+            self.changer.populate_table()
             # Попытка сохранения данных
             purchase.execute()
         
@@ -166,6 +173,20 @@ class InsertWidgetNMCK(QWidget):
             if widget is not None:
                 widget.setParent(None)
                 widget.deleteLater()
+
+    def updateLog(self):
+        purchase = Purchase.get(Purchase.Id == self.purchase_id)
+                
+       
+        changed_date = ChangedDate(
+            RegistryNumber=purchase.RegistryNumber,
+            username=self.user,
+            chenged_time=datetime.datetime.now(),
+            PurchaseName=purchase.PurchaseName,
+            Role=self.role,
+            Type=f'Добавлены данные  Метод сопоставимых рыночных цен'
+        )
+        changed_date.save()
     def show_message(self, title, message):
         msg_box = QMessageBox()
         msg_box.setWindowTitle(title)

@@ -2,23 +2,27 @@ from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
 from datetime import date
-from models import Purchase
+from models import Purchase, ChangedDate
 from PySide6.QtCore import Qt, QStringListModel
 from PySide6.QtGui import *
 import sys, json
 import statistics
 import pandas as pd
 import shutil
+import datetime
 import os
 db = SqliteDatabase('test.db')
 
 class InsertWidgetNMCK_2(QWidget):
-    def __init__(self,purchase_id,db_wind):
+    def __init__(self,purchase_id,db_wind,role,user,changer):
         
         super().__init__()
         self.tkp_data = {}
         self.purchase_id = purchase_id
         self.db_window = db_wind
+        self.role = role
+        self.user = user
+        self.changer = changer
         self.setWindowTitle("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
         self.setGeometry(100, 100, 600, 200)
         # Создаем лейблы
@@ -167,6 +171,8 @@ class InsertWidgetNMCK_2(QWidget):
                             ).where(Purchase.Id == self.purchase_id)
         try:
             # Попытка сохранения данных
+            self.updateLog()
+            self.changer.populate_table()
             purchase.execute()
         
             db.close()
@@ -191,6 +197,19 @@ class InsertWidgetNMCK_2(QWidget):
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
         msg_box.exec()
+    def updateLog(self):
+        purchase = Purchase.get(Purchase.Id == self.purchase_id)
+                
+       
+        changed_date = ChangedDate(
+            RegistryNumber=purchase.RegistryNumber,
+            username=self.user,
+            chenged_time=datetime.datetime.now(),
+            PurchaseName=purchase.PurchaseName,
+            Role=self.role,
+            Type=f'Добавлены данные по Определение НМЦК методом сопоставимых рыночных цен (анализа рынка)'
+        )
+        changed_date.save()
 
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)

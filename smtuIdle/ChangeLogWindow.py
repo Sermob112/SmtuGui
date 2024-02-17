@@ -25,13 +25,17 @@ class ChangeLogWindow(QWidget):
         # Создаем таблицу для отображения данных
         self.table = QTableWidget()
         self.table.setColumnCount(7)
-        self.table.setHorizontalHeaderLabels(["Идентификатор", "Операция","Реестровый номер", "Пользователь", "Дата изменения", "Наименование закупки", "Роль"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setHorizontalHeaderLabels(["Идентификатор", "Операция","Реестровый номер закупки", "Пользователь", "Дата изменения", "Наименование закупки", "Роль"])
+    
+        self.table.horizontalHeader().setStretchLastSection(True) # Растягиваем вторую колонку на оставшееся пространство
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        for i in range(self.table.columnCount()):
+            self.table.horizontalHeader().setSectionResizeMode(i, QHeaderView.ResizeToContents)
         self.table.setShowGrid(True)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setVisible(True)
-
+        self.table.setWordWrap(True)
+        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
        
         self.populate_table()
 
