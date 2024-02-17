@@ -30,11 +30,13 @@ cursor = db.cursor()
 
 
 class PurchasesWidget(QWidget):
-    def __init__(self,main_window,role):
+    def __init__(self,main_window,role, user, changer):
         super().__init__()
         self.main_win = main_window
         self.selected_text = None
         self.role = role
+        self.user = user
+        self.changer = changer
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
         self.table.setColumnCount(2)
@@ -347,7 +349,8 @@ class PurchasesWidget(QWidget):
         if len(self.purchases_list) != 0:
             self.current_purchase = self.purchases_list[self.current_position]
             purchase_id = self.current_purchase.Id
-            self.insert_cont = InsertWidgetPanel(purchase_id,self)
+     
+            self.insert_cont = InsertWidgetPanel(purchase_id,self,self.role,self.user,self.changer)
             self.insert_cont.show()
     
     def open_file(self, item):

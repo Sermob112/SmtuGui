@@ -204,14 +204,17 @@ class Ui_MainWindow(QMainWindow):
         self.page6 = QtWidgets.QWidget()
         self.label6 = QtWidgets.QLabel(self.page6)
         self.stackedWidget.addWidget(self.page6)
-
+        #Загрузка виджета изминений бд
+        self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
+        layout = QVBoxLayout(self.page5)
+        layout.addWidget(self.ChangeWindow)
 
          #Загрузка виджета БД 
         self.purchaseViewerall = PurchasesWidgetAll(self,self.users_roles[0])
         layout = QVBoxLayout(self.page0)
         layout.addWidget(self.purchaseViewerall)
         #Загрузка виджета БД закупок
-        self.purchaseViewer = PurchasesWidget(self,self.users_roles[0])
+        self.purchaseViewer = PurchasesWidget(self,self.users_roles[0],self.username,self.ChangeWindow)
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
      
@@ -224,10 +227,7 @@ class Ui_MainWindow(QMainWindow):
         self.Insert = CurrencyWidget(self.users_roles[0])
         layout = QVBoxLayout(self.page4)
         layout.addWidget(self.Insert)
-         #Загрузка виджета изминений бд
-        self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
-        layout = QVBoxLayout(self.page5)
-        layout.addWidget(self.ChangeWindow)
+         
             #Загрузка виджета CSV
         self.loadCsv = CsvLoaderWidget(self, self.Insert,self.purchaseViewerall,self.users_roles[0],self.username,self.ChangeWindow )
         layout = QVBoxLayout(self.page1)

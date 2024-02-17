@@ -8,11 +8,11 @@ from PySide6.QtGui import *
 import sys, json
 import statistics
 import pandas as pd
-from models import Purchase, Contract
+from models import Purchase, Contract,ChangedDate
 import os
 import shutil
 from peewee import DoesNotExist
-
+import datetime
 from InsertWidgetNMCK import InsertWidgetNMCK
 from InsertWidgetCEIA import InsertWidgetCEIA
 from InsertWidgetNMCK_2 import InsertWidgetNMCK_2
@@ -21,11 +21,14 @@ from InsertWidgetNMCK_4 import InsertWidgetNMCK_4
 db = SqliteDatabase('test.db')
 
 class InsertWidgetPanel(QWidget):
-    def __init__(self, purchase_id,db_wind):
+    def __init__(self, purchase_id, db_wind,role,user,changer ):
         super().__init__()
         self.tkp_data = {}
         self.purchase_id = purchase_id
         self.db_window = db_wind
+        self.role = role
+        self.user = user
+        self.changer = changer
         # Создаем лейблы
         self.setWindowTitle("Добавить НМЦК")
         self.setGeometry(100, 100, 900, 300)
@@ -140,19 +143,19 @@ class InsertWidgetPanel(QWidget):
     
 
     def add_button_tkp_clicked(self):
-            self.tkp_shower = InsertWidgetNMCK(self.purchase_id, self.db_window)
+            self.tkp_shower = InsertWidgetNMCK(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             self.tkp_shower.show()
     
     def add_button_cia_clicked(self):   
-            self.cia_shower = InsertWidgetNMCK_3(self.purchase_id, self.db_window)
+            self.cia_shower = InsertWidgetNMCK_3(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             self.cia_shower.show()
 
     def add_button_contract_clicked(self):
-            self.insert_cont = InsertWidgetNMCK_2(self.purchase_id, self.db_window)
+            self.insert_cont = InsertWidgetNMCK_2(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             self.insert_cont.show()
     def add_button_4_clicked(self):
 
-            self.insert_cont = InsertWidgetNMCK_4(self.purchase_id, self.db_window)
+            self.insert_cont = InsertWidgetNMCK_4(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             self.insert_cont.show()
 
     def browse_file_NMCK(self):
@@ -172,6 +175,8 @@ class InsertWidgetPanel(QWidget):
             try:
                 Purchase.update(nmck_file=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
                 db.close()
+                self.updateLog(destination_path)
+                self.changer.populate_table()
                 self.db_window.reload_data_id(self.purchase_id)
                 self.db_window.show_current_purchase()
                 # Выводим сообщение об успешном сохранении
@@ -195,9 +200,11 @@ class InsertWidgetPanel(QWidget):
                 pass
             try:
                 Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
-                db.close()
+                self.updateLog(destination_path)
+                self.changer.populate_table()
                 self.db_window.reload_data_id(self.purchase_id)
                 self.db_window.show_current_purchase()
+                db.close()
                 # Выводим сообщение об успешном сохранении
                 self.show_message("Успех", "Данные успешно добавлены")
             except Exception as e:
@@ -221,13 +228,17 @@ class InsertWidgetPanel(QWidget):
                 try:
                     Contract.get(Contract.purchase == self.purchase_id)
                     Contract.update(ContractFile= destination_path if destination_path else "нет данных").where(Contract.purchase == self.purchase_id).execute()
-                except DoesNotExist:
-                    Contract.create( purchase = self.purchase_id,ContractFile= destination_path if destination_path else "нет данных")
-                db.close()
-                self.db_window.reload_data_id(self.purchase_id)
-                self.db_window.show_current_purchase()
-                # Выводим сообщение об успешном сохранении
-                self.show_message("Успех", "Данные успешно добавлены")
+                    self.updateLog(destination_path)
+                    self.changer.populate_table()
+                    db.close()
+                    self.db_window.reload_data_id(self.purchase_id)
+                    self.db_window.show_current_purchase()
+                    self.show_message("Успех", "Данные успешно добавлены")
+                except :
+                    
+                    # Contract.create( purchase = self.purchase_id,ContractFile= destination_path if destination_path else "нет данных")
+         
+                    self.show_message("Внимание", "Невозможно добавить файл контракта, когда не внесены данные по контракту")
             except Exception as e:
                 self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
 
@@ -250,11 +261,27 @@ class InsertWidgetPanel(QWidget):
                 db.close()
                 self.db_window.reload_data_id(self.purchase_id)
                 self.db_window.show_current_purchase()
+                self.updateLog(destination_path)
+                self.changer.populate_table()
                 # Выводим сообщение об успешном сохранении
                 self.show_message("Успех", "Данные успешно добавлены")
             except Exception as e:
                 self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
-               
+
+    
+    def updateLog(self,destination_path):
+        purchase = Purchase.get(Purchase.Id == self.purchase_id)
+                
+       
+        changed_date = ChangedDate(
+            RegistryNumber=purchase.RegistryNumber,
+            username=self.user,
+            chenged_time=datetime.datetime.now(),
+            PurchaseName=purchase.PurchaseName,
+            Role=self.role,
+            Type=f'Добавлен файл {destination_path}'
+        )
+        changed_date.save()    
     def show_message(self, title, message):
         msg_box = QMessageBox()
         msg_box.setWindowTitle(title)
