@@ -146,9 +146,13 @@ class InsertWidgetNMCK_4(QWidget):
         os.makedirs(self.db_folder, exist_ok=True)
         try:
             source_path = self.notification_link_edit.text()
-            absolute_db_folder = os.path.abspath(self.db_folder)
-        
-            destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+            purchase = Purchase.get(Purchase.Id == self.purchase_id)
+            purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+            if not os.path.exists(purchase_folder):
+                os.makedirs(purchase_folder)
+            # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+            destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+            destination_path = os.path.basename(destination_path_1)
             shutil.copy2(source_path, destination_path)
         except:
             pass
