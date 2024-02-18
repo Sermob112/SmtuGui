@@ -166,9 +166,14 @@ class InsertWidgetPanel(QWidget):
         if file_path:
             try:
                 source_path = file_path
-                absolute_db_folder = os.path.abspath(self.db_folder)
-            
-                destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                # absolute_db_folder = os.path.abspath(self.db_folder)
+                purchase = Purchase.get(Purchase.Id == self.purchase_id)
+                purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+                if not os.path.exists(purchase_folder):
+                    os.makedirs(purchase_folder)
+                # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+                destination_path = os.path.basename(destination_path_1)
                 shutil.copy2(source_path, destination_path)
             except:
                 pass
@@ -192,10 +197,19 @@ class InsertWidgetPanel(QWidget):
         if file_path:
             try:
                 source_path = file_path
-                absolute_db_folder = os.path.abspath(self.db_folder)
-            
-                destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
-                shutil.copy2(source_path, destination_path)
+                purchase = Purchase.get(Purchase.Id == self.purchase_id)
+                purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+
+                # Создаем папку, если ее нет
+                if not os.path.exists(purchase_folder):
+                    os.makedirs(purchase_folder)
+
+                # Определяем путь для копирования файла
+                destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+                destination_path = os.path.basename(destination_path_1)
+
+                # Копируем файл
+                shutil.copy2(source_path, destination_path_1)
             except:
                 pass
             try:
@@ -217,10 +231,15 @@ class InsertWidgetPanel(QWidget):
         
         if file_path:
             try:
+               
                 source_path = file_path
-                absolute_db_folder = os.path.abspath(self.db_folder)
-            
-                destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                purchase = Purchase.get(Purchase.Id == self.purchase_id)
+                purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+                if not os.path.exists(purchase_folder):
+                    os.makedirs(purchase_folder)
+                # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+                destination_path = os.path.basename(destination_path_1)
                 shutil.copy2(source_path, destination_path)
             except:
                 pass
@@ -250,9 +269,13 @@ class InsertWidgetPanel(QWidget):
         if file_path:
             try:
                 source_path = file_path
-                absolute_db_folder = os.path.abspath(self.db_folder)
-            
-                destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                purchase = Purchase.get(Purchase.Id == self.purchase_id)
+                purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+                if not os.path.exists(purchase_folder):
+                    os.makedirs(purchase_folder)
+                # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+                destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+                destination_path = os.path.basename(destination_path_1)
                 shutil.copy2(source_path, destination_path)
             except:
                 pass
