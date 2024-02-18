@@ -206,34 +206,41 @@ class Ui_MainWindow(QMainWindow):
         self.stackedWidget.addWidget(self.page6)
         #Загрузка виджета изминений бд
         self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
+        self.ChangeWindow.setParent(self)
         layout = QVBoxLayout(self.page5)
         layout.addWidget(self.ChangeWindow)
 
          #Загрузка виджета БД 
         self.purchaseViewerall = PurchasesWidgetAll(self,self.users_roles[0])
+        self.purchaseViewerall.setParent(self)
         layout = QVBoxLayout(self.page0)
         layout.addWidget(self.purchaseViewerall)
         #Загрузка виджета БД закупок
         self.purchaseViewer = PurchasesWidget(self,self.users_roles[0],self.username,self.ChangeWindow)
+        self.purchaseViewer.setParent(self)
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
      
         
         self.Debug = DebugWidget()
+        self.Debug.setParent(self)
         layout = QVBoxLayout(self.page6)
         layout.addWidget(self.Debug)
         
         #Загрузка виджета ввод данных валюты
         self.Insert = CurrencyWidget(self.users_roles[0])
+        self.Insert.setParent(self)
         layout = QVBoxLayout(self.page4)
         layout.addWidget(self.Insert)
          
             #Загрузка виджета CSV
         self.loadCsv = CsvLoaderWidget(self, self.Insert,self.purchaseViewerall,self.users_roles[0],self.username,self.ChangeWindow )
+        self.loadCsv.setParent(self)
         layout = QVBoxLayout(self.page1)
         layout.addWidget(self.loadCsv)
           #Загрузка виджета статистического анализа
         self.Statistic = StatisticWidget(self.purchaseViewerall,self.users_roles[0])
+        self.Statistic.setParent(self)
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.Statistic)
 
