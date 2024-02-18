@@ -321,7 +321,11 @@ class PurchasesWidget(QWidget):
         value_font = QFont()
         value_font.setPointSize(10)
         value_item.setFont(value_font)
-       
+        if label_text == "файл НМЦК" or label_text == "файл протокола":
+            if value_text != "Нет данных":
+                # Установка цвета фона только для нужных ячеек
+                label_item.setBackground(QColor(200, 255, 200))  # Светло-зеленый
+                value_item.setBackground(QColor(200, 255, 200))  # Светло-зеленый
 
         self.table.setItem(row_position, 0, label_item)
         self.table.setItem(row_position, 1, value_item)
@@ -351,6 +355,7 @@ class PurchasesWidget(QWidget):
             purchase_id = self.current_purchase.Id
      
             self.insert_cont = InsertWidgetPanel(purchase_id,self,self.role,self.user,self.changer)
+            # self.insert_cont.setParent(self)
             self.insert_cont.show()
     
     def open_file(self, item):
