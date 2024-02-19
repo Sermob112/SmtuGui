@@ -283,7 +283,9 @@ class StatisticWidget(QWidget):
         pivot_table['Общий итог'] = row_totals
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
+        print(pivot_table)
 
+        print(column_sums)
         return pivot_table, column_sums
     
     def analisOKPD2(self):
@@ -316,8 +318,8 @@ class StatisticWidget(QWidget):
             'Цена контракта 500 000-  1 000 000 тыс.руб.',
             'Цена контракта 200 000 - 500 000 тыс.руб.',
             'Цена контракта 100 000 - 200 000 тыс.руб.',
-            'Менее 100 тыс.руб',
-            'Цены нет'
+            'Менее 100 тыс.руб'
+          
         ]
         # Создаем DataFrame
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.InitialMaxContractPrice) for purchase in purchases],
@@ -609,23 +611,10 @@ class StatisticWidget(QWidget):
         self.table.insertRow(row_position)
         self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
 
-        # Инициализируем переменную для хранения общей суммы
-        sum_value_total = 0
-
-        # Проходим по всем столбцам, начиная со второго (индекс 1)
-        for col_index in range(1, self.table.columnCount()):
-            # Получаем заголовок столбца
-            column_name = self.table.horizontalHeaderItem(col_index).text()
-            # Получаем сумму для данного столбца из словаря с суммами
-            sum_value = sums.get(column_name, 0)
-            # Добавляем сумму к общей сумме
-            sum_value_total += sum_value
-            # Устанавливаем значение суммы для данного столбца в ячейку таблицы
-            self.table.setItem(row_position, col_index, QTableWidgetItem(str(sum_value)))
-
-        # Добавляем общую сумму значений в последний столбец 'Общий итог'
-        last_col_index = self.table.columnCount() - 1
-        self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
+        for col_index, key in enumerate(sums.keys()):
+            value = sums[key]
+            self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
+      
     
 
 
@@ -681,10 +670,10 @@ class StatisticWidget(QWidget):
             return 'Цена контракта 200 000 - 500 000 тыс.руб.'
         elif 100000 <= row['InitialMaxContractPrice'] <= 200000:
             return 'Цена контракта 100 000 - 200 000 тыс.руб.'
-        elif 100000 <= row['InitialMaxContractPrice']:
-            return 'Менее 100 тыс.руб'
+        # elif 100000 <= row['InitialMaxContractPrice']:
+        #     return 'Менее 100 тыс.руб'
         else:
-            return 'Нет цены'
+            return 'Менее 100 тыс.руб'
         
     def show_current_data(self):
         # Очистка таблицы перед обновлением
