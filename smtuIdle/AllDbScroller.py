@@ -34,9 +34,9 @@ class PurchasesWidgetAll(QWidget):
         self.table.setColumnCount(9)
 
         # Устанавливаем заголовки колонок
-        column_headers = ["№ПП", "Закон", "Реестровый номер",
+        column_headers = ["№ПП", "Закон", "Реестровый номер", "Дата размещения",
                           "Наименование закупки", "Предмет аукциона", "Начальная максимальная цена контракта",
-                          "Валюта", "Наименование заказчика", "Дата размещения"]
+                          "Валюта", "Наименование заказчика"]
         self.table.resizeColumnsToContents()
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.table.setHorizontalHeaderLabels(column_headers)
@@ -215,10 +215,10 @@ class PurchasesWidgetAll(QWidget):
                 self.table.insertRow(current_position)
                 
                 # Добавляем данные в каждую ячейку для текущей записи
-                for col, value in enumerate([current_purchase.Id, current_purchase.PurchaseOrder, current_purchase.RegistryNumber
+                for col, value in enumerate([current_purchase.Id, current_purchase.PurchaseOrder, current_purchase.RegistryNumber,str(current_purchase.PlacementDate)
                                              , current_purchase.PurchaseName,current_purchase.AuctionSubject,
                                              str(current_purchase.InitialMaxContractPrice), current_purchase.Currency,
-                                              current_purchase.CustomerName,str(current_purchase.PlacementDate)
+                                              current_purchase.CustomerName
                                              ]):
                     item = QTableWidgetItem(str(value))
                     self.table.setItem(current_position, col, item)

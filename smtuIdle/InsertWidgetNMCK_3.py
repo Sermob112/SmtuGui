@@ -30,6 +30,7 @@ class InsertWidgetNMCK_3(QWidget):
         label1.setAlignment(Qt.AlignCenter)
         label2 = QLabel("Наименование организации, производившей расчет")
         label3 = QLabel("Дата расчета")
+        label4 = QLabel("Цена")
          
         
         labelNMCK5 = QLabel("Выбирите файл")
@@ -41,25 +42,26 @@ class InsertWidgetNMCK_3(QWidget):
         self.edit1 = QLineEdit(self)
         self.edit2 = QDateEdit(self)
         self.edit2.setCalendarPopup(True)
-        # self.edit3 = QLineEdit(self)
-        # self.edit3.setValidator(QIntValidator())
+        self.edit3 = QLineEdit(self)
+        self.edit3.setValidator(QIntValidator())
 
         layout1 = QVBoxLayout(self)
         layout2 = QHBoxLayout(self)
         layout3 = QHBoxLayout(self)
         layout4 = QHBoxLayout(self)
-        # layout5 = QHBoxLayout(self)
+        layout5 = QHBoxLayout(self)
 
         # Добавляем лейбл и поле ввода в первую строку
         layout2.addWidget(label2)
         layout2.addWidget(self.edit1)
         layout3.addWidget(label3)
         layout3.addWidget(self.edit2)
-
+        layout4.addWidget(label4)
+        layout4.addWidget(self.edit3)
     
-        layout4.addWidget(labelNMCK5)
-        layout4.addWidget(self.notification_link_edit)
-        layout4.addWidget(browse_button)
+        layout5.addWidget(labelNMCK5)
+        layout5.addWidget(self.notification_link_edit)
+        layout5.addWidget(browse_button)
         # Добавляем все строки в вертикальный контейнер
         layout1.addWidget(label1)
         layout1.addLayout(layout2)
@@ -142,6 +144,7 @@ class InsertWidgetNMCK_3(QWidget):
                             
                             organization_name = self.edit1.text() if self.edit1.text() else 0,
                             organization_name_date = self.edit2.text() if self.edit2.text() else 0,
+                            organization_price = self.edit3.text() if self.edit3.text() else 0,
                             organization_name_file = destination_path
                             # ResponseCount=int(self.edit2.text()) if self.edit2.text() else 0,
                             # FinancingLimit=int(self.edit3.text()) if self.edit3.text() else 0,

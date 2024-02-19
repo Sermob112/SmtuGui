@@ -63,6 +63,7 @@ class Purchase(BaseModel):
     NMC_determ = FloatField(null=True,  default="Нет данных", verbose_name="Среднее значение цены")
     NMC_coef_determ = FloatField(null=True,  default="Нет данных", verbose_name="Среднее значение цены")
     organization_name =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
+    organization_price =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
     organization_name_date =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
     organization_name_file =  CharField(null=True,verbose_name="Извещение о закупке", max_length=255)
     method_direction_requests = CharField(null=True, max_length=255, default="Нет данных", verbose_name="Способ направления запросов о предоставлении ценовой информации потенциальным исполнителям")
