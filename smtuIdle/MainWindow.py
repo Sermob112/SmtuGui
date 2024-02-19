@@ -19,6 +19,7 @@ from datetime import datetime
 from parserV3 import export_to_excel_all
 from models import *
 from peewee import JOIN
+
 # from Module_start import AuthManager
 
 class Ui_MainWindow(QMainWindow):
@@ -33,6 +34,8 @@ class Ui_MainWindow(QMainWindow):
         app = QApplication.instance()
         app.setStyle(style)
         self.resize(1680, 960)
+       
+        
         # Установка каскадной таблицы стилей (CSS) для всего приложения
         # file = QFile(":/qdarkstyle/style.qss")
         # file.open(QFile.ReadOnly | QFile.Text)
@@ -317,23 +320,28 @@ class Ui_MainWindow(QMainWindow):
             else:
                 button.setStyleSheet("")
     
-    def exit(self):
-    # Записываем лог выхода пользователя
-        try:
-            user_log = UserLog.select().where(UserLog.username == self.username, UserLog.logout_time == None).get()
-            user_log.logout_time = datetime.now()
-            user_log.save()
-        except UserLog.DoesNotExist:
-            # Если запись о входе пользователя не найдена, не делаем ничего
+    def exit(self,event):
+   
+        # Обработка события закрытия главного окна
+        reply = QMessageBox()
+        reply.setWindowTitle("Предупреждение о выходе") 
+        reply.setText("Вы уверены, что хотите выйти из текущей роли?")
+        reply.addButton("Нет", QMessageBox.NoRole)
+        reply.addButton("Да", QMessageBox.YesRole)
+        result = reply.exec()
+       
+
+        if result == 1:
+            self.write_logout_log()
+            self.close()
+            from start import AuthWindow
+            self.auth_window = AuthWindow()
+            self.auth_window.show()
+        else:
             pass
-
-        # Закрываем текущее главное окно
-        self.close()
-
-    # Открываем окно аутентификации
-        from start import AuthWindow
-        self.auth_window = AuthWindow()
-        self.auth_window.show()
+            # from start import AuthWindow
+            # self.auth_window = AuthWindow()
+            # self.auth_window.show()
     def updatePurchaseLabel(self):
         self.user = f"Пользователь: <b>{self.username}</b>"
         self.date = f"Дата: <b>{self.formatted_date}</b>"
@@ -402,17 +410,21 @@ class Ui_MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
 
-    def closeEvent(self, event):
-        # Обработка события закрытия главного окна
-        reply = QMessageBox.question(self, 'Message', "Вы уверены, что хотите закрыть приложение?",
-                                     QMessageBox.StandardButtons.Yes | QMessageBox.StandardButtons.No)
+    # def closeEvent(self, event):
+    #     # Обработка события закрытия главного окна
+    #     reply = QMessageBox()
+    #     reply.setWindowTitle("Предупреждение о выходе") 
+    #     reply.setText("Вы уверены, что хотите закрыть приложение?")
+    #     reply.addButton("Нет", QMessageBox.NoRole)
+    #     reply.addButton("Да", QMessageBox.YesRole)
+    #     result = reply.exec()
+       
 
-        if reply == QMessageBox.StandardButton.Yes:
-            # Если пользователь подтвердил закрытие приложения, записываем лог выхода
-            self.write_logout_log()
-            event.accept()
-        else:
-            event.ignore()
+    #     if result == 1:
+    #         self.write_logout_log()
+    #         event.accept()
+    #     else:
+    #         event.ignore()
 
     def write_logout_log(self):
         # Запись лога выхода пользователя при закрытии приложения
