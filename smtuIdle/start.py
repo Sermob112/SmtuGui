@@ -4,7 +4,7 @@ from models import UserLog
 from PySide6.QtWidgets import *
 from initialize_db import initialize_database
 from MainWindow import Ui_MainWindow
-from PySide6.QtGui import QFont,QIcon
+from PySide6.QtGui import QFont,QIcon,QPixmap
 from datetime import datetime
 from PySide6.QtCore import Qt,QRect,QCoreApplication
 class AuthWindow(QWidget):
@@ -20,13 +20,35 @@ class AuthWindow(QWidget):
         initialize_database()
 
         main_layout = QVBoxLayout()
-
+        pics_layout = QHBoxLayout()
         # Создайте макет для формы
         form_layout = QVBoxLayout()
         form_logPass = QVBoxLayout()
         form_layoutForLogPAs = QFormLayout()
         label_layout = QVBoxLayout()
+         # # Выровняйте форму по центру окна
+        form_logPass.setAlignment(Qt.AlignCenter)
+        form_logPass.setContentsMargins (0,0,0,200)
+   
 
+        # Добавление изображения в верхний левый угол
+        image_label_top_left = QLabel()
+        pixmap = QPixmap("Pics/4.png")
+        pixmap = pixmap.scaledToWidth(50)  # Масштабирование изображения по ширине
+        image_label_top_left.setPixmap(pixmap)
+        image_label_top_left.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
+        pics_layout.addWidget(image_label_top_left)
+        
+        image_label_top_right = QLabel()
+        pixmap = QPixmap("Pics/4.png")
+        pixmap = pixmap.scaledToWidth(50)  # Масштабирование изображения по ширине
+        image_label_top_right.setPixmap(pixmap)
+        image_label_top_right.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignTop)
+        pics_layout.addWidget(image_label_top_right)
+        main_layout.addLayout(pics_layout)
+        # Установите центральный макет
+        self.setLayout(main_layout)
+        self.main_window = QMainWindow()
         self.label = QLabel()
         self.label.setMaximumWidth(400)
         self.label.setWordWrap(True)
@@ -72,45 +94,7 @@ class AuthWindow(QWidget):
         main_layout.addLayout(form_logPass)
         # main_layout.addLayout(form_layout)
 
-        # # Выровняйте форму по центру окна
-        form_logPass.setAlignment(Qt.AlignCenter)
-        form_logPass.setContentsMargins (0,0,0,200)
        
-        # Установите центральный макет
-        self.setLayout(main_layout)
-
-        # # Добавьте стили для улучшения внешнего вида
-        # style = """
-        #     QWidget {
-        #         background-color: #f0f0f0;
-        #     }
-        #     QLabel {
-        #         font-size: 14px;
-        #     }
-        #     QLineEdit {
-        #         padding: 5px;
-        #         font-size: 14px;
-        #         border: 1px solid #ccc;
-        #         border-radius: 3px;
-        #     }
-        #     QPushButton {
-        #         padding: 5px;
-        #         font-size: 14px;
-        #         background-color: #4CAF50;
-        #         color: white;
-        #         border: none;
-        #         border-radius: 3px;
-        #     }
-        #     QPushButton:hover {
-        #         background-color: #45a049;
-        #     }
-        # """
-
-        # self.setStyleSheet(style)
-
-        
-         # Убрать рамку окна для более современного вида
-        self.main_window = QMainWindow()
 
     def authenticate(self):
         username = self.username_edit.text()

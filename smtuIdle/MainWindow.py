@@ -3,6 +3,7 @@ from PySide6.QtCore import QFile,QTextStream
 from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
 from PySide6.QtWidgets import *
+from PySide6.QtGui import QIcon
 from PySide6 import QtCore
 from PySide6 import QtWidgets
 from DBtest import PurchasesWidget
@@ -142,6 +143,8 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton6.setObjectName("pushButton6")
         self.leftPanelLayout.addWidget(self.pushButton6)
+
+
   
         # Задаем фиксированную высоту и максимальное расстояние между кнопками
         button_height = 30  # Задайте желаемую высоту
@@ -158,7 +161,15 @@ class Ui_MainWindow(QMainWindow):
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
-      
+        
+        self.pushButton0.setIcon(QIcon("Pics/6.png"))
+        self.pushButton1.setIcon(QIcon("Pics/14.png"))
+        self.pushButton2.setIcon(QIcon("Pics/4.png"))
+        self.pushButton3.setIcon(QIcon("Pics/1.png"))
+        self.pushButton4.setIcon(QIcon("Pics/15.png"))
+        
+        self.pushButton5_1.setIcon(QIcon("Pics/3.png"))
+        self.pushButton6.setIcon(QIcon("Pics/7.png"))
   
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
