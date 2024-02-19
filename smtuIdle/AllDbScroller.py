@@ -5,6 +5,7 @@ from datetime import date
 from models import Purchase, Contract, FinalDetermination,CurrencyRate
 from PySide6.QtCore import Qt, QStringListModel,Signal
 from PySide6.QtGui import QColor,QIcon
+from PySide6.QtCore import QDate
 import sys, json
 from peewee import JOIN
 from InsertWidgetCurrency import InsertWidgetCurrency
@@ -47,6 +48,7 @@ class PurchasesWidgetAll(QWidget):
         self.current_position = 0   
         self.label = QLabel("Всего записей", self)
         self.table.cellClicked.connect(self.handle_cell_click)
+         
          # Создаем выпадающее меню
         self.sort_options = QComboBox(self)
         self.sort_options.addItems(["Сортировать по возрастанию цены", "Сортировать по убыванию цены",
@@ -55,10 +57,12 @@ class PurchasesWidgetAll(QWidget):
          # Устанавливаем обработчик событий для выпадающего меню
        
         self.sort_options.setFixedWidth(250)
+        self.sort_options.currentIndexChanged.connect(self.highlight_current_item)
         unique_purchase_orders = Purchase.select(Purchase.PurchaseOrder).distinct()
         self.sort_by_putch_order = QComboBox(self)
         self.sort_by_putch_order.addItem("Сортировать по Закону")
         self.sort_by_putch_order.setFixedWidth(250)
+        self.sort_by_putch_order.currentIndexChanged.connect(self.highlight_current_item)
         for order in unique_purchase_orders:
             self.sort_by_putch_order.addItem(str(order.PurchaseOrder))
 
@@ -71,6 +75,7 @@ class PurchasesWidgetAll(QWidget):
         for order in unique_purchase_OKPD2:
             self.sort_by_putch_okpd2.addItem(str(order.OKPD2Classification))
         # Создаем метки и поля для ввода минимальной и максимальной цены
+        self.sort_by_putch_okpd2.currentIndexChanged.connect(self.highlight_current_item)
         self.min_price_label = QLabel("Минимальная цена", self)
         self.min_price_input = QLineEdit(self)
         self.min_price_input.setFixedWidth(100)
@@ -175,6 +180,11 @@ class PurchasesWidgetAll(QWidget):
         layout.addLayout(button_layout3)
         # Получаем данные из базы данных и отображаем первую запись
         self.reload_data()
+        self.min_price_input.textChanged.connect(self.highlight_input)
+        self.max_price_input.textChanged.connect(self.highlight_input)
+        self.min_data_input.dateChanged.connect(self.highlight_input)
+        self.max_data_input.dateChanged.connect(self.highlight_input)
+        self.search_input.textChanged.connect(self.highlight_input)
         # self.purchases = Purchase.select()
         # self.purchases = (Purchase
         #         .select()
@@ -218,8 +228,43 @@ class PurchasesWidgetAll(QWidget):
         else:
             self.label.setText("Нет записей")     
 
-   
+    def highlight_input(self):
+        min_price = self.min_price_input.text()
+        max_price = self.max_price_input.text()
+        min_data_valid = self.min_data_input.date().isValid()
+        max_data_valid = self.max_data_input.date().isValid()
+        search_text = self.search_input.text()
 
+        # Подсветка полей в зависимости от введенных данных
+        if min_price or max_price:
+            self.min_price_input.setStyleSheet("background-color: #98FB98;")
+            self.max_price_input.setStyleSheet("background-color: #98FB98;")
+         
+        elif min_data_valid or max_data_valid:
+            self.min_data_input.setStyleSheet("background-color: #98FB98;")
+            self.max_data_input.setStyleSheet("background-color: #98FB98;")
+        elif  self.apply_filter_button:
+            self.apply_filter_button.setStyleSheet("background-color: #98FB98;")
+        else:
+            self.min_price_input.setStyleSheet("")
+            self.max_price_input.setStyleSheet("")
+            self.min_data_input.setStyleSheet("")
+            self.max_data_input.setStyleSheet("")
+
+        # Подсветка search_input
+        if search_text:
+            self.search_input.setStyleSheet("background-color: #98FB98;")
+        else:
+            self.search_input.setStyleSheet("")
+    def highlight_current_item(self, index):
+        if index >= 0:
+            sender = self.sender()  # Получаем объект, который вызвал сигнал
+            if sender == self.sort_by_putch_order:
+                self.sort_by_putch_order.setStyleSheet("background-color: #98FB98;")
+            elif sender == self.sort_by_putch_okpd2:
+                self.sort_by_putch_okpd2.setStyleSheet("background-color: #98FB98;")
+            elif sender == self.sort_options:
+                self.sort_options.setStyleSheet("background-color: #98FB98;")
     
     def apply_filter(self):
         self.current_position = 0
@@ -350,11 +395,12 @@ class PurchasesWidgetAll(QWidget):
         # Очищаем все поля ввода
         self.min_price_input.clear()
         self.max_price_input.clear()
-        self.min_data_input.clear()
-        self.max_data_input.clear()
+        self.min_data_input.setDate(QDate(2000, 1, 1))
+        self.max_data_input.setDate(self.max_data_input.date().currentDate())
         self.sort_by_putch_order.setCurrentIndex(0)  # Сбрасываем выбранное значение в выпадающем списке
         self.search_input.clear()
         self.current_position = 0
+        self.sort_by_putch_okpd2.setCurrentIndex(0)
         self.selected_text = None
         # Очищаем и снова получаем уникальные значения для автозаполнения
         self.unique_values_query = self.findUnic()
@@ -362,7 +408,13 @@ class PurchasesWidgetAll(QWidget):
         
         # Возвращаем записи в исходное состояние без применения каких-либо фильтров
         self.reload_data()
+        # Сброс стилей всех элементов к стандартному состоянию
+        self.reset_styles()
 
+    def reset_styles(self):
+        # Сброс стилей всех элементов к стандартному состоянию
+        for input_field in [self.min_price_input, self.max_price_input, self.apply_filter_button,self.min_data_input, self.max_data_input, self.sort_by_putch_order, self.search_input, self.sort_by_putch_okpd2, self.sort_options]:
+            input_field.setStyleSheet("")
      
 
     def remove_button_clicked(self):
