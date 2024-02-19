@@ -9,7 +9,8 @@ import sys, json
 from PySide6.QtGui import QFont
 from peewee import JOIN
 from insertPanel import InsertWidgetPanel
-from InsertWidgetContract import InsertWidgetContract
+from insertPanelContract import InsertPanelContract
+
 from InsertWidgetNMCK import InsertWidgetNMCK
 from InsertWidgetCEIA import InsertWidgetCEIA
 from InsertWidgetCurrency import InsertWidgetCurrency
@@ -54,15 +55,17 @@ class PurchasesWidget(QWidget):
         self.addButtonContract = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
         
         self.addButtonContract.setMaximumWidth(400)
-        # self.addButtonTKP = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
+        
+        self.addButtonTKP = QPushButton("Добавить результаты закупки", self)
+        self.addButtonTKP.setMaximumWidth(400)
         # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
         self.addButtonCurrency= QPushButton("Экспорт в excel файл", self)
         self.addButtonCurrency.setMaximumWidth(300)
 
 
          # Устанавливаем обработчики событий для кнопок
-        self.addButtonContract.clicked.connect(self.add_button_contract_clicked)
-        # self.addButtonTKP.clicked.connect(self.add_button_tkp_clicked)
+        self.addButtonContract.clicked.connect(self.add_button_nmck_clicked)
+        self.addButtonTKP.clicked.connect(self.add_button_contract_clicked)
         # self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
 
         self.addButtonCurrency.clicked.connect(self.show_current_purchase_to_excel)
@@ -85,6 +88,7 @@ class PurchasesWidget(QWidget):
         
         # button_layout2.addWidget(self.addButtonTKP)
         button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignLeft)
+        button_layout2.addWidget(self.addButtonTKP,alignment=Qt.AlignLeft)
         # button_layout2.addWidget(self.addButtonCIA)
         button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignLeft)
         button_layout2.setAlignment(Qt.AlignLeft)
@@ -228,6 +232,7 @@ class PurchasesWidget(QWidget):
             self.add_section_to_table("3.Определение НМЦК затратным методом")
             self.add_row_to_table("Наименование организации", str(current_purchase.organization_name) if current_purchase.organization_name else "Нет данных")
             self.add_row_to_table("Дата расчета", str(current_purchase.organization_name_date) if current_purchase.organization_name_date else "Нет данных")
+            self.add_row_to_table("Цена", str(current_purchase.organization_price) if current_purchase.organization_price else "Нет данных")
             self.add_row_to_table("Файл расчета", str(current_purchase.organization_name_file) if current_purchase.organization_name_file else "Нет данных")
             self.add_section_to_table("4.Итоговое определение НМЦК с использованием нескольких методов")
             self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации потенциальным исполнителям", 
@@ -348,13 +353,23 @@ class PurchasesWidget(QWidget):
         self.table.setSpan(row_position, 0, 1, 2)  # Занимаем два столбца
 
 
-    def add_button_contract_clicked(self):
+    def add_button_nmck_clicked(self):
         
         if len(self.purchases_list) != 0:
             self.current_purchase = self.purchases_list[self.current_position]
             purchase_id = self.current_purchase.Id
      
             self.insert_cont = InsertWidgetPanel(purchase_id,self,self.role,self.user,self.changer)
+            # self.insert_cont.setParent(self)
+            self.insert_cont.show()
+
+    def add_button_contract_clicked(self):
+        
+        if len(self.purchases_list) != 0:
+            self.current_purchase = self.purchases_list[self.current_position]
+            purchase_id = self.current_purchase.Id
+     
+            self.insert_cont = InsertPanelContract(purchase_id,self,self.role,self.user,self.changer)
             # self.insert_cont.setParent(self)
             self.insert_cont.show()
     
