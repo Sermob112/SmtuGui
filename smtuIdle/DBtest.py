@@ -177,8 +177,8 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Дата окончания заявки", str(current_purchase.ApplicationEndDate) if current_purchase.ApplicationEndDate else "Нет данных")
             self.add_row_to_table("Дата аукциона", str(current_purchase.AuctionDate) if current_purchase.AuctionDate else "Нет данных")
             self.add_row_to_table("Извещение о закупке", str(current_purchase.notification_link) if current_purchase.notification_link else "Нет данных")
-            self.add_row_to_table("файл НМЦК", str(current_purchase.nmck_file) if current_purchase.nmck_file else "Нет данных")
-            self.add_row_to_table("файл протокола", str(current_purchase.protocol_file) if current_purchase.protocol_file else "Нет данных")
+            self.add_row_to_table("Файл НМЦК", str(current_purchase.nmck_file) if current_purchase.nmck_file else "Нет данных")
+            self.add_row_to_table("Файл протокола", str(current_purchase.protocol_file) if current_purchase.protocol_file else "Нет данных")
             self.add_section_to_table("Определение НМЦК и ЦКЕИ")
             self.add_section_to_table("1.Определение НМЦК методом сопоставимых рыночных цен")
             tkp_proposal_dict = {}
@@ -321,7 +321,7 @@ class PurchasesWidget(QWidget):
         value_font = QFont()
         value_font.setPointSize(10)
         value_item.setFont(value_font)
-        if label_text == "файл НМЦК" or label_text == "файл протокола":
+        if label_text == "файл НМЦК" or label_text == "файл протокола" or label_text == "Извещение о закупке" or label_text == "Файл расчета" or label_text == "Файл итогового определения НМЦК с использованием нескольких методов" or label_text == "Договор":
             if value_text != "Нет данных":
                 # Установка цвета фона только для нужных ячеек
                 label_item.setBackground(QColor(200, 255, 200))  # Светло-зеленый
