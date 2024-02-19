@@ -41,7 +41,7 @@ class InsertWidgetContract2(QWidget):
         label14 = QLabel("Снижение НМЦК, руб.:")
         label15 = QLabel("Снижение НМЦК, %:")
         label16 = QLabel("Протоколы определения поставщика (выписка):")
-        # label17 = QLabel("Договор:")
+        label17 = QLabel("Файл Контрактов:")
 
         # Создаем поля ввода
        
@@ -61,10 +61,9 @@ class InsertWidgetContract2(QWidget):
         self.ReductionNMCPercent = QLineEdit(self)
         self.ReductionNMCPercent.setValidator(QDoubleValidator())
         self.SupplierProtocol = QLineEdit(self)
-        browse_button_contract= QPushButton("Добавить файл Контрактов")
-        browse_button_protocol= QPushButton("Добавить файл извещения")
-        browse_button_contract.clicked.connect(self.browse_file_contract)
-        browse_button_protocol.clicked.connect(self.browse_file_izvesh)
+        # browse_button_contract= QPushButton("Добавить файл Контрактов")
+        # browse_button_contract.clicked.connect(self.browse_file_contract)
+
         # self.ContractFile = QLineEdit(self)
       
 
@@ -85,10 +84,10 @@ class InsertWidgetContract2(QWidget):
         layout18 = QHBoxLayout(self)
         layout6 = QHBoxLayout(self)
         layout7 = QHBoxLayout(self)
-        # layout17 = QHBoxLayout(self)
-        # self.notification_link_edit_contratc = QLineEdit()
-        # browse_button_contratc = QPushButton("Обзор")
-        # browse_button_contratc.clicked.connect(self.browse_file_contract)
+        layout19 = QHBoxLayout(self)
+        self.notification_link_edit_contratc = QLineEdit()
+        browse_button_contratc = QPushButton("Добавить файл Контрактов")
+        browse_button_contratc.clicked.connect(self.browse_file_contract)
  
 
         layout5.addWidget(label5)
@@ -129,12 +128,12 @@ class InsertWidgetContract2(QWidget):
         layout16.addWidget(label16)
         layout16.addWidget(self.SupplierProtocol)
 
-        layout17.addWidget(browse_button_contract, alignment=Qt.AlignLeft)
-        layout18.addWidget(browse_button_protocol, alignment=Qt.AlignLeft)
+        # layout17.addWidget(browse_button_contract, alignment=Qt.AlignLeft)
 
-        # layout17.addWidget(label17)
-        # layout17.addWidget(self.notification_link_edit_contratc)
-        # layout17.addWidget(browse_button_contratc)
+
+        layout19.addWidget(label17)
+        layout19.addWidget(self.notification_link_edit_contratc)
+        layout19.addWidget(browse_button_contratc)
 
         # Добавляем все строки в вертикальный контейнер
         self.layout1.addWidget(label1)
@@ -153,8 +152,9 @@ class InsertWidgetContract2(QWidget):
         self.layout1.addLayout(layout14)
         self.layout1.addLayout(layout15)
         self.layout1.addLayout(layout16)
-        self.layout1.addLayout(layout17)
+        # self.layout1.addLayout(layout17)
         self.layout1.addLayout(layout18)
+        self.layout1.addLayout(layout19)
         scroll_area = QScrollArea(self)
         scroll_area.setWidgetResizable(True)
         scroll_widget = QWidget()
@@ -214,9 +214,9 @@ class InsertWidgetContract2(QWidget):
                 widget.setParent(None)
                 widget.deleteLater()
     def save_tkp_data(self):
-        # self.db_folder = "файлы бд"
+        self.db_folder = "файлы бд"
         
-        # os.makedirs(self.db_folder, exist_ok=True)
+        os.makedirs(self.db_folder, exist_ok=True)
         self.price_proposal = {}
         self.applicant = {}
         self.status = {}
@@ -242,14 +242,21 @@ class InsertWidgetContract2(QWidget):
                 self.status[key_status] = status_edit.text() if status_edit.text() else "[]"
 
             j += 1
-        # try:
-        #     source_path_contract = self.notification_link_edit_contratc.text()
-        #     absolute_db_folder = os.path.abspath(self.db_folder)
+        try:
+           
+            source_path = self.notification_link_edit_contratc.text()
+            purchase = Purchase.get(Purchase.Id == self.purchase_id)
+            purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+            if not os.path.exists(purchase_folder):
+                os.makedirs(purchase_folder)
+            # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+            destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+            destination_path = os.path.basename(destination_path_1)
+            shutil.copy2(source_path, destination_path_1)
         
-        #     destination_path_contract = os.path.join(absolute_db_folder, os.path.basename(source_path_contract))
-        #     shutil.copy2(source_path_contract, destination_path_contract)
-        # except:
-        #     pass
+            
+        except:
+            pass
         price_proposal_json = json.dumps(self.price_proposal,ensure_ascii=False)
         applicant_json = json.dumps(self.applicant,ensure_ascii=False)
         status_json = json.dumps(self.status,ensure_ascii=False)
@@ -269,7 +276,7 @@ class InsertWidgetContract2(QWidget):
                                 ContractingAuthority=self.ContractingAuthority.text() if self.ContractingAuthority.text() else 0,
                                 ContractIdentifier=self.ContractIdentifier.text() if self.ContractIdentifier.text() else 0,
                                 RegistryNumber=self.RegistryNumber.text() if self.RegistryNumber.text() else 0,
-                                # ContractFile= destination_path_contract if destination_path_contract else "нет данных",
+                                ContractFile= destination_path if destination_path else "нет данных",
                                 PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json).where(Contract.purchase == self.purchase_id).execute()
         except DoesNotExist:
                 Contract.create( purchase = self.purchase_id,
@@ -286,7 +293,7 @@ class InsertWidgetContract2(QWidget):
                                  ContractingAuthority=self.ContractingAuthority.text() if self.ContractingAuthority.text() else 0,
                                 ContractIdentifier=self.ContractIdentifier.text() if self.ContractIdentifier.text() else 0,
                                 RegistryNumber=self.RegistryNumber.text() if self.RegistryNumber.text() else 0,
-                                # ContractFile= destination_path_contract if destination_path_contract else "нет данных",
+                                ContractFile= destination_path if destination_path else "нет данных",
                                 PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
         try:
             # Попытка сохранения данных
@@ -334,83 +341,51 @@ class InsertWidgetContract2(QWidget):
             Type=f'Добавлены данные определения победителя'
         )
         changed_date.save()
-    def browse_file_izvesh(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
-        self.db_folder = "файлы бд"
-        
-        if file_path:
-            try:
-                source_path = file_path
-                purchase = Purchase.get(Purchase.Id == self.purchase_id)
-                purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+   
 
-                # Создаем папку, если ее нет
-                if not os.path.exists(purchase_folder):
-                    os.makedirs(purchase_folder)
-
-                # Определяем путь для копирования файла
-                destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
-                destination_path = os.path.basename(destination_path_1)
-
-                # Копируем файл
-                shutil.copy2(source_path, destination_path)
-            except:
-                pass
-            try:
-                Purchase.update(notification_link=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
-                self.updateLog_izvish(destination_path)
-                self.changer.populate_table()
-                self.db_window.reload_data_id(self.purchase_id)
-                self.db_window.show_current_purchase()
-                db.close()
-                # Выводим сообщение об успешном сохранении
-                self.show_message("Успех", "Данные успешно добавлены")
-            except Exception as e:
-                self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
-
-    def browse_file_contract(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
-        self.db_folder = "файлы бд"
-        
-        if file_path:
-            try:
-               
-                source_path = file_path
-                purchase = Purchase.get(Purchase.Id == self.purchase_id)
-                purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
-                if not os.path.exists(purchase_folder):
-                    os.makedirs(purchase_folder)
-                # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
-                destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
-                destination_path = os.path.basename(destination_path_1)
-                shutil.copy2(source_path, destination_path_1)
-            except:
-                pass
-            try:
-                try:
-                    Contract.get(Contract.purchase == self.purchase_id)
-                    Contract.update(ContractFile= destination_path if destination_path else "нет данных").where(Contract.purchase == self.purchase_id).execute()
-                    self.updateLog(destination_path)
-                    self.changer.populate_table()
-                    db.close()
-                    self.db_window.reload_data_id(self.purchase_id)
-                    self.db_window.show_current_purchase()
-                    self.show_message("Успех", "Данные успешно добавлены")
-                except :
-                    
-                    # Contract.create( purchase = self.purchase_id,ContractFile= destination_path if destination_path else "нет данных")
-         
-                    self.show_message("Внимание", "Невозможно добавить файл контракта, когда не внесены данные по контракту")
-            except Exception as e:
-                self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
     # def browse_file_contract(self):
     #     file_dialog = QFileDialog()
     #     file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+    #     self.db_folder = "файлы бд"
+    #     return file_path
+        # if file_path:
+        #     try:
+               
+        #         source_path = file_path
+        #         purchase = Purchase.get(Purchase.Id == self.purchase_id)
+        #         purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+        #         if not os.path.exists(purchase_folder):
+        #             os.makedirs(purchase_folder)
+        #         # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+        #         destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+        #         destination_path = os.path.basename(destination_path_1)
+        #         shutil.copy2(source_path, destination_path_1)
+        #     except:
+        #         pass
+        #     try:
+        #         try:
+        #             Contract.get(Contract.purchase == self.purchase_id)
+        #             Contract.update(ContractFile= destination_path if destination_path else "нет данных").where(Contract.purchase == self.purchase_id).execute()
+        #             self.updateLog(destination_path)
+        #             self.changer.populate_table()
+        #             db.close()
+        #             self.db_window.reload_data_id(self.purchase_id)
+        #             self.db_window.show_current_purchase()
+        #             self.show_message("Успех", "Данные успешно добавлены")
+        #         except :
+                    
+        #             # Contract.create( purchase = self.purchase_id,ContractFile= destination_path if destination_path else "нет данных")
+         
+        #             self.show_message("Внимание", "Невозможно добавить файл контракта, когда не внесены данные по контракту")
+        #     except Exception as e:
+        #         self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
+    def browse_file_contract(self):
+        file_dialog = QFileDialog()
+        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
         
-    #     if file_path:
-    #         self.notification_link_edit_contratc.setText(file_path)
+        if file_path:
+            self.notification_link_edit_contratc.setText(file_path)
+
 # if __name__ == "__main__":
 #     app = QApplication(sys.argv)
 #     window = InsertWidgetContract(3)
