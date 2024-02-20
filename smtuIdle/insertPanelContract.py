@@ -30,7 +30,7 @@ class InsertPanelContract(QWidget):
         self.setWindowTitle("Добавить результаты закупки")
         self.setGeometry(100, 100, 600, 150)
         
-        label1 = QLabel("Добавить НМЦК")
+        label1 = QLabel("Определение победителя закупки")
         label1.setAlignment(Qt.AlignCenter)
  
      

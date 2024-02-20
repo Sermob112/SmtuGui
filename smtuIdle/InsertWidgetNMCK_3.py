@@ -67,7 +67,7 @@ class InsertWidgetNMCK_3(QWidget):
         layout1.addLayout(layout2)
         layout1.addLayout(layout3)
         layout1.addLayout(layout4)
-        # layout1.addLayout(layout5)
+        layout1.addLayout(layout5)
 
         self.form_layout = QVBoxLayout()
         layout1.addLayout(self.form_layout)
@@ -134,7 +134,7 @@ class InsertWidgetNMCK_3(QWidget):
             # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
             destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
             destination_path = os.path.basename(destination_path_1)
-            shutil.copy2(source_path, destination_path)
+            shutil.copy2(source_path, destination_path_1)
         except:
             pass
      
