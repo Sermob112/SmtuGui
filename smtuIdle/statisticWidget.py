@@ -22,6 +22,7 @@ class StatisticWidget(QWidget):
         self.label_filter_order = QLabel("Фильтры: ")
         self.label_filter_data = QLabel("Фильтры: ")
         self.label_filter_price = QLabel("Фильтры: ")
+        self.label_filter_okpd2 = QLabel("Фильтры: ")
          # Создаем кнопки "Назад" и "Вперед"
         # btn_back = QPushButton("Назад", self)
         # btn_forward = QPushButton("Вперед", self)
@@ -145,15 +146,15 @@ class StatisticWidget(QWidget):
                          self.analisNMCKReduce(),self.analyze_price_count(),self.analisOKPD2()]
         self.show_current_data()
         self.query = self.all_purchase.return_filtered_purchase()
-        sort_by_putch_order, min_date, max_date, min_price, max_price = self.all_purchase.return_filters_variabels()
+        sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2= self.all_purchase.return_filters_variabels()
         self.filter_layout.addWidget(self.label_filter_data)
         self.filter_layout.addWidget(self.label_filter_order)
         self.filter_layout.addWidget(self.label_filter_price)
-        
+        self.filter_layout.addWidget(self.label_filter_okpd2)
         self.label_filter_data.setText(f"Фильтр по дате: с {min_date} по {max_date}")
         self.label_filter_order.setText(f"Фильтр по закону:{sort_by_putch_order}")
         self.label_filter_price.setText(f"Фильтр по цене:{min_price} - {max_price}")
-
+        self.label_filter_okpd2.setText(f"Фильтр по ОКПД2:{okpd2}")
     def analyze_price_count(self):
         coeff_range_order = [
             'Ценовое предложение №1',
@@ -283,9 +284,9 @@ class StatisticWidget(QWidget):
         pivot_table['Общий итог'] = row_totals
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
-        print(pivot_table)
+        # print(pivot_table)
 
-        print(column_sums)
+        # print(column_sums)
         return pivot_table, column_sums
     
     def analisOKPD2(self):
@@ -710,21 +711,27 @@ class StatisticWidget(QWidget):
         pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
         pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
         pivot_tables_max_price5, column_sums_max_price5= self.analisOKPD2()
-        sort_by_putch_order, min_date, max_date, min_price, max_price = self.all_purchase.return_filters_variabels()
+        sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2 = self.all_purchase.return_filters_variabels()
         filters = []
 
 # Проверяем каждый фильтр на пустоту и добавляем непустые значения в список filters
+        okpd2 = okpd2.replace(".", "_")
+        okpd2 = okpd2.replace(":", "_")
         if sort_by_putch_order:
-            filters.append("Фильтр по закону " + sort_by_putch_order)
+            filters.append(" " + sort_by_putch_order)
+        if okpd2:
+            filters.append(str(okpd2))
         if min_date:
-            filters.append("Фильтр по дате " + str(min_date))  # Преобразуем datetime.date в строку
+            filters.append(" " + str(min_date))  # Преобразуем datetime.date в строку
         if max_date:
             filters.append(str(max_date))
         if min_price:
-            filters.append("Фильтр по цене " + min_price)
+            filters.append(" " + str(min_price))
         if max_price:
-            filters.append(max_price)
-        file_name = 'Данные статистики по ' + ' '.join(filters) + '.xlsx'
+            filters.append(str(max_price))
+        
+       
+        file_name = f"Данные статистики по Фильтрам {' '.join(filters)}.xlsx"
         self.save_to_excel_combined(
         [pivot_tables_purchase1, pivot_tables_purchase2, pivot_tables_purchase3, pivot_tables_purchase4, pivot_tables_purchase5],
         [column_sums_purchase1, column_sums_purchase2, column_sums_purchase3, column_sums_purchase4, column_sums_purchase5],

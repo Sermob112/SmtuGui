@@ -73,7 +73,7 @@ class AuthWindow(QWidget):
         self.password_edit.setAlignment(Qt.AlignLeft)
         self.login_button = QPushButton("Войти")
         self.login_button.clicked.connect(self.authenticate)
-        self.login_button.setFixedWidth(300)
+        self.login_button.setFixedWidth(320)
         lock_icon = QIcon("Pics/icons8-пароль-30.png")  # Путь к вашей иконке
         self.password_edit.addAction(lock_icon, QLineEdit.LeadingPosition)
         login_icon = QIcon("Pics/icons8-вход-в-систему,-в-кружке,-стрелка-вправо-30.png")
