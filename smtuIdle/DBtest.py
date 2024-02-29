@@ -52,7 +52,9 @@ class PurchasesWidget(QWidget):
         self.current_position =0
         self.BackButton = QPushButton("Назад", self)
         self.BackButton.clicked.connect(self.go_back)
-        self.deleteButton = QPushButton("Добавить обоснование НМЦК", self)
+        self.deleteButton = QPushButton("Удалить запись", self)
+        self.deleteButton.setFixedWidth(200)
+        self.deleteButton.clicked.connect(self.remove_button_clicked)
         self.addButtonContract = QPushButton("Добавить обоснование НМЦК", self)
         self.BackButton.hide()
         self.addButtonContract.setMaximumWidth(400)
@@ -73,7 +75,7 @@ class PurchasesWidget(QWidget):
         self.addButtonCurrency.clicked.connect(self.show_current_purchase_to_excel)
         
          # Создаем метку
-        self.label = QLabel("Текущая запись:", self)
+        self.label = QLabel("", self)
         # Устанавливаем обработчики событий для кнопок
 
 
@@ -95,7 +97,13 @@ class PurchasesWidget(QWidget):
         # button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignLeft)
         # button_layout2.addWidget(self.addButtonTKP,alignment=Qt.AlignLeft)
         # button_layout2.addWidget(self.addButtonCIA)
-        button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignCenter)
+        # Создаем слой для центрирования
+       # Создаем слой для центрирования
+                
+        # Добавляем первую кнопку
+        button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignmentFlag.AlignCenter)
+        button_layout.addStretch()
+        button_layout2.addWidget(self.deleteButton)
         # button_layout2.setAlignment(Qt.AlignCenter)
    
 
@@ -110,7 +118,7 @@ class PurchasesWidget(QWidget):
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
         layout.addLayout(button_layout2)
-  
+        
         # Получаем данные из базы данных и отображаем первую запись
         self.reload_data()
         # self.purchases = Purchase.select()
@@ -138,13 +146,37 @@ class PurchasesWidget(QWidget):
             self.addButtonContract.hide()
         else:
             self.addButtonCurrency.show()
-
+    def remove_button_clicked(self):
+        # reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
+        #                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        # if reply == QMessageBox.Yes:
+        reply = QMessageBox()
+        reply.setWindowTitle("Удаление")
+        reply.setText('Вы точно хотите удалить текущую запись?')
+        
+        reply.addButton("Нет", QMessageBox.NoRole)
+        reply.addButton("Да", QMessageBox.YesRole)
+        result = reply.exec()
+        if result == 1:
+            if self.current_purchase.Id:
+                success = delete_records_by_id([self.current_purchase.Id],user=self.user, role= self.role)
+                if success:
+                    self.main_win.updatePurchaseLabel()
+                    
+                    QMessageBox.information(self, "Успех", "Вы успешно удалили запись!")
+                    self.reload_data()
+                else:
+                    QMessageBox.information(self,"Ошибка", "Ошибка при удалении записей")
+                    
+                  
+        else:
+            pass
     def show_current_purchase(self):
      
         if len(self.purchases_list) != 0:
             current_purchase = self.purchases_list[self.current_position]
             # Отображаем информацию о текущей записи в лейбле
-            self.label.setText(f"Запись {self.current_position + 1} из {len(self.purchases_list)}")
+            # self.label.setText(f"Запись {self.current_position + 1} из {len(self.purchases_list)}")
             # Дополнительный код для отображения записи в таблице (замените на свой код)
             # self.table.setItem(row, column, QTableWidgetItem(str(current_purchase.some_property)))
         else:
@@ -312,7 +344,7 @@ class PurchasesWidget(QWidget):
             #         self.add_row_to_table("Дата курса валюты", str(curr.CurrencyRateDate))
             #         self.add_row_to_table("Предыдущая валюта", str(curr.PreviousCurrency))
         else:
-            self.label.setText("Нет записей")
+            self.label.setText("Нет записи")
 
     def add_row_to_table(self, label_text, value_text):
         row_position = self.table.rowCount()
