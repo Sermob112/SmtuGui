@@ -91,6 +91,7 @@ class PurchasesWidgetAll(QWidget):
         for order in unique_purchase_CustomerName:
             self.sort_by_putch_CustomerName.addItem(str(order.CustomerName))
 
+        transparent_style = "QDateEdit { color: transparent; }"
 
         unique_purchase_ProcurementMethod = Purchase.select(Purchase.ProcurementMethod).distinct()
         self.sort_by_putch_ProcurementMethod = QComboBox(self)
@@ -113,12 +114,16 @@ class PurchasesWidgetAll(QWidget):
         self.min_data_label = QLabel("Начальная дата", self)
         self.min_data_input = QDateEdit(self)
         self.min_data_input.setCalendarPopup(True)
+        self.min_data_input.setStyleSheet(transparent_style)
         # self.min_data_input.setDate(self.min_data_input.date().currentDate())
+
+        self.min_data_input.clear()
         self.min_data_input.setFixedWidth(150)
         self.max_data_label = QLabel("Конечная дата", self)
         self.max_data_input = QDateEdit(self)
         self.max_data_input.setCalendarPopup(True)
         self.max_data_input.setDate(self.max_data_input.date().currentDate())
+        self.max_data_input.setStyleSheet(transparent_style) 
         button_layout3 = QHBoxLayout()
         button_layout3.addWidget(self.toExcel)
         button_layout3.setAlignment(Qt.AlignHCenter)

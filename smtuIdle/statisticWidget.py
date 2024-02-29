@@ -28,12 +28,14 @@ class StatisticWidget(QWidget):
         # btn_forward = QPushButton("Вперед", self)
         self.toExcel = QPushButton("Экспорт в Excel", self)
         self.Update = QPushButton("Обновить", self)
+        self.Reset_filters = QPushButton("Сбросить фильтры", self)
         # btn_analysis = QPushButton("Анализ", self)
         self.query = self.all_purchase.return_filtered_purchase()
         # btn_back.clicked.connect(self.show_previous_data)
         # btn_forward.clicked.connect(self.show_next_data)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
         self.Update.clicked.connect(self.update_data)
+        self.Reset_filters.clicked.connect(self.reset_filters)
         # Инициализация переменной для отслеживания текущего индекса данных
         self.current_data_index = 0
 
@@ -119,9 +121,13 @@ class StatisticWidget(QWidget):
         # button_layout.addWidget(btn_forward)
 
         #  вертикальный слой для кнопок внизу справа
+        button_layout2_H = QHBoxLayout(self)
         button_layout2 = QVBoxLayout(self)
+       
+        button_layout2_H.addWidget(self.Update)
+        button_layout2_H.addWidget(self.Reset_filters)
         button_layout2.addWidget(self.toExcel)
-        button_layout2.addWidget(self.Update)
+        button_layout2.addLayout(button_layout2_H)
         #  вертикальные слои с кнопками в горизонтальный слой
         self.vertical_layout.addLayout(button_layout)
         self.vertical_layout.addLayout(button_layout2)
@@ -202,6 +208,9 @@ class StatisticWidget(QWidget):
             if value != "Нет данных" :
                 count += 1
         return count
+    def reset_filters(self):
+        self.all_purchase.resetFilters()
+        self.update_data()
     # def analisPriceCount(self):
     #     #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
     #     query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
