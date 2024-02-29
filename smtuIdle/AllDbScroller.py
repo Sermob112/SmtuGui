@@ -35,16 +35,25 @@ class PurchasesWidgetAll(QWidget):
 
         # Устанавливаем заголовки колонок
         column_headers = ["№ПП", "Закон", "Реестровый номер", "Дата размещения",
-                          "Наименование закупки", "Предмет аукциона", "Начальная максимальная цена контракта",
+                          "Наименование закупки", "Предмет аукциона", "НМЦК",
                           "Валюта", "Наименование заказчика"]
         self.table.resizeColumnsToContents()
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.table.setHorizontalHeaderLabels(column_headers)
+        self.table.setColumnWidth(4, 600)
+        self.table.setColumnWidth(8, 600)
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        # Затем устанавливаем режим изменения размера колонки "Наименование закупки" на фиксированный размер
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.Fixed)
+        self.table.horizontalHeader().setSectionResizeMode(8, QHeaderView.Fixed)
+        self.table.setTextElideMode(Qt.ElideRight)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setShowGrid(True)
         self.table.verticalHeader().setVisible(False)
         self.table.horizontalHeader().setVisible(True)
+        self.table.setWordWrap(True)
+        
+     
         self.current_position = 0   
         self.label = QLabel("Всего записей", self)
         self.table.cellClicked.connect(self.handle_cell_click)
@@ -74,6 +83,21 @@ class PurchasesWidgetAll(QWidget):
         self.sort_by_putch_okpd2.setFixedWidth(250)
         for order in unique_purchase_OKPD2:
             self.sort_by_putch_okpd2.addItem(str(order.OKPD2Classification))
+
+        unique_purchase_CustomerName = Purchase.select(Purchase.CustomerName).distinct()
+        self.sort_by_putch_CustomerName = QComboBox(self)
+        self.sort_by_putch_CustomerName.addItem("Сортировать по Заказчикам")
+        self.sort_by_putch_CustomerName.setFixedWidth(250)
+        for order in unique_purchase_CustomerName:
+            self.sort_by_putch_CustomerName.addItem(str(order.CustomerName))
+
+
+        unique_purchase_ProcurementMethod = Purchase.select(Purchase.ProcurementMethod).distinct()
+        self.sort_by_putch_ProcurementMethod = QComboBox(self)
+        self.sort_by_putch_ProcurementMethod.addItem("Сортировать по Методу закупки")
+        self.sort_by_putch_ProcurementMethod.setFixedWidth(250)
+        for order in unique_purchase_ProcurementMethod:
+            self.sort_by_putch_ProcurementMethod.addItem(str(order.ProcurementMethod))
         # Создаем метки и поля для ввода минимальной и максимальной цены
         self.sort_by_putch_okpd2.currentIndexChanged.connect(self.highlight_current_item)
         self.min_price_label = QLabel("Минимальная цена", self)
@@ -143,6 +167,8 @@ class PurchasesWidgetAll(QWidget):
         layout.addWidget(self.sort_options)
         layout.addWidget(self.sort_by_putch_order)
         layout.addWidget(self.sort_by_putch_okpd2)
+        layout.addWidget(self.sort_by_putch_ProcurementMethod)
+        layout.addWidget(self.sort_by_putch_CustomerName)
         # Создаем горизонтальный макет для минимальной и максимальной цены
         price_layout = QGridLayout()
         # Добавляем их в сетку
@@ -224,8 +250,15 @@ class PurchasesWidgetAll(QWidget):
                                              ]):
                     item = QTableWidgetItem(str(value))
                     self.table.setItem(current_position, col, item)
-            
-                        
+                    item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
+                    # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
+                    self.table.setItem(current_position, col, item)
+                    if col == 6:  # Индексация колонок начинается с 0
+                        item.setTextAlignment(Qt.AlignRight | Qt.AlignTop)
+                    # Устанавливаем перенос текста в ячейке путем увеличения высоты строки
+                    self.table.setRowHeight(current_position, self.table.rowHeight(current_position) + 3)  # Увеличиваем высоту строки                        
                     # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
         else:
             self.label.setText("Нет записей")     
@@ -320,12 +353,24 @@ class PurchasesWidgetAll(QWidget):
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.PurchaseOrder ==  self.selected_order
             )
+            # Фильтр по ОКПД2
         self.selected_okpd = self.sort_by_putch_okpd2.currentText()
         if  self.selected_okpd != "Сортировать по ОКПД2":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.OKPD2Classification ==  self.selected_okpd
             )
-   
+        # Фильтр по Методу закупки
+        self.selected_ProcurementMethod = self.sort_by_putch_ProcurementMethod.currentText()
+        if  self.selected_ProcurementMethod != "Сортировать по Методу закупки":
+            purchases_query_combined = purchases_query_combined.where(
+                Purchase.ProcurementMethod ==  self.selected_ProcurementMethod
+            )
+        # Фильтр по Заказчикам
+        self.CustomerName = self.sort_by_putch_CustomerName.currentText()
+        if  self.CustomerName != "Сортировать по Заказчикам":
+            purchases_query_combined = purchases_query_combined.where(
+                Purchase.CustomerName ==  self.CustomerName
+            )
         keyword = self.selected_text
         
 
@@ -407,6 +452,8 @@ class PurchasesWidgetAll(QWidget):
         self.search_input.clear()
         self.current_position = 0
         self.sort_by_putch_okpd2.setCurrentIndex(0)
+        self.sort_by_putch_ProcurementMethod.setCurrentIndex(0)
+        self.sort_by_putch_CustomerName.setCurrentIndex(0)
         self.selected_text = None
         # Очищаем и снова получаем уникальные значения для автозаполнения
         self.unique_values_query = self.findUnic()
