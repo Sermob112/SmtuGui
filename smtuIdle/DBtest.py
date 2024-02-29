@@ -52,16 +52,18 @@ class PurchasesWidget(QWidget):
         self.current_position =0
         self.BackButton = QPushButton("Назад", self)
         self.BackButton.clicked.connect(self.go_back)
-        self.addButtonContract = QPushButton("Добавить обоснование начальной (максимальной) цены контракта", self)
-        
+        self.deleteButton = QPushButton("Добавить обоснование НМЦК", self)
+        self.addButtonContract = QPushButton("Добавить обоснование НМЦК", self)
+        self.BackButton.hide()
         self.addButtonContract.setMaximumWidth(400)
         
         self.addButtonTKP = QPushButton("Добавить результаты закупки", self)
         self.addButtonTKP.setMaximumWidth(400)
         # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
-        self.addButtonCurrency= QPushButton("Экспорт в excel файл", self)
+        self.addButtonCurrency= QPushButton("Экспорт в Еxcel Формуляра Закупок", self)
         self.addButtonCurrency.setMaximumWidth(300)
-
+        self.label_form = QLabel() 
+        self.label_form.setText("Редактирование Формуляра")
 
          # Устанавливаем обработчики событий для кнопок
         self.addButtonContract.clicked.connect(self.add_button_nmck_clicked)
@@ -76,9 +78,12 @@ class PurchasesWidget(QWidget):
 
 
         button_layout = QHBoxLayout()
-    
+        vertical_labels = QVBoxLayout()
+        vertical_labels.addWidget(self.label_form)
         self.butlayout = QHBoxLayout()
-        self.butlayout.addWidget(self.BackButton )
+        vertical_labels.addLayout(self.butlayout)
+        self.butlayout.addWidget(self.addButtonContract )
+        self.butlayout.addWidget(self.addButtonTKP )
         self.butlayout.setAlignment(Qt.AlignLeft)
         button_layout.addWidget(self.label)
         self.label.setAlignment(Qt.AlignHCenter)
@@ -87,11 +92,11 @@ class PurchasesWidget(QWidget):
 
         
         # button_layout2.addWidget(self.addButtonTKP)
-        button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignLeft)
-        button_layout2.addWidget(self.addButtonTKP,alignment=Qt.AlignLeft)
+        # button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignLeft)
+        # button_layout2.addWidget(self.addButtonTKP,alignment=Qt.AlignLeft)
         # button_layout2.addWidget(self.addButtonCIA)
-        button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignLeft)
-        button_layout2.setAlignment(Qt.AlignLeft)
+        button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignCenter)
+        # button_layout2.setAlignment(Qt.AlignCenter)
    
 
  
@@ -101,7 +106,7 @@ class PurchasesWidget(QWidget):
         # Создаем горизонтальный макет для минимальной и максимальной цены
         self.table.itemClicked.connect(self.open_file)
         # Добавляем таблицу и остальные элементы в макет
-        layout.addLayout( self.butlayout)
+        layout.addLayout( vertical_labels)
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
         layout.addLayout(button_layout2)
@@ -331,9 +336,10 @@ class PurchasesWidget(QWidget):
                 # Установка цвета фона только для нужных ячеек
                 label_item.setBackground(QColor(200, 255, 200))  # Светло-зеленый
                 value_item.setBackground(QColor(200, 255, 200))  # Светло-зеленый
-
+            
         self.table.setItem(row_position, 0, label_item)
         self.table.setItem(row_position, 1, value_item)
+        
 
         # # Adjust row height
         self.table.resizeRowsToContents()

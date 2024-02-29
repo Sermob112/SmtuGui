@@ -170,7 +170,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton2.setIcon(QIcon("Pics/4.png"))
         self.pushButton3.setIcon(QIcon("Pics/1.png"))
         self.pushButton4.setIcon(QIcon("Pics/15.png"))
-        
+        self.pushButton5.setIcon(QIcon("Pics/13.png"))
         self.pushButton5_1.setIcon(QIcon("Pics/3.png"))
         self.pushButton6.setIcon(QIcon("Pics/7.png"))
   
@@ -300,12 +300,12 @@ class Ui_MainWindow(QMainWindow):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
-        self.pushButton0.setText(_translate("MainWindow", "Просмотр БД"))
-        self.pushButton1.setText(_translate("MainWindow", "Ввод Закупок"))
+        self.pushButton0.setText(_translate("MainWindow", "Просмотр Формуляра Закупки"))
+        self.pushButton1.setText(_translate("MainWindow", "Ввод данных по закупкам"))
         self.pushButton2.setText(_translate("MainWindow", "Просмотр закупок БД"))
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
-        self.pushButton5.setText(_translate("MainWindow", "Экспорт всех данных БД в Excel"))
+        self.pushButton5.setText(_translate("MainWindow", "Экспорт БД НМЦК в Excel"))
         self.pushButton5_1.setText(_translate("MainWindow", "Панель изменений"))
         self.pushButton6.setText(_translate("MainWindow", "Отладка"))
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
