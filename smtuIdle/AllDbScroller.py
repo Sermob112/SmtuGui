@@ -134,7 +134,7 @@ class PurchasesWidgetAll(QWidget):
         self.reset_filters_button.clicked.connect(self.resetFilters)
         # Создаем поле ввода для поиска
         
-        self.search_input = QLineEdit(self)
+        self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Поиск по Реестровому номеру, заказчику, наименованию объекта или организации")
         self.unique_values_query = self.findUnic()
         self.search_input.setFixedWidth(300)
@@ -159,21 +159,32 @@ class PurchasesWidgetAll(QWidget):
         self.apply_filter_button.setIcon(icon)
         self.apply_filter_button.clicked.connect(self.apply_filter)
         self.apply_filter_button.setFixedWidth(150)
-        
-
+        self.QwordFinder = QPushButton("Поиск по ключевому слову")
+        self.QwordFinder.setIcon(QIcon("Pics/right-arrow.png"))
+        self.QwordFinder.setMaximumWidth(300)
+        self.QwordFinder.clicked.connect(self.toggle_menu)
  
-    
-
+        self.menu_content = QWidget()
+        menu_layout = QVBoxLayout()
+        menu_layout.addWidget(self.search_input)
+        self.menu_content.setLayout(menu_layout)
+        self.menu_frame = QFrame()
+        self.menu_frame.setLayout(QVBoxLayout())
+        self.menu_frame.layout().addWidget(self.menu_content)
+        self.menu_frame.setVisible(False)
        # Создаем горизонтальный макет и добавляем элементы
         layout = QVBoxLayout(self)
-        layout.addWidget(self.search_input)
- 
+        # layout.addWidget(self.search_input)
+        layout.addWidget(self.QwordFinder, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.menu_frame)
+        toplayoutH = QHBoxLayout(self)
         # Добавляем выпадающее меню
-        layout.addWidget(self.sort_options)
-        layout.addWidget(self.sort_by_putch_order)
-        layout.addWidget(self.sort_by_putch_okpd2)
-        layout.addWidget(self.sort_by_putch_ProcurementMethod)
-        layout.addWidget(self.sort_by_putch_CustomerName)
+        toplayoutH.addWidget(self.sort_options)
+        toplayoutH.addWidget(self.sort_by_putch_order)
+        toplayoutH.addWidget(self.sort_by_putch_okpd2)
+        toplayoutH.addWidget(self.sort_by_putch_ProcurementMethod)
+        toplayoutH.addWidget(self.sort_by_putch_CustomerName)
+        layout.addLayout(toplayoutH)
         # Создаем горизонтальный макет для минимальной и максимальной цены
         price_layout = QGridLayout()
         # Добавляем их в сетку
@@ -238,6 +249,15 @@ class PurchasesWidgetAll(QWidget):
             self.toExcel.hide()
         else:
             self.toExcel.show()
+
+    def toggle_menu(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame.setVisible(not self.menu_frame.isVisible())
+        if self.menu_frame.isVisible():
+            self.QwordFinder.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.QwordFinder.setIcon(QIcon("Pics/right-arrow.png"))
+      
     def show_all_purchases(self):
     # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)
