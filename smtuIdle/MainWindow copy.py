@@ -1,5 +1,5 @@
 from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtCore import *
+from PySide6.QtCore import QFile,QTextStream
 from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
 from PySide6.QtWidgets import *
@@ -35,109 +35,81 @@ class Ui_MainWindow(QMainWindow):
         app.setStyle(style)
         self.resize(1680, 960)
        
+        
+        # Установка каскадной таблицы стилей (CSS) для всего приложения
+        # file = QFile(":/qdarkstyle/style.qss")
+        # file.open(QFile.ReadOnly | QFile.Text)
+        # stream = QTextStream(file)
+        # app.setStyleSheet(stream.readAll())
+
+        # Главный макет
+
+      
+      
+    
+                # Общий макет
     
         self.centralwidget = QtWidgets.QWidget(self)
         self.setCentralWidget(self.centralwidget)
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.topLayout = QtWidgets.QHBoxLayout()
         # Статический виджет в центре
-        # self.centerWidget = QtWidgets.QWidget(self.centralwidget)
-        # self.centerLayout = QtWidgets.QVBoxLayout(self.centerWidget)
-        # self.topLayout.addWidget(self.centerWidget)
+        self.centerWidget = QtWidgets.QWidget(self.centralwidget)
+        self.centerLayout = QtWidgets.QVBoxLayout(self.centerWidget)
+        self.topLayout.addWidget(self.centerWidget)
      
-        # self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
-        # self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
+        self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
+        self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
+        # self.rightTopLayoutButton = QtWidgets.QHBoxLayout(self.rightTopWidget)
+        # self.rightTopLayoutButton.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignmentFlag.AlignRight)
         self.layoutBut = QHBoxLayout()
         self.logoutButton = QPushButton("Выйти")
         self.logoutButton.setFixedWidth(150)
         self.logoutButton.clicked.connect(self.exit)
-        self.layoutBut.addWidget(self.logoutButton)
        
-    
-        self.dbLabel = QtWidgets.QLabel()
+        self.userLabel = QtWidgets.QLabel(self.rightTopWidget)
+        self.RolLabel = QtWidgets.QLabel(self.rightTopWidget)
+        self.dbLabel = QtWidgets.QLabel(self.rightTopWidget)
         current_date = datetime.now()
         latest_record = ChangedDate.select().order_by(ChangedDate.chenged_time.desc()).first()
         if latest_record:
             # Получаем поле chenged_time из последней записи
-            latest_changed_time = latest_record.chenged_time.strftime('%d.%m.%Y %H:%M') 
-               
+            latest_changed_time = latest_record.chenged_time        
         else:
             latest_changed_time = "Нет данных"
         self.formatted_date = current_date.strftime("%d-%m-%Y")
-        
+        self.dbLabel.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
         user = User.get(User.username == self.username)
         user_roles = UserRole.select().where(UserRole.user == user)
         self.users_roles = [user_role.role.name for user_role in user_roles]
-        # Получаем самую раннюю дату
-        earliest_date = Purchase.select(fn.Min(Purchase.PlacementDate)).scalar()
-
-        # Получаем самую позднюю дату
-        latest_date = Purchase.select(fn.Max(Purchase.PlacementDate)).scalar()
         self.user = f"Пользователь: <b>{self.username}</b>"
         self.role = f"Роль: <b>{self.users_roles[0]}</b>"
         self.date = f"Дата сеанса: <b>{self.formatted_date}</b>"
         self.dateUpdate = f"Дата последнего обновления БД: <b>{latest_changed_time}</b>"
-        self.dateLastPurch = f"Данные о закупках с <b>{earliest_date.strftime('%d.%m.%Y')} по {latest_date.strftime('%d.%m.%Y')} </b>"
         self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
-        self.dbLabel.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
-
-        # Установка максимальной высоты
-        self.dbLabel.setFixedWidth(480)
-  
-        self.dbLabel.setWordWrap(True)
-        self.topLayout.addWidget(self.dbLabel)
-        self.topLayout.setAlignment(QtCore.Qt.AlignLeft)
-        # self.topLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        
-       
-        self.userLabel = QtWidgets.QLabel()
-        self.RolLabel = QtWidgets.QLabel()
         
         self.userLabel.setText(self.user)
         self.RolLabel.setText(self.role)
-        # self.rightTopLayout.addWidget(self.dbLabel)
-        # self.rightTopLayout.addWidget(self.userLabel)
-        # self.rightTopLayout.addWidget(self.RolLabel)
-        self.purchaseLabel = QtWidgets.QLabel()
-        self.purchaseLabel.setText( self.date)
-        self.purchaseLabel2 = QtWidgets.QLabel()
-        self.purchaseLabel3 = QtWidgets.QLabel()
-        self.purchaseLabel4 = QtWidgets.QLabel()
-        self.rightLayout = QVBoxLayout()
-        self.rightLayout.addWidget( self.userLabel)
-        self.rightLayout.addWidget( self.RolLabel)
-        self.rightLayout.addWidget( self.purchaseLabel)
-        self.topLayout.addSpacing(20)
-        self.topLayout.addLayout(self.rightLayout)
-        
-        self.rightLayout2 = QVBoxLayout()
-        self.purchaseLabel2.setText(self.dateLastPurch)
-        self.purchaseLabel3.setText(self.totalRecords)
-        self.purchaseLabel4.setText(self.dateUpdate)
-        self.rightLayout2.addWidget( self.purchaseLabel2)
-        self.rightLayout2.addWidget( self.purchaseLabel3)
-        self.rightLayout2.addWidget( self.purchaseLabel4)
-        self.topLayout.addSpacing(20)
-        self.topLayout.addLayout(self.rightLayout2)
-        self.topLayout.addStretch()
-        self.topLayout.addLayout(self.layoutBut)
-        self.verticalLayout.addLayout(self.topLayout)
-
-        
-        # self.purchaseLabel.setText( self.totalRecords)
-        # self.purchaseLabel2.setText(self.date)
-        # self.purchaseLabel3.setText(self.dateUpdate)
-        # self.updatePurchaseLabel()
-        # self.rightTopLayout.addWidget(self.purchaseLabel)
-        # self.rightTopLayout.addWidget(self.purchaseLabel2)
-        # self.rightTopLayout.addWidget(self.purchaseLabel3)
+        self.rightTopLayout.addWidget(self.dbLabel)
+        self.rightTopLayout.addWidget(self.userLabel)
+        self.rightTopLayout.addWidget(self.RolLabel)
+        self.purchaseLabel = QtWidgets.QLabel(self.rightTopWidget)
+        self.purchaseLabel2 = QtWidgets.QLabel(self.rightTopWidget)
+        self.purchaseLabel3 = QtWidgets.QLabel(self.rightTopWidget)
+       
+        self.purchaseLabel.setText( self.totalRecords)
+        self.purchaseLabel2.setText(self.date)
+        self.purchaseLabel3.setText(self.dateUpdate)
+        self.updatePurchaseLabel()
+        self.rightTopLayout.addWidget(self.purchaseLabel)
+        self.rightTopLayout.addWidget(self.purchaseLabel2)
+        self.rightTopLayout.addWidget(self.purchaseLabel3)
   
-        # self.topLayout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
-        # self.topLayout.addWidget(self.rightTopWidget)
-        # self.layoutBut.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignRight)
-        # self.verticalLayout.addLayout( self.layoutBut)
-        # self.verticalLayout.addLayout(self.topLayout)
-
+        self.topLayout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
+        self.topLayout.addWidget(self.rightTopWidget)
+        self.layoutBut.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignRight)
+        self.verticalLayout.addLayout( self.layoutBut)
+        self.verticalLayout.addLayout(self.topLayout)
          # Добавляем вертикальную разделительную черту внизу
         line = QtWidgets.QFrame(self.centralwidget)
         line.setFrameShape(QtWidgets.QFrame.HLine)
@@ -383,8 +355,8 @@ class Ui_MainWindow(QMainWindow):
         self.user = f"Пользователь: <b>{self.username}</b>"
         self.date = f"Дата сеанса: <b>{self.formatted_date}</b>"
         self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
-        self.purchaseLabel3.setText(self.totalRecords)
-        self.purchaseLabel.setText(self.date)
+        self.purchaseLabel.setText(self.totalRecords)
+        self.purchaseLabel2.setText(self.date)
     def return_variabels(self):
         self.user = f"Пользователь {self.username}"
         self.date = f"Дата сеанса{self.formatted_date}"
