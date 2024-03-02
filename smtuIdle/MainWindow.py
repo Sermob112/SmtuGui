@@ -12,6 +12,7 @@ from InsertWidgetNMCK import InsertWidgetNMCK
 from statisticWidget import StatisticWidget
 from CurrencyWindow import CurrencyWidget
 from debugWindow import DebugWidget
+from HelpPanel import HelpPanel
 from AllDbScroller import PurchasesWidgetAll
 from ChangeLogWindow import ChangeLogWindow
 from parserV3 import count_total_records
@@ -69,15 +70,24 @@ class Ui_MainWindow(QMainWindow):
         user_roles = UserRole.select().where(UserRole.user == user)
         self.users_roles = [user_role.role.name for user_role in user_roles]
         # Получаем самую раннюю дату
+        
         earliest_date = Purchase.select(fn.Min(Purchase.PlacementDate)).scalar()
-
+        if earliest_date:
+            erli = earliest_date.strftime('%d.%m.%Y')
+        else:
+            erli = "Нет данных"
         # Получаем самую позднюю дату
+       
         latest_date = Purchase.select(fn.Max(Purchase.PlacementDate)).scalar()
+        if latest_date:
+            laster = latest_date.strftime('%d.%m.%Y')
+        else:
+            laster = earliest_date = "Нет данных"
         self.user = f"Пользователь: <b>{self.username}</b>"
         self.role = f"Роль: <b>{self.users_roles[0]}</b>"
         self.date = f"Дата сеанса: <b>{self.formatted_date}</b>"
         self.dateUpdate = f"Дата последнего обновления БД: <b>{latest_changed_time}</b>"
-        self.dateLastPurch = f"Данные о закупках с <b>{earliest_date.strftime('%d.%m.%Y')} по {latest_date.strftime('%d.%m.%Y')} </b>"
+        self.dateLastPurch = f"Данные о закупках с <b>{erli} по {laster} </b>"
         self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
         self.dbLabel.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
 
@@ -154,35 +164,39 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton0.setObjectName("pushButton0")
         self.leftPanelLayout.addWidget(self.pushButton0)
         
-        self.leftPanelLayout.addSpacing(50)
+        self.leftPanelLayout.addSpacing(20)
         self.pushButton1 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton1.setObjectName("pushButton1")
         self.leftPanelLayout.addWidget(self.pushButton1)
         
-        self.leftPanelLayout.addSpacing(50)
+        self.leftPanelLayout.addSpacing(20)
         self.pushButton2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton2.setObjectName("pushButton2")
         self.leftPanelLayout.addWidget(self.pushButton2)
-        self.leftPanelLayout.addSpacing(50)
+        self.leftPanelLayout.addSpacing(20)
         self.pushButton3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton3.setObjectName("pushButton3")
         self.leftPanelLayout.addWidget(self.pushButton3)
-        self.leftPanelLayout.addSpacing(50)
+        self.leftPanelLayout.addSpacing(20)
         self.pushButton4 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton4.setObjectName("pushButton4")
         self.leftPanelLayout.addWidget(self.pushButton4)
-        self.leftPanelLayout.addSpacing(50)
+        self.leftPanelLayout.addSpacing(20)
         self.pushButton5 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton5.setObjectName("pushButton5")
         self.leftPanelLayout.addWidget(self.pushButton5)
-        self.leftPanelLayout.addSpacing(50)
+        self.leftPanelLayout.addSpacing(20)
         self.pushButton5_1 = QtWidgets.QPushButton(self.centralwidget)
         self.leftPanelLayout.addWidget(self.pushButton5_1)
-        self.leftPanelLayout.addSpacing(50)
+        self.leftPanelLayout.addSpacing(20)
         
         self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton6.setObjectName("pushButton6")
         self.leftPanelLayout.addWidget(self.pushButton6)
+        self.leftPanelLayout.addSpacing(20)
+        self.pushButton7 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton7.setObjectName("pushButton7")
+        self.leftPanelLayout.addWidget(self.pushButton7)
 
 
   
@@ -198,6 +212,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5.setFixedHeight(button_height)
         self.pushButton5_1.setFixedHeight(button_height)
         self.pushButton6.setFixedHeight(button_height)
+        self.pushButton7.setFixedHeight(button_height)
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
@@ -210,11 +225,15 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5.setIcon(QIcon("Pics/13.png"))
         self.pushButton5_1.setIcon(QIcon("Pics/3.png"))
         self.pushButton6.setIcon(QIcon("Pics/7.png"))
+        self.pushButton7.setIcon(QIcon("Pics/7.png"))
   
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
-        
-
+        self.buttons = [
+            self.pushButton0, self.pushButton1, self.pushButton2,
+            self.pushButton3, self.pushButton4,self.pushButton5_1, self.pushButton6,self.pushButton7,self.pushButton5
+        ]
+        self.update_button_style_all()
 
         # Линия-разделитель
         self.line = QtWidgets.QFrame(self.centralwidget)
@@ -255,6 +274,10 @@ class Ui_MainWindow(QMainWindow):
         self.page6 = QtWidgets.QWidget()
         self.label6 = QtWidgets.QLabel(self.page6)
         self.stackedWidget.addWidget(self.page6)
+
+        self.page7 = QtWidgets.QWidget()
+        self.label7 = QtWidgets.QLabel(self.page7)
+        self.stackedWidget.addWidget(self.page7)
         #Загрузка виджета изминений бд
         self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
         self.ChangeWindow.setParent(self)
@@ -295,21 +318,23 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.Statistic)
 
-       
+        #Загрузка виджета помощи
 
+        self.helper= HelpPanel()
+        self.helper.setParent(self)
+        layout = QVBoxLayout(self.page7)
+
+        layout.addWidget(self.helper)
         self.purchaseViewerall.window = self
         self.horizontalLayout.addWidget(self.stackedWidget)
 
         self.verticalLayout.addLayout(self.horizontalLayout)
 
         self.setCentralWidget(self.centralwidget)
-        self.buttons = [
-            self.pushButton0, self.pushButton1, self.pushButton2,
-            self.pushButton3, self.pushButton4,self.pushButton5_1, self.pushButton6,self.pushButton5
-        ]
+  
         
        
-        self.pushButton0.setStyleSheet("background-color: #4CAF50; color: white;")
+        self.pushButton0.setStyleSheet("background-color: #4CAF50;font-size: 11pt;text-align: left;padding-left: 8px; ")
         self.stackedWidget.currentChanged.connect(self.update_button_style)
         # Подключение сигналов к слотам
         self.pushButton0.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
@@ -321,6 +346,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5.clicked.connect(self.export_to_excel_all)
         self.pushButton5_1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
         self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(6))
+        self.pushButton7.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(7))
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -345,6 +371,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5.setText(_translate("MainWindow", "Экспорт БД НМЦК в Excel"))
         self.pushButton5_1.setText(_translate("MainWindow", "Панель изменений"))
         self.pushButton6.setText(_translate("MainWindow", "Отладка"))
+        self.pushButton7.setText(_translate("MainWindow", "Файлы Руководства"))
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         # self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
@@ -353,9 +380,13 @@ class Ui_MainWindow(QMainWindow):
     def update_button_style(self, index):
         for i, button in enumerate(self.buttons):
             if i == index:
-                button.setStyleSheet("background-color: #4CAF50; color: white;")
+                button.setStyleSheet("background-color: #4CAF50;font-size: 11pt;text-align: left;padding-left: 8px;")
             else:
-                button.setStyleSheet("")
+                button.setStyleSheet("font-size: 11pt;text-align: left;padding-left: 8px;")
+
+    def update_button_style_all(self):
+        for i, button in enumerate(self.buttons):
+            button.setStyleSheet("font-size: 11pt;text-align: left;padding-left: 8px;")
     
     def exit(self,event):
    

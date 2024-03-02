@@ -151,6 +151,9 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5_1 = QtWidgets.QPushButton(self.centralwidget)
         self.leftPanelLayout.addWidget(self.pushButton5_1)
         self.leftPanelLayout.addSpacing(50)
+        self.pushButton7 = QtWidgets.QPushButton(self.centralwidget)
+        self.leftPanelLayout.addWidget(self.pushButton7)
+        self.leftPanelLayout.addSpacing(50)
         
         self.pushButton6 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton6.setObjectName("pushButton6")
