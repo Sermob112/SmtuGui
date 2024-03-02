@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt, QStringListModel,Signal
-
+from PySide6.QtGui import *
 from peewee import *
 import pandas as pd
 from models import Purchase, Contract
@@ -45,9 +45,9 @@ class StatisticWidget(QWidget):
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["Метод", "223-ФЗ", "44-ФЗ", "Общий итог"])
 
-        self.table.setColumnWidth(0, 300)  # Ширина "Метод"
-        self.table.setColumnWidth(1, 100)  # Ширина "223-ФЗ"
-        self.table.setColumnWidth(2, 100)  # Ширина "44-ФЗ"
+        # self.table.setColumnWidth(0, 300)  # Ширина "Метод"
+        # self.table.setColumnWidth(1, 100)  # Ширина "223-ФЗ"
+        # self.table.setColumnWidth(2, 100)  # Ширина "44-ФЗ"
         # Устанавливаем политику расширения таблицы
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # Установите политику изменения размеров секций горизонтального заголовка
@@ -55,54 +55,160 @@ class StatisticWidget(QWidget):
         # Установите политику изменения размеров колонок содержимого
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
           # Список для хранения всех данных, которые  отобразить в таблице
-        self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
+        self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count(),self.analisOKPD2()]
+                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()]
         
         
         self.label_texts = [
-            "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП",
+            "Анализ методов, использованных для определения НМЦК и ЦКЕП",
             "Анализ формулировок, применяемых государственными заказчиками, при объявлении закупки",
-            "Уровень цены контракта, заключенного по результатам конкурса",
-            "Диапазон значений коэффициента вариации при определении НМЦК и ЦКЕП",
-            "Количество заявок на участие в закупке",
-            "Количество допущенных заявок на участие в закупке",
-            "Количество отклоненных заявок на участие в закупке",
-            "Соотношение НМЦК и ЦКЕП и цены контракта, заключенного по результатам конкурса",
+            "Анализ по классификации ОКПД2",           
+            "Анализ количества заявок на участие в закупке",
+            "Анализ количества допущенных заявок на участие в закупке",
+            "Анализ количества отклоненных заявок на участие в закупке",
+            "Анализ соотношения НМЦК и ЦКЕП и цены контракта, заключенного по результатам конкурса",
             "Анализ количества ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
-            "Анализ по классификации ОКПД2"
+            "Анализ уровеня цены контракта, заключенного по результатам конкурса",
+             "Анализ диапазона значений коэффициента вариации при определении НМЦК и ЦКЕП"
         ]
         self.buttons = []
 
+        # Добавляем горизонтальную линию
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)  # Форма линии (горизонтальная)
+        line.setFrameShadow(QFrame.Shadow.Sunken)  # Тень линии
+        line.setStyleSheet("background-color: grey;")  # Цвет фона
+        line.setFixedHeight(2)
 
-        for index, text in enumerate(self.label_texts):
+        line1 = QFrame()
+        line1.setFrameShape(QFrame.Shape.HLine)
+        line1.setFrameShadow(QFrame.Shadow.Sunken)
+        line1.setStyleSheet("background-color: grey;")
+        line1.setFixedHeight(2)
+
+        line2 = QFrame()
+        line2.setFrameShape(QFrame.Shape.HLine)
+        line2.setFrameShadow(QFrame.Shadow.Sunken)
+        line2.setStyleSheet("background-color: grey;")
+        line2.setFixedHeight(2)
+         # Добавляем кнопку выпадающего меню Первый этап
+        self.FirstStage = QPushButton("Анализ НМЦК")
+        self.FirstStage.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FirstStage.setMaximumWidth(800)
+        self.FirstStage.setStyleSheet("text-align: left; padding-left: 10px;font-size: 11pt;")
+        self.FirstStage.clicked.connect(self.toggle_stage_1)
+         # колапсирующее окно Первый этап
+        self.menu_content = QWidget()
+        menu_layout = QVBoxLayout()
+        self.Qword = QLabel("Анализ методов и формулировок в государственных закупках")
+        menu_layout.addWidget(self.Qword)
+        for index, text in enumerate(self.label_texts[:3]):
             button = QtWidgets.QPushButton(text)
             button.setFixedSize(800, 30)
             size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
             button.setSizePolicy(size_policy)
             button.setStyleSheet("text-align: left;")
-            
-            
-            # Подключите обработчик события к каждой кнопке, передавая индекс
             button.clicked.connect(partial(self.show_specific_data, index, button))
-            
+            menu_layout.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
             self.buttons.append(button)
+        # menu_layout.addWidget(line)
+        self.menu_content.setLayout(menu_layout)
+        self.menu_frame = QFrame()
+        self.menu_frame.setLayout(QVBoxLayout())
+        self.menu_frame.layout().addWidget(self.menu_content)
+        self.menu_frame.setVisible(False)
+
+         # Добавляем кнопку выпадающего меню по цене
+        self.SecondStage = QPushButton("Анализ Заявок")
+        self.SecondStage.setIcon(QIcon("Pics/right-arrow.png"))
+        self.SecondStage.setMaximumWidth(800)
+        self.SecondStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
+        self.SecondStage.clicked.connect(self.toggle_stage_2)
+         # колапсирующее окно со списком всех элементов
+        self.menu_content_2 = QWidget()
+        menu_layout_2 = QVBoxLayout()
+        self.Qword_2 = QLabel("Анализ заявок на участие в конкурсе")
+        menu_layout_2.addWidget(self.Qword_2)
+        for index , text in enumerate(self.label_texts[3:6]):
+            button = QtWidgets.QPushButton(text)
+            button.setFixedSize(800, 30)
+            size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+            button.setSizePolicy(size_policy)
+            button.setStyleSheet("text-align: left;")
+            button.clicked.connect(partial(self.show_specific_data, index + 3, button))
+            menu_layout_2.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
+            self.buttons.append(button)
+        # menu_layout_2.addWidget(line)
+        self.menu_content_2.setLayout(menu_layout_2)
+        self.menu_frame_2 = QFrame()
+        self.menu_frame_2.setLayout(QVBoxLayout())
+        self.menu_frame_2.layout().addWidget(self.menu_content_2)
+        self.menu_frame_2.setVisible(False)
+
+        # Добавляем кнопку выпадающего меню Первый этап
+        self.ThirdStage = QPushButton("Анализ контрактов")
+        self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png"))
+        self.ThirdStage.setMaximumWidth(800)
+        self.ThirdStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
+        self.ThirdStage.clicked.connect(self.toggle_stage_3)
+         # колапсирующее окно Первый этап
+        self.menu_content_3 = QWidget()
+        menu_layout_3 = QVBoxLayout()
+        self.Qword_3 = QLabel("Анализ заключенных контрактов и разницы НМЦК и ЦКЕИ")
+        menu_layout_3.addWidget(self.Qword_3)
+        for index, text in enumerate(self.label_texts[6:]):
+            button = QtWidgets.QPushButton(text)
+            button.setFixedSize(800, 30)
+            size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+            button.setSizePolicy(size_policy)
+            button.setStyleSheet("text-align: left;")
+            button.clicked.connect(partial(self.show_specific_data, index + 6, button))
+            menu_layout_3.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
+            self.buttons.append(button)
+        # menu_layout.addWidget(line)
+        self.menu_content_3.setLayout(menu_layout_3)
+        self.menu_frame_3 = QFrame()
+        self.menu_frame_3.setLayout(QVBoxLayout())
+        self.menu_frame_3.layout().addWidget(self.menu_content_3)
+        self.menu_frame_3.setVisible(False)
         
-        self.buttons_layout = QtWidgets.QVBoxLayout()
+        #ЦИКЛ кнопок 
+        # for index, text in enumerate(self.label_texts[:3]):
+        #     button = QtWidgets.QPushButton(text)
+        #     button.setFixedSize(800, 30)
+        #     size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+        #     button.setSizePolicy(size_policy)
+        #     button.setStyleSheet("text-align: left;")
+            
+            
+        #     # Подключите обработчик события к каждой кнопке, передавая индекс
+        #     button.clicked.connect(partial(self.show_specific_data, index, button))
+            
+        #     self.buttons.append(button)
+        
+        self.buttons_layout = QVBoxLayout()
 
         # Добавьте кнопки в вертикальный слой
-        for button in self.buttons:
-            self.buttons_layout.addWidget(button)
+        # for button in self.buttons:
+        #     self.buttons_layout.addWidget(button)
 
         main_layout = QHBoxLayout(self)
-        scroll_area = QScrollArea(self)
-        scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        scroll_widget = QtWidgets.QWidget()
-        scroll_widget.setLayout(self.buttons_layout)
-      
-        scroll_area.setWidget(scroll_widget)
-        main_layout.addWidget(scroll_area)
-
+        # scroll_area = QScrollArea(self)
+        # scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        # scroll_widget = QtWidgets.QWidget()
+        # scroll_widget.setLayout(self.buttons_layout)
+        self.buttons_layout.addWidget(self.FirstStage)
+        self.buttons_layout.addWidget(self.menu_frame)
+        self.buttons_layout.addWidget(self.SecondStage)
+        self.buttons_layout.addWidget(self.menu_frame_2)
+        self.buttons_layout.addWidget(self.ThirdStage)
+        self.buttons_layout.addWidget(self.menu_frame_3)
+        self.buttons_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
+        # scroll_area.setWidget(scroll_widget)
+        # main_layout.addWidget(scroll_area)
+        main_layout.addLayout(self.buttons_layout)
         
 
         #  вертикальный слой для метки и таблицы
@@ -131,6 +237,7 @@ class StatisticWidget(QWidget):
         #  вертикальные слои с кнопками в горизонтальный слой
         self.vertical_layout.addLayout(button_layout)
         self.vertical_layout.addLayout(button_layout2)
+        
         #  основной макет для вашего виджета
         self.setLayout(main_layout)
         #  отображение данных
@@ -145,7 +252,29 @@ class StatisticWidget(QWidget):
             self.toExcel.hide()
         else:
             self.toExcel.show()
-        
+
+    def toggle_stage_1(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame.setVisible(not self.menu_frame.isVisible())
+        if self.menu_frame.isVisible():
+            self.FirstStage.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.FirstStage.setIcon(QIcon("Pics/right-arrow.png"))
+
+    def toggle_stage_2(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame_2.setVisible(not self.menu_frame_2.isVisible())
+        if self.menu_frame_2.isVisible():
+            self.SecondStage.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.SecondStage.setIcon(QIcon("Pics/right-arrow.png"))  
+    def toggle_stage_3(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame_3.setVisible(not self.menu_frame_3.isVisible())
+        if self.menu_frame_3.isVisible():
+            self.ThirdStage.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png")) 
     def update_data(self):
         self.all_data = [self.analis(),self.analisNMSK(), self.analisMAxPrice(),self.analisCoeffVar(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),

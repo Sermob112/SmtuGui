@@ -337,9 +337,9 @@ class Ui_MainWindow(QMainWindow):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
-        self.pushButton0.setText(_translate("MainWindow", "Просмотр Формуляра Закупки"))
+        self.pushButton0.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton1.setText(_translate("MainWindow", "Ввод данных по закупкам"))
-        self.pushButton2.setText(_translate("MainWindow", "Просмотр закупок БД"))
+        self.pushButton2.setText(_translate("MainWindow", "Просмотр Формуляра Закупки"))
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
         self.pushButton5.setText(_translate("MainWindow", "Экспорт БД НМЦК в Excel"))
