@@ -4,7 +4,7 @@ from playhouse.shortcuts import model_to_dict
 from datetime import date
 from models import Purchase, Contract, FinalDetermination,CurrencyRate
 from PySide6.QtCore import Qt, QStringListModel,Signal
-from PySide6.QtGui import QColor,QIcon
+from PySide6.QtGui import QColor,QIcon,QFont
 from PySide6.QtCore import QDate
 import sys, json
 from peewee import JOIN
@@ -59,17 +59,17 @@ class PurchasesWidgetAll(QWidget):
         self.table.cellClicked.connect(self.handle_cell_click)
          
          # Создаем выпадающее меню
-        self.sort_options = QComboBox(self)
-        self.sort_options.addItems(["Сортировать по возрастанию цены", "Сортировать по убыванию цены",
+        self.sort_options = QComboBox()
+        self.sort_options.addItems(["Сортировать по Цене (Возростание)", "Сортировать по Цены (Убывание)",
                                     
-                                    "Сортировать по Дате (Убывание)","Сортировать по Дате (возростание)"])
+                                    "Сортировать по Дате (Возростание)","Сортировать по Дате (Убывание)"])
          # Устанавливаем обработчик событий для выпадающего меню
        
         self.sort_options.setFixedWidth(250)
         self.sort_options.currentIndexChanged.connect(self.highlight_current_item)
         unique_purchase_orders = Purchase.select(Purchase.PurchaseOrder).distinct()
-        self.sort_by_putch_order = QComboBox(self)
-        self.sort_by_putch_order.addItem("Сортировать по Закону")
+        self.sort_by_putch_order = QComboBox()
+        self.sort_by_putch_order.addItem("Фильтрация по Закону")
         self.sort_by_putch_order.setFixedWidth(250)
         self.sort_by_putch_order.currentIndexChanged.connect(self.highlight_current_item)
         for order in unique_purchase_orders:
@@ -78,52 +78,52 @@ class PurchasesWidgetAll(QWidget):
 
       
         unique_purchase_OKPD2 = Purchase.select(Purchase.OKPD2Classification).distinct()
-        self.sort_by_putch_okpd2 = QComboBox(self)
-        self.sort_by_putch_okpd2.addItem("Сортировать по ОКПД2")
+        self.sort_by_putch_okpd2 = QComboBox()
+        self.sort_by_putch_okpd2.addItem("Фильтрация по ОКПД2")
         self.sort_by_putch_okpd2.setFixedWidth(250)
         for order in unique_purchase_OKPD2:
             self.sort_by_putch_okpd2.addItem(str(order.OKPD2Classification))
 
         unique_purchase_CustomerName = Purchase.select(Purchase.CustomerName).distinct()
-        self.sort_by_putch_CustomerName = QComboBox(self)
-        self.sort_by_putch_CustomerName.addItem("Сортировать по Заказчикам")
+        self.sort_by_putch_CustomerName = QComboBox()
+        self.sort_by_putch_CustomerName.addItem("Фильтрация по Заказчикам")
         self.sort_by_putch_CustomerName.setFixedWidth(250)
         for order in unique_purchase_CustomerName:
             self.sort_by_putch_CustomerName.addItem(str(order.CustomerName))
 
-        transparent_style = "QDateEdit { color: transparent; }"
+        self.transparent_style = "QDateEdit { color: transparent; }"
 
         unique_purchase_ProcurementMethod = Purchase.select(Purchase.ProcurementMethod).distinct()
-        self.sort_by_putch_ProcurementMethod = QComboBox(self)
-        self.sort_by_putch_ProcurementMethod.addItem("Сортировать по Методу закупки")
+        self.sort_by_putch_ProcurementMethod = QComboBox()
+        self.sort_by_putch_ProcurementMethod.addItem("Фильтрация по Методу закупки")
         self.sort_by_putch_ProcurementMethod.setFixedWidth(250)
         for order in unique_purchase_ProcurementMethod:
             self.sort_by_putch_ProcurementMethod.addItem(str(order.ProcurementMethod))
         # Создаем метки и поля для ввода минимальной и максимальной цены
         self.sort_by_putch_okpd2.currentIndexChanged.connect(self.highlight_current_item)
-        self.min_price_label = QLabel("Минимальная цена", self)
-        self.min_price_input = QLineEdit(self)
+        self.min_price_label = QLabel("Минимальная цена")
+        self.min_price_input = QLineEdit()
         self.min_price_input.setFixedWidth(100)
-        self.max_price_label = QLabel("Максимальная цена", self)
-        self.max_price_input = QLineEdit(self)
+        self.max_price_label = QLabel("Максимальная цена")
+        self.max_price_input = QLineEdit()
         self.max_price_input.setFixedWidth(100)
         self.toExcel = QPushButton("Экспорт в Excel", self)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
         self.toExcel.setFixedWidth(400)
 
-        self.min_data_label = QLabel("Начальная дата", self)
-        self.min_data_input = QDateEdit(self)
-        self.min_data_input.setCalendarPopup(True)
-        self.min_data_input.setStyleSheet(transparent_style)
+        self.min_data_label = QLabel("Начальная дата")
+        self.min_data_input = QDateEdit()
+        self.min_data_input.setCalendarPopup(False)
+        self.min_data_input.setStyleSheet(self.transparent_style)
         # self.min_data_input.setDate(self.min_data_input.date().currentDate())
 
         self.min_data_input.clear()
         self.min_data_input.setFixedWidth(150)
-        self.max_data_label = QLabel("Конечная дата", self)
-        self.max_data_input = QDateEdit(self)
+        self.max_data_label = QLabel("Конечная дата")
+        self.max_data_input = QDateEdit()
         self.max_data_input.setCalendarPopup(True)
         self.max_data_input.setDate(self.max_data_input.date().currentDate())
-        self.max_data_input.setStyleSheet(transparent_style) 
+        self.max_data_input.setStyleSheet(self.transparent_style) 
         button_layout3 = QHBoxLayout()
         button_layout3.addWidget(self.toExcel)
         button_layout3.setAlignment(Qt.AlignHCenter)
@@ -153,69 +153,192 @@ class PurchasesWidgetAll(QWidget):
         icon_path = "Pics/icons8-фильтр-ios-17-32.png"
         self.label.setAlignment(Qt.AlignHCenter)
         icon = QIcon(icon_path)
-        
+        # Добавляем горизонтальную линию
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)  # Форма линии (горизонтальная)
+        line.setFrameShadow(QFrame.Shadow.Sunken)  # Тень линии
+        line.setStyleSheet("background-color: grey;")  # Цвет фона
+        line.setFixedHeight(2)
+
+        line1 = QFrame()
+        line1.setFrameShape(QFrame.Shape.HLine)
+        line1.setFrameShadow(QFrame.Shadow.Sunken)
+        line1.setStyleSheet("background-color: grey;")
+        line1.setFixedHeight(2)
+
+        line2 = QFrame()
+        line2.setFrameShape(QFrame.Shape.HLine)
+        line2.setFrameShadow(QFrame.Shadow.Sunken)
+        line2.setStyleSheet("background-color: grey;")
+        line2.setFixedHeight(2)
+
+        line3 = QFrame()
+        line3.setFrameShape(QFrame.Shape.HLine)
+        line3.setFrameShadow(QFrame.Shadow.Sunken)
+        line3.setStyleSheet("background-color: grey;")
+        line3.setFixedHeight(2)
         # Добавляем кнопку "Применить фильтр"
         self.apply_filter_button = QPushButton("Применить фильтр", self)
         self.apply_filter_button.setIcon(icon)
         self.apply_filter_button.clicked.connect(self.apply_filter)
         self.apply_filter_button.setFixedWidth(150)
+        # Добавляем кнопку выпадающего меню по ключевому слову
         self.QwordFinder = QPushButton("Поиск по ключевому слову")
         self.QwordFinder.setIcon(QIcon("Pics/right-arrow.png"))
         self.QwordFinder.setMaximumWidth(300)
         self.QwordFinder.clicked.connect(self.toggle_menu)
- 
+        # Добавляем кнопку выпадающего меню по фильтрам
+        self.FilterCollapse = QPushButton("Фильтры")
+        self.FilterCollapse.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FilterCollapse.setMaximumWidth(300)
+        self.FilterCollapse.clicked.connect(self.toggle_menu_filters)
+         # Добавляем кнопку выпадающего меню по цене
+        self.FilterPrice = QPushButton("Цена")
+        self.FilterPrice.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FilterPrice.setMaximumWidth(300)
+        self.FilterPrice.clicked.connect(self.toggle_menu_price)
+        # Добавляем кнопку выпадающего меню по цене
+        self.FilterDate = QPushButton("Дата")
+        self.FilterDate.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FilterDate.setMaximumWidth(300)
+        self.FilterDate.clicked.connect(self.toggle_menu_date)
+        #меню по ключевому слову
         self.menu_content = QWidget()
         menu_layout = QVBoxLayout()
+        self.Qword = QLabel("Поиск по ключевому слову")
+        menu_layout.addWidget(line)
+        menu_layout.addWidget(self.Qword)
         menu_layout.addWidget(self.search_input)
+        
         self.menu_content.setLayout(menu_layout)
         self.menu_frame = QFrame()
         self.menu_frame.setLayout(QVBoxLayout())
         self.menu_frame.layout().addWidget(self.menu_content)
         self.menu_frame.setVisible(False)
+        self.sort_by_putch_ProcurementMethod.currentIndexChanged.connect(self.highlight_current_item)
+        self.sort_by_putch_CustomerName.currentIndexChanged.connect(self.highlight_current_item)
+        #меню по ключевому фильтрам
+        self.menu_content_filters = QWidget()
+        menu_layout_filters = QHBoxLayout()
+        self.FilterLable = QLabel("Расшириная фильтрация по справочникам")
+        menu_layout_filtersH = QVBoxLayout()
+        menu_layout_filtersH.addWidget(line1)
+        menu_layout_filtersH.addWidget(self.FilterLable)
+        menu_layout_filters.addWidget(self.sort_options)
+        menu_layout_filters.addWidget(self.sort_by_putch_order)
+        menu_layout_filters.addWidget(self.sort_by_putch_okpd2)
+        menu_layout_filters.addWidget(self.sort_by_putch_ProcurementMethod)
+        menu_layout_filters.addWidget(self.sort_by_putch_CustomerName)
+        menu_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        menu_layout_filtersH.addLayout(menu_layout_filters)
+        self.menu_content_filters.setLayout(menu_layout_filtersH)
+        self.menu_frame_filters = QFrame()
+        self.menu_frame_filters.setLayout(QVBoxLayout())
+        self.menu_frame_filters.layout().addWidget(self.menu_content_filters)
+        self.menu_frame_filters.setVisible(False)
+        #меню по  фильтрам цена
+        self.menu_content_price = QWidget()
+        menu_layout_price = QHBoxLayout()
+        menu_layout_priceV = QVBoxLayout()
+        self.PriceLabel = QLabel("Фильтрация по НМЦК")
+        menu_layout_priceV.addWidget( self.PriceLabel)
+        menu_layout_priceV.addWidget(line2)
+        menu_layout_price.addWidget(self.min_price_label)
+        menu_layout_price.addWidget(self.min_price_input)
+        menu_layout_price.addWidget(self.max_price_label)
+        menu_layout_price.addWidget(self.max_price_input)
+        menu_layout_priceV.addLayout(menu_layout_price)
+        menu_layout_price.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        menu_layout_price.addItem(spacer)
+        self.menu_content_price.setLayout(menu_layout_priceV)
+        self.menu_frame_price = QFrame()
+        self.menu_frame_price.setLayout(QVBoxLayout())
+        self.menu_frame_price.layout().addWidget(self.menu_content_price)
+        self.menu_frame_price.setVisible(False)
+        #меню по  фильтрам дата
+        self.menu_content_data = QWidget()
+        menu_layout_data = QHBoxLayout()
+        DataLabel = QLabel("Фильтрация по Дате Размещения")
+        menu_layout_dataV = QVBoxLayout()
+        menu_layout_dataV.addWidget(DataLabel)
+        menu_layout_dataV.addWidget(line3)
+        menu_layout_data.addWidget(self.min_data_label)
+        menu_layout_data.addWidget(self.min_data_input)
+        menu_layout_data.addWidget(self.max_data_label)
+        menu_layout_data.addWidget(self.max_data_input)
+        menu_layout_data.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        menu_layout_dataV.addLayout(menu_layout_data)
+        spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        menu_layout_data.addItem(spacer)
+        self.menu_content_data.setLayout(menu_layout_dataV)
+        self.menu_frame_data = QFrame()
+        self.menu_frame_data.setLayout(QVBoxLayout())
+        self.menu_frame_data.layout().addWidget(self.menu_content_data)
+        self.menu_frame_data.setVisible(False)
        # Создаем горизонтальный макет и добавляем элементы
         layout = QVBoxLayout(self)
-        # layout.addWidget(self.search_input)
-        layout.addWidget(self.QwordFinder, alignment=Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(self.menu_frame)
-        toplayoutH = QHBoxLayout(self)
-        # Добавляем выпадающее меню
-        toplayoutH.addWidget(self.sort_options)
-        toplayoutH.addWidget(self.sort_by_putch_order)
-        toplayoutH.addWidget(self.sort_by_putch_okpd2)
-        toplayoutH.addWidget(self.sort_by_putch_ProcurementMethod)
-        toplayoutH.addWidget(self.sort_by_putch_CustomerName)
-        layout.addLayout(toplayoutH)
-        # Создаем горизонтальный макет для минимальной и максимальной цены
-        price_layout = QGridLayout()
-        # Добавляем их в сетку
-        price_layout.addWidget(self.min_price_label, 0, 0)
-        price_layout.addWidget(self.min_price_input, 0, 1)
-        price_layout.addWidget(self.max_price_label, 1, 0)
-        price_layout.addWidget(self.max_price_input, 1, 1)
-        # layout.addLayout(price_layout)
+        self.All_parametrs_finder = QLabel("Все параметры поиска")
+        font = QFont()
+        font.setPointSize(16)
 
-        # Создаем горизонтальный макет для начальной и конечной даты
-        date_layout = QGridLayout()
-        date_layout.addWidget(self.min_data_label, 0, 0)
-        date_layout.addWidget(self.min_data_input, 0, 1)
-        date_layout.addWidget(self.max_data_label, 1, 0)
-        date_layout.addWidget(self.max_data_input, 1, 1)
-        combined_layout = QHBoxLayout()
-        combined_layout.addLayout(price_layout)
-        combined_layout.addLayout(date_layout)
-        combined_layout.addSpacing(200) 
-        frame = QFrame()
-        frame.setLayout(combined_layout)
+        # Устанавливаем созданный шрифт для QLabel
+        self.All_parametrs_finder.setFont(font)
+        # layout.addWidget(self.search_input)
+        button_layout_filters = QHBoxLayout()
+        button_layout_filters.addWidget(self.QwordFinder)
+        button_layout_filters.addWidget(self.FilterCollapse)
+        button_layout_filters.addWidget(self.FilterPrice)
+        button_layout_filters.addWidget(self.FilterDate)
+        button_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addWidget(self.All_parametrs_finder,alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addLayout(button_layout_filters)
+        layout.addWidget(self.menu_frame)
+        layout.addWidget(self.menu_frame_filters)
+        layout.addWidget(self.menu_frame_price)
+        layout.addWidget(self.menu_frame_data)
+        # toplayoutH = QHBoxLayout(self)
+        # Добавляем выпадающее меню
+        # toplayoutH.addWidget(self.sort_options)
+        # toplayoutH.addWidget(self.sort_by_putch_order)
+        # toplayoutH.addWidget(self.sort_by_putch_okpd2)
+        # toplayoutH.addWidget(self.sort_by_putch_ProcurementMethod)
+        # toplayoutH.addWidget(self.sort_by_putch_CustomerName)
+        # layout.addLayout(toplayoutH)
+        # Создаем горизонтальный макет для минимальной и максимальной цены
+        # price_layout = QGridLayout()
+        # # Добавляем их в сетку
+        # price_layout.addWidget(self.min_price_label, 0, 0)
+        # price_layout.addWidget(self.min_price_input, 0, 1)
+        # price_layout.addWidget(self.max_price_label, 1, 0)
+        # price_layout.addWidget(self.max_price_input, 1, 1)
+        # # layout.addLayout(price_layout)
+
+        # # Создаем горизонтальный макет для начальной и конечной даты
+        # date_layout = QGridLayout()
+        # date_layout.addWidget(self.min_data_label, 0, 0)
+        # date_layout.addWidget(self.min_data_input, 0, 1)
+        # date_layout.addWidget(self.max_data_label, 1, 0)
+        # date_layout.addWidget(self.max_data_input, 1, 1)
+        # combined_layout = QHBoxLayout()
+        # combined_layout.addLayout(price_layout)
+        # combined_layout.addLayout(date_layout)
+        # combined_layout.addSpacing(200) 
+        # frame = QFrame()
+        # frame.setLayout(combined_layout)
 
         # Ограничиваем максимальную ширину frame
-        frame.setMaximumWidth(850)
-        layout.addWidget(frame)
-        price_layout.setColumnStretch(2, 1)  # Растягиваем последний столбец
-        date_layout.setColumnStretch(2, 1)
+        # frame.setMaximumWidth(850)
+        # layout.addWidget(frame)
+        # price_layout.setColumnStretch(2, 1)  # Растягиваем последний столбец
+        # date_layout.setColumnStretch(2, 1)
 
         # Добавляем кнопку "Применить фильтр"
-        layout.addWidget(self.apply_filter_button)
-        layout.addWidget(self.reset_filters_button)
+        button_layout_filters = QHBoxLayout()
+        button_layout_filters.addWidget(self.apply_filter_button)
+        button_layout_filters.addWidget(self.reset_filters_button)
+        button_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        layout.addLayout(button_layout_filters)
         # Добавляем таблицу и остальные элементы в макет
         layout.addWidget(self.table)
         layout.addLayout(button_layout)
@@ -257,6 +380,27 @@ class PurchasesWidgetAll(QWidget):
             self.QwordFinder.setIcon(QIcon("Pics/arrow-down.png"))
         else:
             self.QwordFinder.setIcon(QIcon("Pics/right-arrow.png"))
+    def toggle_menu_filters(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame_filters.setVisible(not self.menu_frame_filters.isVisible())
+        if self.menu_frame_filters.isVisible():
+            self.FilterCollapse.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.FilterCollapse.setIcon(QIcon("Pics/right-arrow.png"))
+    def toggle_menu_price(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame_price.setVisible(not self.menu_frame_price.isVisible())
+        if self.menu_frame_price.isVisible():
+            self.FilterPrice.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.FilterPrice.setIcon(QIcon("Pics/right-arrow.png"))
+    def toggle_menu_date(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame_data.setVisible(not self.menu_frame_data.isVisible())
+        if self.menu_frame_data.isVisible():
+            self.FilterDate.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.FilterDate.setIcon(QIcon("Pics/right-arrow.png"))
       
     def show_all_purchases(self):
     # Очищаем таблицу перед добавлением новых данных
@@ -289,7 +433,7 @@ class PurchasesWidgetAll(QWidget):
             self.label.setText("Нет записей")     
     def highlight_apply_filter_button(self):
     # Подсвечиваем кнопку apply_filter_button
-        self.apply_filter_button.setStyleSheet("background-color: #98FB98;")
+        self.apply_filter_button.setStyleSheet("background-color: #ccffcc;")
 
   
     def highlight_input(self):
@@ -301,21 +445,25 @@ class PurchasesWidgetAll(QWidget):
         
         # Подсветка полей в зависимости от введенных данных
         if min_price or max_price:
-            self.min_price_input.setStyleSheet("background-color: #98FB98;")
-            self.max_price_input.setStyleSheet("background-color: #98FB98;")
+            self.min_price_input.setStyleSheet("background-color: #ccffcc;")
+            self.max_price_input.setStyleSheet("background-color: #ccffcc;")
+            self.FilterPrice.setStyleSheet("background-color: #ccffcc;")
         else:
+            self.min_price_input.setStyleSheet("")
             self.min_price_input.setStyleSheet("")
 
         if min_data_valid or max_data_valid:
-            self.min_data_input.setStyleSheet("background-color: #98FB98;")
-            self.max_data_input.setStyleSheet("background-color: #98FB98;")
+            self.min_data_input.setStyleSheet("background-color: #ccffcc;")
+            self.max_data_input.setStyleSheet("background-color: #ccffcc;")
+            self.FilterDate.setStyleSheet("background-color: #ccffcc;")
         else:
             self.min_data_input.setStyleSheet("")
             self.max_data_input.setStyleSheet("")
            
         # Подсветка search_input
         if search_text:
-            self.search_input.setStyleSheet("background-color: #98FB98;")
+            self.search_input.setStyleSheet("background-color: #ccffcc;")
+            self.QwordFinder.setStyleSheet("background-color: #ccffcc;")
         else:
             self.search_input.setStyleSheet("")
         
@@ -324,23 +472,32 @@ class PurchasesWidgetAll(QWidget):
         if index >= 0:
             sender = self.sender()  # Получаем объект, который вызвал сигнал
             if sender == self.sort_by_putch_order:
-                self.sort_by_putch_order.setStyleSheet("background-color: #98FB98;")
+                self.sort_by_putch_order.setStyleSheet("background-color: #ccffcc;")
+                self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
             elif sender == self.sort_by_putch_okpd2:
-                self.sort_by_putch_okpd2.setStyleSheet("background-color: #98FB98;")
+                self.sort_by_putch_okpd2.setStyleSheet("background-color: #ccffcc;")
+                self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
             elif sender == self.sort_options:
-                self.sort_options.setStyleSheet("background-color: #98FB98;")
+                self.sort_options.setStyleSheet("background-color: #ccffcc;")
+                self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
+            elif sender == self.sort_by_putch_CustomerName:
+                self.sort_by_putch_CustomerName.setStyleSheet("background-color: #ccffcc;")
+                self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
+            elif sender == self.sort_by_putch_ProcurementMethod:
+                self.sort_by_putch_ProcurementMethod.setStyleSheet("background-color: #ccffcc;")
+                self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
     
     def apply_filter(self):
         self.current_position = 0
         self.selected_option = self.sort_options.currentText()
 
-        if  self.selected_option == "Сортировать по возрастанию цены":
+        if  self.selected_option == "Сортировать по Цене (Возростание)":
             order_by = Purchase.InitialMaxContractPrice
-        elif  self.selected_option == "Сортировать по убыванию цены":
+        elif  self.selected_option == "Сортировать по Цены (Убывание)":
             order_by = Purchase.InitialMaxContractPrice.desc()
         elif  self.selected_option == "Сортировать по Дате (Убывание)":
             order_by = Purchase.PlacementDate.desc()
-        elif  self.selected_option == "Сортировать по Дате (возростание)":
+        elif  self.selected_option == "Сортировать по Дате (Возростание)":
             order_by = Purchase.PlacementDate
   
 
@@ -374,25 +531,25 @@ class PurchasesWidgetAll(QWidget):
         # Фильтр по законам
        
         self.selected_order = self.sort_by_putch_order.currentText()
-        if  self.selected_order != "Сортировать по Закону":
+        if  self.selected_order != "Фильтрация по Закону":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.PurchaseOrder ==  self.selected_order
             )
             # Фильтр по ОКПД2
         self.selected_okpd = self.sort_by_putch_okpd2.currentText()
-        if  self.selected_okpd != "Сортировать по ОКПД2":
+        if  self.selected_okpd != "Фильтрация по ОКПД2":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.OKPD2Classification ==  self.selected_okpd
             )
         # Фильтр по Методу закупки
         self.selected_ProcurementMethod = self.sort_by_putch_ProcurementMethod.currentText()
-        if  self.selected_ProcurementMethod != "Сортировать по Методу закупки":
+        if  self.selected_ProcurementMethod != "Фильтрация по Методу закупки":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.ProcurementMethod ==  self.selected_ProcurementMethod
             )
         # Фильтр по Заказчикам
         self.CustomerName = self.sort_by_putch_CustomerName.currentText()
-        if  self.CustomerName != "Сортировать по Заказчикам":
+        if  self.CustomerName != "Фильтрация по Заказчикам":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.CustomerName ==  self.CustomerName
             )
@@ -480,6 +637,8 @@ class PurchasesWidgetAll(QWidget):
         self.sort_by_putch_ProcurementMethod.setCurrentIndex(0)
         self.sort_by_putch_CustomerName.setCurrentIndex(0)
         self.selected_text = None
+        
+        
         # Очищаем и снова получаем уникальные значения для автозаполнения
         self.unique_values_query = self.findUnic()
         
@@ -491,8 +650,12 @@ class PurchasesWidgetAll(QWidget):
 
     def reset_styles(self):
         # Сброс стилей всех элементов к стандартному состоянию
-        for input_field in [self.min_price_input, self.max_price_input, self.apply_filter_button,self.min_data_input, self.max_data_input, self.sort_by_putch_order, self.search_input, self.sort_by_putch_okpd2, self.sort_options]:
+        for input_field in [self.min_price_input, self.max_price_input, self.apply_filter_button,
+                             self.sort_by_putch_order, self.search_input, self.sort_by_putch_okpd2, self.sort_options,
+                             self.sort_by_putch_CustomerName,self.sort_by_putch_ProcurementMethod,self.QwordFinder,self.FilterCollapse, self.FilterDate,self.FilterPrice]:
             input_field.setStyleSheet("")
+        self.max_data_input.setStyleSheet(self.transparent_style) 
+        self.min_data_input.setStyleSheet(self.transparent_style) 
      
 
     def remove_button_clicked(self):
@@ -614,12 +777,12 @@ class PurchasesWidgetAll(QWidget):
     def return_filters_variabels(self):
     
         # search_input = self.selected_text if self.selected_text is not None else ""
-        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order.currentText() != "Сортировать по Закону"  else "-"
+        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order.currentText() != "Фильтровать по Закону"  else "-"
         min_date = self.min_data_input.date().toPython() if self.min_data_input.date().toPython() is not None  else "-"
         max_date = self.max_data_input.date().toPython() if self.max_data_input.date().toPython() is not None  else "-"
         min_price = self.min_price_input.text() if self.min_price_input.text() is not None  else "Фильтр не применен"
         max_price = self.max_price_input.text()  if self.max_price_input.text() is not None  else "Фильтр не применен"
-        sort_by_putch_okpd2 = self.sort_by_putch_okpd2.currentText() if self.sort_by_putch_okpd2.currentText() != "Сортировать по ОКПД2" else "-"
+        sort_by_putch_okpd2 = self.sort_by_putch_okpd2.currentText() if self.sort_by_putch_okpd2.currentText() != "Фильтровать по ОКПД2" else "-"
         return sort_by_putch_order,min_date,max_date,min_price,max_price,sort_by_putch_okpd2
 
         
