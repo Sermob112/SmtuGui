@@ -523,7 +523,7 @@ class PurchasesWidget(QWidget):
             selected_file = file_dialog.selectedFiles()[0]
             selected_file = selected_file if selected_file else None
             if selected_file:
-                wb.save(f'{selected_file}\данные_по_закупке №{self.current_purchase.RegistryNumber}.xlsx')
+                wb.save(f'{selected_file}\формуляр закупки {self.current_purchase.RegistryNumber}.xlsx')
                 QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
        
 
