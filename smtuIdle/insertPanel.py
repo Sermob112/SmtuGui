@@ -18,6 +18,7 @@ from InsertWidgetCEIA import InsertWidgetCEIA
 from InsertWidgetNMCK_2 import InsertWidgetNMCK_2
 from InsertWidgetNMCK_3 import InsertWidgetNMCK_3
 from InsertWidgetNMCK_4 import InsertWidgetNMCK_4
+from InsertWidgetNMCK_5 import InsertWidgetNMCK_5
 db = SqliteDatabase('test.db')
 
 class InsertWidgetPanel(QWidget):
@@ -41,15 +42,16 @@ class InsertWidgetPanel(QWidget):
         button_NMCK_method_2= QPushButton("2.Добавить определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
         button_NMCK_method_3= QPushButton("3.Добавить определение НМЦК затратным методом")
         button_NMCK_method_4= QPushButton("4.Итоговое определение НМЦК с использованием нескольких методов")
-        browse_button_NMCK= QPushButton("Добавить файл НМЦК")
-        browse_button_izvesh= QPushButton("Добавить файл Извещения")
+        button_NMCK_method_5= QPushButton("Добавить файлы НМЦК")
+        # browse_button_NMCK= QPushButton("Добавить файл НМЦК")
+        # browse_button_izvesh= QPushButton("Добавить файл Извещения")
         # browse_button_contract= QPushButton("Добавить файл Контрактов")
-        browse_button_protocol= QPushButton("Добавить файл Протокол")
+        # browse_button_protocol= QPushButton("Добавить файл Протокола")
         # Создаем поля ввода
-        browse_button_NMCK.clicked.connect(self.browse_file_NMCK)
-        browse_button_izvesh.clicked.connect(self.browse_file_izvesh)
+        # browse_button_NMCK.clicked.connect(self.browse_file_NMCK)
+        # browse_button_izvesh.clicked.connect(self.browse_file_izvesh)
         # browse_button_contract.clicked.connect(self.browse_file_contract)
-        browse_button_protocol.clicked.connect(self.browse_file_protocol)
+        # browse_button_protocol.clicked.connect(self.browse_file_protocol)
         # self.ContractFile = QLineEdit(self)
         
         button_style_pressed = """
@@ -63,18 +65,20 @@ class InsertWidgetPanel(QWidget):
         button_NMCK_method_2.setFixedWidth(fixed_width)
         button_NMCK_method_3.setFixedWidth(fixed_width)
         button_NMCK_method_4.setFixedWidth(fixed_width)
-        browse_button_NMCK.setFixedWidth(fixed_width)
-        browse_button_izvesh.setFixedWidth(fixed_width)
-        # browse_button_contract.setFixedWidth(fixed_width)
-        browse_button_protocol.setFixedWidth(fixed_width)
+        button_NMCK_method_5.setFixedWidth(fixed_width)
+        # browse_button_NMCK.setFixedWidth(fixed_width)
+        # browse_button_izvesh.setFixedWidth(fixed_width)
+        # # browse_button_contract.setFixedWidth(fixed_width)
+        # browse_button_protocol.setFixedWidth(fixed_width)
         button_NMCK_method_1.setStyleSheet("text-align: left;")
         button_NMCK_method_2.setStyleSheet("text-align: left;")
         button_NMCK_method_3.setStyleSheet("text-align: left;")
         button_NMCK_method_4.setStyleSheet("text-align: left;")
-        browse_button_NMCK.setStyleSheet("text-align: left;")
-        browse_button_izvesh.setStyleSheet("text-align: left;")
-        # browse_button_contract.setStyleSheet("text-align: left;")
-        browse_button_protocol.setStyleSheet("text-align: left;")
+        button_NMCK_method_5.setStyleSheet("text-align: left;")
+        # browse_button_NMCK.setStyleSheet("text-align: left;")
+        # browse_button_izvesh.setStyleSheet("text-align: left;")
+        # # browse_button_contract.setStyleSheet("text-align: left;")
+        # browse_button_protocol.setStyleSheet("text-align: left;")
         
 
         
@@ -104,16 +108,18 @@ class InsertWidgetPanel(QWidget):
         layout3.addWidget(button_NMCK_method_2, alignment=Qt.AlignLeft)
         layout4.addWidget(button_NMCK_method_3, alignment=Qt.AlignLeft)
         layout5.addWidget(button_NMCK_method_4, alignment=Qt.AlignLeft)
-        layout6.addWidget(browse_button_NMCK, alignment=Qt.AlignLeft)
-        layout7.addWidget(browse_button_izvesh, alignment=Qt.AlignLeft)
-        # layout8.addWidget(browse_button_contract, alignment=Qt.AlignLeft)
-        layout9.addWidget(browse_button_protocol, alignment=Qt.AlignLeft)
+        layout6.addWidget(button_NMCK_method_5, alignment=Qt.AlignLeft)
+        # layout6.addWidget(browse_button_NMCK, alignment=Qt.AlignLeft)
+        # layout7.addWidget(browse_button_izvesh, alignment=Qt.AlignLeft)
+        # # layout8.addWidget(browse_button_contract, alignment=Qt.AlignLeft)
+        # layout9.addWidget(browse_button_protocol, alignment=Qt.AlignLeft)
         # Добавляем лейбл и поле ввода во вторую строку
         
         button_NMCK_method_1.clicked.connect(self.add_button_tkp_clicked)
         button_NMCK_method_2.clicked.connect(self.add_button_contract_clicked)
         button_NMCK_method_3.clicked.connect(self.add_button_cia_clicked)
         button_NMCK_method_4.clicked.connect(self.add_button_4_clicked)
+        button_NMCK_method_5.clicked.connect(self.add_button_files_clicked)
        
  
         
@@ -161,6 +167,11 @@ class InsertWidgetPanel(QWidget):
             self.insert_cont_4 = InsertWidgetNMCK_4(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             # self.insert_cont_4.setParent(self)
             self.insert_cont_4.show()
+    def add_button_files_clicked(self):
+
+            self.insert_cont_5 = InsertWidgetNMCK_5(self.purchase_id, self.db_window,self.role,self.user,self.changer)
+            # self.insert_cont_4.setParent(self)
+            self.insert_cont_5.show()
 
     def browse_file_NMCK(self):
         file_dialog = QFileDialog()
@@ -265,36 +276,37 @@ class InsertWidgetPanel(QWidget):
             except Exception as e:
                 self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
 
-    def browse_file_protocol(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
-        self.db_folder = "файлы бд"
+    # def browse_file_protocol(self):
+    #     file_dialog = QFileDialog()
+    #     file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+    #     self.db_folder = "файлы бд"
         
-        if file_path:
-            try:
-                source_path = file_path
-                purchase = Purchase.get(Purchase.Id == self.purchase_id)
-                purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
-                if not os.path.exists(purchase_folder):
-                    os.makedirs(purchase_folder)
-                # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
-                destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
-                destination_path = os.path.basename(destination_path_1)
-                shutil.copy2(source_path, destination_path_1)
-            except:
-                pass
-            try:
-                Purchase.update(protocol_file=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
-                db.close()
-                self.db_window.reload_data_id(self.purchase_id)
-                self.db_window.show_current_purchase()
-                self.updateLog(destination_path)
-                self.changer.populate_table()
-                # Выводим сообщение об успешном сохранении
-                self.show_message("Успех", "Данные успешно добавлены")
-            except Exception as e:
-                self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
-
+    #     if file_path:
+    #         try:
+    #             source_path = file_path
+    #             purchase = Purchase.get(Purchase.Id == self.purchase_id)
+    #             purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+    #             if not os.path.exists(purchase_folder):
+    #                 os.makedirs(purchase_folder)
+    #             # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+    #             destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+    #             destination_path = os.path.basename(destination_path_1)
+    #             shutil.copy2(source_path, destination_path_1)
+    #         except:
+    #             pass
+    #         try:
+    #             Purchase.update(protocol_file=destination_path if destination_path else "нет данных").where(Purchase.Id == self.purchase_id).execute()
+    #             db.close()
+    #             self.db_window.reload_data_id(self.purchase_id)
+    #             self.db_window.show_current_purchase()
+    #             self.updateLog(destination_path)
+    #             self.changer.populate_table()
+    #             # Выводим сообщение об успешном сохранении
+    #             self.show_message("Успех", "Данные успешно добавлены")
+    #         except Exception as e:
+    #             self.show_message("Ошибка", f"Произошла ошибка: {str(e)}")
+        
+    
     
     def updateLog(self,destination_path):
         purchase = Purchase.get(Purchase.Id == self.purchase_id)
