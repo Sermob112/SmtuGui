@@ -396,19 +396,19 @@ class PurchasesWidgetAll(QWidget):
 
         # Устанавливаем заголовки колонок
         column_headers = ["№ПП", "Реестровый номер договора", "Реестровый номер закупки",
-                          "Номер контракта", "Дата начала/подписания",
-                           "Заказчик по контракту","Победитель",  "Цена договора",
+                          "Номер контракта", "Дата начала/подписания", "Цена договора",
+                           "Заказчик по контракту","Победитель", 
                            "Наименование закупки"]
         self.table_cont.resizeColumnsToContents()
         self.table_cont.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.table_cont.setHorizontalHeaderLabels(column_headers)
-        self.table_cont.setColumnWidth(5, 600)
         self.table_cont.setColumnWidth(6, 600)
+        self.table_cont.setColumnWidth(7, 600)
         self.table_cont.setColumnWidth(8, 600)
         self.table_cont.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         # Затем устанавливаем режим изменения размера колонки "Наименование закупки" на фиксированный размер
-        self.table_cont.horizontalHeader().setSectionResizeMode(5, QHeaderView.Fixed)
         self.table_cont.horizontalHeader().setSectionResizeMode(6, QHeaderView.Fixed)
+        self.table_cont.horizontalHeader().setSectionResizeMode(7, QHeaderView.Fixed)
         self.table_cont.horizontalHeader().setSectionResizeMode(8, QHeaderView.Fixed)
         self.table_cont.setTextElideMode(Qt.ElideRight)
         self.table_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -431,21 +431,21 @@ class PurchasesWidgetAll(QWidget):
        
         self.sort_options_contract.setFixedWidth(250)
         self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item)
-        # unique_purchase_orders = Purchase.select(Purchase.PurchaseOrder).distinct()
-        # self.sort_by_putch_order = QComboBox()
-        # self.sort_by_putch_order.addItem("Фильтрация по Закону")
-        # self.sort_by_putch_order.setFixedWidth(250)
-        # self.sort_by_putch_order.currentIndexChanged.connect(self.highlight_current_item)
-        # for order in unique_purchase_orders:
-        #     self.sort_by_putch_order.addItem(str(order.PurchaseOrder))
+        unique_contract_winnter = Contract.select(Contract.WinnerExecutor).distinct()
+        self.sort_by_putch_winner = QComboBox()
+        self.sort_by_putch_winner.addItem("Фильтрация по Победителю-исполнителю контракта")
+        self.sort_by_putch_winner.setFixedWidth(250)
+        self.sort_by_putch_winner.currentIndexChanged.connect(self.highlight_current_item)
+        for order in unique_contract_winnter:
+            self.sort_by_putch_winner.addItem(str(order.WinnerExecutor))
 
 
       
        
          #  кнопка "Сбросить фильтры" 
         self.reset_filters_button_contract = QPushButton("Сбросить фильтры контрактов", self)
-        self.reset_filters_button_contract.setFixedWidth(150)
-        self.reset_filters_button_contract.clicked.connect(self.resetFilters)
+        self.reset_filters_button_contract.setFixedWidth(250)
+        self.reset_filters_button_contract.clicked.connect(self.resetFiltersContract)
         # Создаем поле ввода для поиска
     
        
@@ -468,10 +468,10 @@ class PurchasesWidgetAll(QWidget):
         line1.setStyleSheet("background-color: grey;")
         line1.setFixedHeight(2)
         # Добавляем кнопку "Применить фильтр"
-        self.apply_filter_button_contract = QPushButton("Применить фильтр", self)
+        self.apply_filter_button_contract = QPushButton("Применить фильтр контрактов", self)
         self.apply_filter_button_contract.setIcon(icon)
-        self.apply_filter_button_contract.clicked.connect(self.apply_filter)
-        self.apply_filter_button_contract.setFixedWidth(150)
+        self.apply_filter_button_contract.clicked.connect(self.apply_filter_contract)
+        self.apply_filter_button_contract.setFixedWidth(250)
         # Добавляем кнопку выпадающего меню по фильтрам
         self.FilterCollapseContract = QPushButton("Фильтры")
         self.FilterCollapseContract.setIcon(QIcon("Pics/right-arrow.png"))
@@ -495,11 +495,12 @@ class PurchasesWidgetAll(QWidget):
         menu_layout_filtersH = QVBoxLayout()
         menu_layout_filtersH.addWidget(line1)
         menu_layout_filtersH.addWidget(self.FilterLable_contract )
-        menu_layout_filters.addWidget(self.sort_options)
-        menu_layout_filters.addWidget(self.sort_by_putch_order)
-        menu_layout_filters.addWidget(self.sort_by_putch_okpd2)
-        menu_layout_filters.addWidget(self.sort_by_putch_ProcurementMethod)
-        menu_layout_filters.addWidget(self.sort_by_putch_CustomerName)
+        menu_layout_filters.addWidget(self.sort_options_contract)
+        menu_layout_filters.addWidget(self.sort_by_putch_winner)
+        # menu_layout_filters.addWidget(self.sort_by_putch_order)
+        # menu_layout_filters.addWidget(self.sort_by_putch_okpd2)
+        # menu_layout_filters.addWidget(self.sort_by_putch_ProcurementMethod)
+        # menu_layout_filters.addWidget(self.sort_by_putch_CustomerName)
         menu_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
         menu_layout_filtersH.addLayout(menu_layout_filters)
         self.menu_content_filters_contract .setLayout(menu_layout_filtersH)
@@ -787,6 +788,48 @@ class PurchasesWidgetAll(QWidget):
        
         self.show_all_purchases()
 
+    def apply_filter_contract(self):
+        self.current_position = 0
+        self.selected_option_contract = self.sort_options_contract.currentText()
+        self.contracts  = (
+    Purchase.select(
+        Purchase.Id,
+        Contract.RegistryNumber,
+        Purchase.RegistryNumber,
+        Contract.ContractNumber,
+        Contract.StartDate,
+         Contract.ContractPrice,
+        Contract.ContractingAuthority,
+        Contract.WinnerExecutor,
+       
+        Purchase.PurchaseName,    
+    )
+     .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)))
+        
+        if  self.selected_option_contract == "Сортировать по Цене (Возростание)":
+            order_by = Contract.ContractPrice
+        elif  self.selected_option_contract == "Сортировать по Цены (Убывание)":
+            order_by = Contract.ContractPrice.desc()
+        elif  self.selected_option_contract == "Сортировать по Дате (Убывание)":
+            order_by = Contract.StartDate.desc()
+        elif  self.selected_option_contract == "Сортировать по Дате (Возростание)":
+            order_by = Contract.StartDate
+
+        self.selected_contr = self.sort_by_putch_winner.currentText()
+        if  self.selected_contr != "Фильтрация по Победителю-исполнителю контракта":
+            self.contracts = self.contracts.where(
+                Contract.WinnerExecutor == self.selected_contr )
+            
+            
+            # purchases_query_combined_contract = Contract.where(
+            #     self.contracts.WinnerExecutor == self.selected_contr
+            # )    
+
+        # self.contracts = purchases_query_combined_contract.order_by(order_by)
+        
+
+        self.contracts_list = list(self.contracts.order_by(order_by).tuples())
+        self.show_all_contracts()
   
     def handle_cell_click(self, row, column):
         # Получаем Id из выбранной строки и выводим в консоль
@@ -860,6 +903,16 @@ class PurchasesWidgetAll(QWidget):
         
         # Возвращаем записи в исходное состояние без применения каких-либо фильтров
         self.reload_data()
+        # Сброс стилей всех элементов к стандартному состоянию
+        self.reset_styles()
+
+    def resetFiltersContract(self):
+        # Очищаем все поля ввода
+        self.sort_options_contract.setCurrentIndex(0)
+        self.sort_by_putch_winner.setCurrentIndex(0)  # Сбрасываем выбранное значение в выпадающем списке
+        self.current_position = 0
+        # Возвращаем записи в исходное состояние без применения каких-либо фильтров
+        self.reload_data_cont()
         # Сброс стилей всех элементов к стандартному состоянию
         self.reset_styles()
 
@@ -998,9 +1051,10 @@ class PurchasesWidgetAll(QWidget):
         Purchase.RegistryNumber,
         Contract.ContractNumber,
         Contract.StartDate,
+        Contract.ContractPrice,
         Contract.ContractingAuthority,
         Contract.WinnerExecutor,
-        Contract.ContractPrice,
+        
         Purchase.PurchaseName,
         
        
