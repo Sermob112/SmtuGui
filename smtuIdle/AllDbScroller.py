@@ -419,7 +419,7 @@ class PurchasesWidgetAll(QWidget):
         self.table_cont.setWordWrap(True)
         # Создаем метки и поля для ввода минимальной и максимальной цены
         
-        self.min_price_label_contrac = QLabel("Минимальная цена")
+        self.min_price_label_contrac = QLabel("Минимальная цена ")
         self.min_price_input_contrac = QLineEdit()
         self.min_price_input_contrac.setFixedWidth(100)
         self.max_price_label_contrac = QLabel("Максимальная цена")
@@ -448,7 +448,7 @@ class PurchasesWidgetAll(QWidget):
      
         self.current_position = 0   
         self.label_cont = QLabel("Всего записей", self)
-        self.table_cont.cellClicked.connect(self.handle_cell_click)
+        self.table_cont.cellClicked.connect(self.handle_cell_click_contract)
          
          # Создаем выпадающее меню
         self.sort_options_contract = QComboBox()
@@ -507,7 +507,7 @@ class PurchasesWidgetAll(QWidget):
         line3.setStyleSheet("background-color: grey;")
         line3.setFixedHeight(2)
         # Добавляем кнопку "Применить фильтр"
-        self.apply_filter_button_contract = QPushButton("Применить фильтр контрактов", self)
+        self.apply_filter_button_contract = QPushButton("Применить фильтры контрактов", self)
         self.apply_filter_button_contract.setIcon(icon)
         self.apply_filter_button_contract.clicked.connect(self.apply_filter_contract)
         self.apply_filter_button_contract.setFixedWidth(250)
@@ -541,7 +541,7 @@ class PurchasesWidgetAll(QWidget):
         #меню по ключевому фильтрам
         self.menu_content_filters_contract  = QWidget()
         menu_layout_filters = QHBoxLayout()
-        self.FilterLable_contract  = QLabel("Расшириная фильтрация по справочникам")
+        self.FilterLable_contract  = QLabel("Расшириная фильтрация по справочникам контрактов")
         menu_layout_filtersH = QVBoxLayout()
         menu_layout_filtersH.addWidget(line1)
         menu_layout_filtersH.addWidget(self.FilterLable_contract )
@@ -562,7 +562,7 @@ class PurchasesWidgetAll(QWidget):
         self.menu_content_price_contrac = QWidget()
         menu_layout_price_contrac = QHBoxLayout()
         menu_layout_priceV_contrac = QVBoxLayout()
-        self.PriceLabel_contrac = QLabel("Фильтрация по НМЦК")
+        self.PriceLabel_contrac = QLabel("Фильтрация по Цене контрактов")
         menu_layout_priceV_contrac.addWidget( self.PriceLabel_contrac)
         menu_layout_priceV_contrac.addWidget(line2)
         menu_layout_price_contrac.addWidget(self.min_price_label_contrac)
@@ -581,7 +581,7 @@ class PurchasesWidgetAll(QWidget):
         #меню по  фильтрам дата
         self.menu_content_data_contrac = QWidget()
         menu_layout_data_contrac = QHBoxLayout()
-        DataLabel_contrac = QLabel("Фильтрация по Дате Размещения")
+        DataLabel_contrac = QLabel("Фильтрация по Дате Размещения контракта")
         menu_layout_dataV_contrac = QVBoxLayout()
         menu_layout_dataV_contrac.addWidget(DataLabel_contrac)
         menu_layout_dataV_contrac.addWidget(line3)
@@ -1031,6 +1031,12 @@ class PurchasesWidgetAll(QWidget):
         # from DBtest import PurchasesWidget
         # self.wind = PurchasesWidget(selected_id)
         # self.wind.show()
+    def handle_cell_click_contract(self, row, column):
+        # Получаем Id из выбранной строки и выводим в консоль
+
+        selected_id = self.table.item(row, 0).text()
+        self.window.stackedWidget.setCurrentIndex(8)
+        self.window.ContractFormularWidget.reload_data_id(selected_id)
 
 
     def findUnic(self):

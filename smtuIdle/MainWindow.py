@@ -13,6 +13,7 @@ from statisticWidget import StatisticWidget
 from CurrencyWindow import CurrencyWidget
 from debugWindow import DebugWidget
 from HelpPanel import HelpPanel
+from ContractFormular import ContractFormularWidget
 from AllDbScroller import PurchasesWidgetAll
 from ChangeLogWindow import ChangeLogWindow
 from parserV3 import count_total_records
@@ -176,6 +177,10 @@ class Ui_MainWindow(QMainWindow):
         self.leftPanelLayout.addSpacing(20)
         self.pushButton3 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton3.setObjectName("pushButton3")
+        self.pushButton8 = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton8.setObjectName("pushButton8")
+        self.leftPanelLayout.addWidget(self.pushButton8)
+        self.leftPanelLayout.addSpacing(20)
         self.leftPanelLayout.addWidget(self.pushButton3)
         self.leftPanelLayout.addSpacing(20)
         self.pushButton4 = QtWidgets.QPushButton(self.centralwidget)
@@ -197,6 +202,8 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton7.setObjectName("pushButton7")
         self.leftPanelLayout.addWidget(self.pushButton7)
+        self.leftPanelLayout.addSpacing(20)
+
 
 
   
@@ -213,6 +220,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5_1.setFixedHeight(button_height)
         self.pushButton6.setFixedHeight(button_height)
         self.pushButton7.setFixedHeight(button_height)
+        self.pushButton8.setFixedHeight(button_height)
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
@@ -226,12 +234,14 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5_1.setIcon(QIcon("Pics/3.png"))
         self.pushButton6.setIcon(QIcon("Pics/7.png"))
         self.pushButton7.setIcon(QIcon("Pics/7.png"))
+        self.pushButton8.setIcon(QIcon("Pics/4.png"))
   
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
         self.buttons = [
             self.pushButton0, self.pushButton1, self.pushButton2,
-            self.pushButton3, self.pushButton4,self.pushButton5_1, self.pushButton6,self.pushButton7,self.pushButton5
+            self.pushButton3, self.pushButton4,self.pushButton5_1, self.pushButton6,
+            self.pushButton7,self.pushButton8,self.pushButton5
         ]
         self.update_button_style_all()
 
@@ -278,6 +288,10 @@ class Ui_MainWindow(QMainWindow):
         self.page7 = QtWidgets.QWidget()
         self.label7 = QtWidgets.QLabel(self.page7)
         self.stackedWidget.addWidget(self.page7)
+
+        self.page8 = QtWidgets.QWidget()
+        self.label8 = QtWidgets.QLabel(self.page8)
+        self.stackedWidget.addWidget(self.page8)
         #Загрузка виджета изминений бд
         self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
         self.ChangeWindow.setParent(self)
@@ -294,7 +308,11 @@ class Ui_MainWindow(QMainWindow):
         self.purchaseViewer.setParent(self)
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
-     
+
+        self.contractFormular = ContractFormularWidget(self,self.users_roles[0],self.username,self.ChangeWindow)
+        self.contractFormular.setParent(self)
+        layout = QVBoxLayout(self.page8)
+        layout.addWidget(self.contractFormular)
         
         self.Debug = DebugWidget()
         self.Debug.setParent(self)
@@ -324,6 +342,8 @@ class Ui_MainWindow(QMainWindow):
         self.helper.setParent(self)
         layout = QVBoxLayout(self.page7)
 
+      
+
         layout.addWidget(self.helper)
         self.purchaseViewerall.window = self
         self.horizontalLayout.addWidget(self.stackedWidget)
@@ -347,6 +367,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5_1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
         self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(6))
         self.pushButton7.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(7))
+        self.pushButton8.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(8))
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -372,6 +393,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5_1.setText(_translate("MainWindow", "Панель изменений"))
         self.pushButton6.setText(_translate("MainWindow", "Отладка"))
         self.pushButton7.setText(_translate("MainWindow", "Файлы Руководства"))
+        self.pushButton8.setText(_translate("MainWindow", "Просмотр Формуляра Контрактов"))
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         # self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
