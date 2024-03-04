@@ -132,6 +132,7 @@ class PurchasesWidgetAll(QWidget):
 
         self.min_data_input.clear()
         self.min_data_input.setFixedWidth(150)
+        self.min_data_input.setCalendarPopup(True)
         self.max_data_label = QLabel("Конечная дата")
         self.max_data_input = QDateEdit()
         self.max_data_input.setCalendarPopup(True)
@@ -210,7 +211,7 @@ class PurchasesWidgetAll(QWidget):
         self.FilterPrice.setIcon(QIcon("Pics/right-arrow.png"))
         self.FilterPrice.setMaximumWidth(300)
         self.FilterPrice.clicked.connect(self.toggle_menu_price)
-        # Добавляем кнопку выпадающего меню по цене
+        # Добавляем кнопку выпадающего меню по дате
         self.FilterDate = QPushButton("Дата")
         self.FilterDate.setIcon(QIcon("Pics/right-arrow.png"))
         self.FilterDate.setMaximumWidth(300)
@@ -416,7 +417,32 @@ class PurchasesWidgetAll(QWidget):
         self.table_cont.verticalHeader().setVisible(False)
         self.table_cont.horizontalHeader().setVisible(True)
         self.table_cont.setWordWrap(True)
+        # Создаем метки и поля для ввода минимальной и максимальной цены
         
+        self.min_price_label_contrac = QLabel("Минимальная цена")
+        self.min_price_input_contrac = QLineEdit()
+        self.min_price_input_contrac.setFixedWidth(100)
+        self.max_price_label_contrac = QLabel("Максимальная цена")
+        self.max_price_input_contrac = QLineEdit()
+        self.max_price_input_contrac.setFixedWidth(100)
+        # self.toExcel = QPushButton("Экспорт в Excel", self)
+        # self.toExcel.clicked.connect(self.export_to_excel_clicked)
+        # self.toExcel.setFixedWidth(400)
+
+        self.min_data_label_contrac = QLabel("Начальная дата")
+        self.min_data_input_contrac = QDateEdit()
+        self.min_data_input_contrac.setCalendarPopup(False)
+        self.min_data_input_contrac.setStyleSheet(self.transparent_style)
+        # self.min_data_input.setDate(self.min_data_input.date().currentDate())
+
+        self.min_data_input_contrac.clear()
+        self.min_data_input_contrac.setFixedWidth(150)
+        self.min_data_input_contrac.setCalendarPopup(True)
+        self.max_data_label_contrac = QLabel("Конечная дата")
+        self.max_data_input_contrac = QDateEdit()
+        self.max_data_input_contrac.setCalendarPopup(True)
+        self.max_data_input_contrac.setDate(self.max_data_input.date().currentDate())
+        self.max_data_input_contrac.setStyleSheet(self.transparent_style) 
      
         self.current_position = 0   
         self.label_cont = QLabel("Всего записей", self)
@@ -430,12 +456,12 @@ class PurchasesWidgetAll(QWidget):
          # Устанавливаем обработчик событий для выпадающего меню
        
         self.sort_options_contract.setFixedWidth(250)
-        self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item)
+        self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item_contract)
         unique_contract_winnter = Contract.select(Contract.WinnerExecutor).distinct()
         self.sort_by_putch_winner = QComboBox()
         self.sort_by_putch_winner.addItem("Фильтрация по Победителю-исполнителю контракта")
         self.sort_by_putch_winner.setFixedWidth(250)
-        self.sort_by_putch_winner.currentIndexChanged.connect(self.highlight_current_item)
+        self.sort_by_putch_winner.currentIndexChanged.connect(self.highlight_current_item_contract)
         for order in unique_contract_winnter:
             self.sort_by_putch_winner.addItem(str(order.WinnerExecutor))
 
@@ -467,6 +493,17 @@ class PurchasesWidgetAll(QWidget):
         line1.setFrameShadow(QFrame.Shadow.Sunken)
         line1.setStyleSheet("background-color: grey;")
         line1.setFixedHeight(2)
+        line2 = QFrame()
+        line2.setFrameShape(QFrame.Shape.HLine)
+        line2.setFrameShadow(QFrame.Shadow.Sunken)
+        line2.setStyleSheet("background-color: grey;")
+        line2.setFixedHeight(2)
+
+        line3 = QFrame()
+        line3.setFrameShape(QFrame.Shape.HLine)
+        line3.setFrameShadow(QFrame.Shadow.Sunken)
+        line3.setStyleSheet("background-color: grey;")
+        line3.setFixedHeight(2)
         # Добавляем кнопку "Применить фильтр"
         self.apply_filter_button_contract = QPushButton("Применить фильтр контрактов", self)
         self.apply_filter_button_contract.setIcon(icon)
@@ -477,6 +514,17 @@ class PurchasesWidgetAll(QWidget):
         self.FilterCollapseContract.setIcon(QIcon("Pics/right-arrow.png"))
         self.FilterCollapseContract.setMaximumWidth(300)
         self.FilterCollapseContract.clicked.connect(self.toggle_menu_filters_contract)
+
+         # Добавляем кнопку выпадающего меню по цене
+        self.FilterPriceContract = QPushButton("Цена")
+        self.FilterPriceContract.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FilterPriceContract.setMaximumWidth(300)
+        self.FilterPriceContract.clicked.connect(self.toggle_menu_price_contract)
+        # Добавляем кнопку выпадающего меню по дате
+        self.FilterDateContract = QPushButton("Дата")
+        self.FilterDateContract.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FilterDateContract.setMaximumWidth(300)
+        self.FilterDateContract.clicked.connect(self.toggle_menu_date_contract)
          # Добавляем кнопку выпадающего меню по цене
         # self.FilterPrice = QPushButton("Цена")
         # self.FilterPrice.setIcon(QIcon("Pics/right-arrow.png"))
@@ -509,7 +557,45 @@ class PurchasesWidgetAll(QWidget):
         self.menu_frame_filters_contract.layout().addWidget(self.menu_content_filters_contract )
         self.menu_frame_filters_contract.setVisible(False)
         #меню по  фильтрам цена
-
+        self.menu_content_price_contrac = QWidget()
+        menu_layout_price_contrac = QHBoxLayout()
+        menu_layout_priceV_contrac = QVBoxLayout()
+        self.PriceLabel_contrac = QLabel("Фильтрация по НМЦК")
+        menu_layout_priceV_contrac.addWidget( self.PriceLabel_contrac)
+        menu_layout_priceV_contrac.addWidget(line2)
+        menu_layout_price_contrac.addWidget(self.min_price_label_contrac)
+        menu_layout_price_contrac.addWidget(self.min_price_input_contrac)
+        menu_layout_price_contrac.addWidget(self.max_price_label_contrac)
+        menu_layout_price_contrac.addWidget(self.max_price_input_contrac)
+        menu_layout_priceV_contrac.addLayout(menu_layout_price_contrac)
+        menu_layout_price_contrac.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        menu_layout_price_contrac.addItem(spacer)
+        self.menu_content_price_contrac.setLayout(menu_layout_priceV_contrac)
+        self.menu_frame_price_contrac = QFrame()
+        self.menu_frame_price_contrac.setLayout(QVBoxLayout())
+        self.menu_frame_price_contrac.layout().addWidget(self.menu_content_price_contrac)
+        self.menu_frame_price_contrac.setVisible(False)
+        #меню по  фильтрам дата
+        self.menu_content_data_contrac = QWidget()
+        menu_layout_data_contrac = QHBoxLayout()
+        DataLabel_contrac = QLabel("Фильтрация по Дате Размещения")
+        menu_layout_dataV_contrac = QVBoxLayout()
+        menu_layout_dataV_contrac.addWidget(DataLabel_contrac)
+        menu_layout_dataV_contrac.addWidget(line3)
+        menu_layout_data_contrac.addWidget(self.min_data_label_contrac)
+        menu_layout_data_contrac.addWidget(self.min_data_input_contrac)
+        menu_layout_data_contrac.addWidget(self.max_data_label_contrac)
+        menu_layout_data_contrac.addWidget(self.max_data_input_contrac)
+        menu_layout_data_contrac.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        menu_layout_dataV_contrac.addLayout(menu_layout_data_contrac)
+        spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        menu_layout_data_contrac.addItem(spacer)
+        self.menu_content_data_contrac.setLayout(menu_layout_dataV_contrac)
+        self.menu_frame_data_contrac = QFrame()
+        self.menu_frame_data_contrac.setLayout(QVBoxLayout())
+        self.menu_frame_data_contrac.layout().addWidget(self.menu_content_data_contrac)
+        self.menu_frame_data_contrac.setVisible(False)
         
         self.All_parametrs_finder_contract = QLabel("Все параметры поиска")
         font = QFont()
@@ -521,12 +607,15 @@ class PurchasesWidgetAll(QWidget):
         button_layout_filters = QHBoxLayout()
 
         button_layout_filters.addWidget(self.FilterCollapseContract)
-        # button_layout_filters.addWidget(self.FilterPrice)
-        # button_layout_filters.addWidget(self.FilterDate)
+        button_layout_filters.addWidget(self.FilterPriceContract)
+        button_layout_filters.addWidget(self.FilterDateContract)
         button_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.All_parametrs_finder_contract,alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addLayout(button_layout_filters)
         layout.addWidget(self.menu_frame_filters_contract)
+        layout.addWidget(self.menu_frame_price_contrac)
+        layout.addWidget(self.menu_frame_data_contrac)
+        
 
         # Добавляем кнопку "Применить фильтр"
         button_layout_filters = QHBoxLayout()
@@ -540,7 +629,12 @@ class PurchasesWidgetAll(QWidget):
         # layout.addLayout(button_layout3)
         # Получаем данные из базы данных и отображаем первую запись
         self.reload_data_cont()
-        self.apply_filter_button_contract.clicked.connect(self.highlight_apply_filter_button)
+
+        self.min_price_input_contrac.textChanged.connect(self.highlight_input_contract)
+        self.max_price_input_contrac.textChanged.connect(self.highlight_input_contract)
+        self.min_data_input_contrac.dateChanged.connect(self.highlight_input_contract)
+        self.max_data_input_contrac.dateChanged.connect(self.highlight_input_contract)
+        self.apply_filter_button_contract.clicked.connect(self.highlight_apply_filter_button_contract)
        
 
         if self.role == "Гость":
@@ -585,6 +679,21 @@ class PurchasesWidgetAll(QWidget):
             self.FilterCollapseContract.setIcon(QIcon("Pics/arrow-down.png"))
         else:
             self.FilterCollapseContract.setIcon(QIcon("Pics/right-arrow.png"))
+
+    def toggle_menu_price_contract(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame_price_contrac.setVisible(not self.menu_frame_price_contrac.isVisible())
+        if self.menu_frame_price_contrac.isVisible():
+            self.FilterPriceContract.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.FilterPriceContract.setIcon(QIcon("Pics/right-arrow.png"))
+    def toggle_menu_date_contract(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame_data_contrac.setVisible(not self.menu_frame_data_contrac.isVisible())
+        if self.menu_frame_data_contrac.isVisible():
+            self.FilterDateContract.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.FilterDateContract.setIcon(QIcon("Pics/right-arrow.png"))
     def show_all_purchases(self):
     # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)
@@ -650,6 +759,10 @@ class PurchasesWidgetAll(QWidget):
     def highlight_apply_filter_button(self):
     # Подсвечиваем кнопку apply_filter_button
         self.apply_filter_button.setStyleSheet("background-color: #ccffcc;")
+    
+    def highlight_apply_filter_button_contract(self):
+    # Подсвечиваем кнопку apply_filter_button
+        self.apply_filter_button_contract.setStyleSheet("background-color: #ccffcc;")
 
   
     def highlight_input(self):
@@ -682,6 +795,32 @@ class PurchasesWidgetAll(QWidget):
             self.QwordFinder.setStyleSheet("background-color: #ccffcc;")
         else:
             self.search_input.setStyleSheet("")
+
+    def highlight_input_contract(self):
+        min_price = self.min_price_input_contrac.text()
+        max_price = self.max_price_input_contrac.text()
+        min_data_valid = self.min_data_input_contrac.date().isValid()
+        max_data_valid = self.max_data_input_contrac.date().isValid()
+      
+        
+        # Подсветка полей в зависимости от введенных данных
+        if min_price or max_price:
+            self.min_price_input_contrac.setStyleSheet("background-color: #ccffcc;")
+            self.max_price_input_contrac.setStyleSheet("background-color: #ccffcc;")
+            self.FilterPriceContract.setStyleSheet("background-color: #ccffcc;")
+        else:
+            self.min_price_input_contrac.setStyleSheet("")
+            self.max_price_input_contrac.setStyleSheet("")
+
+        if min_data_valid or max_data_valid:
+            self.min_data_input_contrac.setStyleSheet("background-color: #ccffcc;")
+            self.max_data_input_contrac.setStyleSheet("background-color: #ccffcc;")
+            self.FilterDateContract.setStyleSheet("background-color: #ccffcc;")
+        else:
+            self.min_data_input_contrac.setStyleSheet("")
+            self.max_data_input_contrac.setStyleSheet("")
+           
+  
         
         
     def highlight_current_item(self, index):
@@ -702,6 +841,26 @@ class PurchasesWidgetAll(QWidget):
             elif sender == self.sort_by_putch_ProcurementMethod:
                 self.sort_by_putch_ProcurementMethod.setStyleSheet("background-color: #ccffcc;")
                 self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
+
+    def highlight_current_item_contract(self, index):
+        if index >= 0:
+            sender = self.sender()  # Получаем объект, который вызвал сигнал
+            if sender == self.sort_options_contract:
+                self.sort_options_contract.setStyleSheet("background-color: #ccffcc;")
+                self.FilterCollapseContract.setStyleSheet("background-color: #ccffcc;")
+            elif sender == self.sort_by_putch_winner:
+                self.sort_by_putch_winner.setStyleSheet("background-color: #ccffcc;")
+                self.FilterCollapseContract.setStyleSheet("background-color: #ccffcc;")
+            # elif sender == self.sort_options:
+            #     self.sort_options.setStyleSheet("background-color: #ccffcc;")
+            #     self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
+            # elif sender == self.sort_by_putch_CustomerName:
+            #     self.sort_by_putch_CustomerName.setStyleSheet("background-color: #ccffcc;")
+            #     self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
+            # elif sender == self.sort_by_putch_ProcurementMethod:
+            #     self.sort_by_putch_ProcurementMethod.setStyleSheet("background-color: #ccffcc;")
+            #     self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
+        
     
     def apply_filter(self):
         self.current_position = 0
@@ -815,17 +974,37 @@ class PurchasesWidgetAll(QWidget):
         elif  self.selected_option_contract == "Сортировать по Дате (Возростание)":
             order_by = Contract.StartDate
 
+        min_price = float(self.min_price_input_contrac.text()) if self.min_price_input_contrac.text() else float('-inf')
+        max_price = float(self.max_price_input_contrac.text()) if self.max_price_input_contrac.text() else float('inf')
+
+        min_date_str = self.min_data_input_contrac.date()
+        max_date_str = self.max_data_input_contrac.date()
+
+        min_date = min_date_str.toPython() if min_date_str.isValid() else None
+        max_date = max_date_str.toPython() if max_date_str.isValid() else None
+
+         # Фильтр по цене
+        self.contracts = self.contracts.where(
+            (Contract.ContractPrice.between(min_price, max_price))
+                                        ).order_by(order_by)
+        # Фильтр по дате
+        if  min_date and max_date:
+            self.contracts = self.contracts.where(
+                (Contract.StartDate.between( min_date,  max_date))
+            )
+
+        # Фильтр по цене и дате
+        self.contracts = self.contracts.where(
+            (Contract.ContractPrice.between(min_price, max_price)) &
+            (Contract.StartDate.between(min_date,  max_date) if min_date and  max_date else True)
+        )
+
         self.selected_contr = self.sort_by_putch_winner.currentText()
         if  self.selected_contr != "Фильтрация по Победителю-исполнителю контракта":
             self.contracts = self.contracts.where(
                 Contract.WinnerExecutor == self.selected_contr )
             
-            
-            # purchases_query_combined_contract = Contract.where(
-            #     self.contracts.WinnerExecutor == self.selected_contr
-            # )    
 
-        # self.contracts = purchases_query_combined_contract.order_by(order_by)
         
 
         self.contracts_list = list(self.contracts.order_by(order_by).tuples())
@@ -909,12 +1088,15 @@ class PurchasesWidgetAll(QWidget):
     def resetFiltersContract(self):
         # Очищаем все поля ввода
         self.sort_options_contract.setCurrentIndex(0)
-        self.sort_by_putch_winner.setCurrentIndex(0)  # Сбрасываем выбранное значение в выпадающем списке
+        self.sort_by_putch_winner.setCurrentIndex(0)  
         self.current_position = 0
-        # Возвращаем записи в исходное состояние без применения каких-либо фильтров
+        self.min_price_input_contrac.clear()
+        self.max_price_input_contrac.clear()
+        self.min_data_input_contrac.setDate(QDate(2000, 1, 1))
+        self.max_data_input_contrac.setDate(self.max_data_input.date().currentDate())
         self.reload_data_cont()
         # Сброс стилей всех элементов к стандартному состоянию
-        self.reset_styles()
+        self.reset_styles_contract()
 
     def reset_styles(self):
         # Сброс стилей всех элементов к стандартному состоянию
@@ -924,6 +1106,14 @@ class PurchasesWidgetAll(QWidget):
             input_field.setStyleSheet("")
         self.max_data_input.setStyleSheet(self.transparent_style) 
         self.min_data_input.setStyleSheet(self.transparent_style) 
+
+    def reset_styles_contract(self):
+        # Сброс стилей всех элементов к стандартному состоянию
+        for input_field in [self.min_price_input_contrac, self.max_price_input_contrac, self.apply_filter_button_contract, self.FilterCollapseContract,self.FilterPriceContract,
+                            self.FilterDateContract,self.FilterCollapseContract, self.sort_options_contract,self.sort_by_putch_winner]:
+            input_field.setStyleSheet("")
+        self.max_data_input_contrac.setStyleSheet(self.transparent_style) 
+        self.min_data_input_contrac.setStyleSheet(self.transparent_style) 
      
 
     def remove_button_clicked(self):

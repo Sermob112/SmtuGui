@@ -325,7 +325,7 @@ def insert_in_table_full(csv_file_path):
                 ContractIdentifier = row[55] if row[55] else 0
                 RegistryNumber = row[56] if row[56] else 0
                 ContractNumber = row[57] if row[57] else 0
-                ContractPrice = row[58] if row[58] else 0
+                ContractPrice = float(row[58]) if row[58] else 0
                 quantity_units = int(row[6]) if row[6] else 0
                 nmck_per_unit = float(row[9]) if row[9] else 0
                 notification_link =  "Нет данных"

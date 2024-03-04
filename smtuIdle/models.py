@@ -98,7 +98,7 @@ class Contract(Model):
     ContractNumber = CharField(verbose_name="№ договора", max_length=255, null=True)
     StartDate = DateField(verbose_name="Дата начала/подписания", null=True)
     EndDate = DateField(verbose_name="Дата окончания/исполнения", null=True)
-    ContractPrice = CharField(verbose_name="Цена договора, руб.", null=True)
+    ContractPrice = FloatField(verbose_name="Цена договора, руб.", null=True)
     AdvancePayment = FloatField(verbose_name="Размер авансирования, руб./(%)", null=True)
     ReductionNMC = FloatField(verbose_name="Снижение НМЦК, руб.", null=True)
     ReductionNMCPercent = FloatField(verbose_name="Снижение НМЦК, %", null=True)
