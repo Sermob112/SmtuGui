@@ -9,7 +9,7 @@ from PySide6.QtCore import QDate
 import sys, json
 from peewee import JOIN
 from InsertWidgetCurrency import InsertWidgetCurrency
-from parserV3 import delete_records_by_id, export_to_excel
+from parserV3 import delete_records_by_id, export_to_excel,export_to_excel_contract
 from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
 from peewee import fn
@@ -425,10 +425,12 @@ class PurchasesWidgetAll(QWidget):
         self.max_price_label_contrac = QLabel("Максимальная цена")
         self.max_price_input_contrac = QLineEdit()
         self.max_price_input_contrac.setFixedWidth(100)
-        # self.toExcel = QPushButton("Экспорт в Excel", self)
-        # self.toExcel.clicked.connect(self.export_to_excel_clicked)
-        # self.toExcel.setFixedWidth(400)
-
+        self.toExcel_contract = QPushButton("Экспорт в Excel", self)
+        self.toExcel_contract.clicked.connect(self.export_to_excel_clicked_contract)
+        self.toExcel_contract.setFixedWidth(400)
+        button_layout3 = QHBoxLayout()
+        button_layout3.addWidget(self.toExcel_contract)
+        button_layout3.setAlignment(Qt.AlignHCenter)
         self.min_data_label_contrac = QLabel("Начальная дата")
         self.min_data_input_contrac = QDateEdit()
         self.min_data_input_contrac.setCalendarPopup(False)
@@ -626,7 +628,7 @@ class PurchasesWidgetAll(QWidget):
         # Добавляем таблицу и остальные элементы в макет
         layout.addWidget(self.table_cont)
         layout.addLayout(button_layout)
-        # layout.addLayout(button_layout3)
+        layout.addLayout(button_layout3)
         # Получаем данные из базы данных и отображаем первую запись
         self.reload_data_cont()
 
@@ -957,11 +959,21 @@ class PurchasesWidgetAll(QWidget):
         Purchase.RegistryNumber,
         Contract.ContractNumber,
         Contract.StartDate,
-         Contract.ContractPrice,
+        Contract.ContractPrice,
         Contract.ContractingAuthority,
         Contract.WinnerExecutor,
-       
-        Purchase.PurchaseName,    
+        Purchase.PurchaseName,
+        Contract.TotalApplications,
+        Contract.AdmittedApplications,
+        Contract.RejectedApplications,
+        Contract.PriceProposal,
+        Contract.Applicant,
+        Contract.Applicant_satatus,
+        Contract.ContractIdentifier,
+        Contract.EndDate,
+        Contract.AdvancePayment, Contract.ReductionNMC, Contract.ReductionNMCPercent,
+        Contract.SupplierProtocol, Contract.ContractFile
+
     )
      .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)))
         
@@ -1226,7 +1238,54 @@ class PurchasesWidgetAll(QWidget):
             else:
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
            
+    def export_to_excel_clicked_contract(self ):
         
+        current_sort_option = self.sort_options_contract.currentText()
+        sort_options  = current_sort_option if current_sort_option is not None  else None
+        min_date = self.min_data_input_contrac.date().toPython() if self.min_data_input_contrac.date().toPython() is not None  else None
+        max_date = self.max_data_input_contrac.date().toPython() if self.max_data_input_contrac.date().toPython() is not None  else None
+        min_price = self.min_price_input_contrac.text() if self.min_price_input_contrac.text() is not None  else None
+        max_price = self.max_price_input_contrac.text()  if self.max_price_input_contrac.text() is not None  else None
+      
+        filters = {
+        'filter_criteria': sort_options ,
+        'start_date': min_date,
+        'end_date': max_date,
+        'min_price': min_price,
+        'max_price': max_price,
+        
+    }   
+    
+         
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(QFileDialog.Directory)
+
+        if file_dialog.exec_():
+            selected_file = file_dialog.selectedFiles()[0]
+            selected_file = selected_file if selected_file else None
+            if selected_file:
+                # query1 = self.purchases
+                # query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                 
+                
+                # query = (
+                #     self.purchases
+                #     .select(Purchase, Contract, FinalDetermination, CurrencyRate)
+                #     .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                #     .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
+                #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
+                # )     
+                records, data, user = self.main_window.return_variabels()
+                # cleaned_filename = data.sub(r'[\\/*?:"<>| ]', '_', data)
+                self.data = list(self.contracts.tuples())
+                # print(self.data[0])
+                if export_to_excel_contract(self.data ,f'{selected_file}/Отфильтрованные данные_контракты__{data}_{records}_{user}.xlsx',filters=filters ) == True:
+                    QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
+                else:
+                    QMessageBox.warning(self, "Ошибка", "Ошибка записи")
+            else:
+                QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
+           
     def reload_data(self):
         self.purchases = Purchase.select()
         self.purchases_list = list(self.purchases)
@@ -1244,10 +1303,18 @@ class PurchasesWidgetAll(QWidget):
         Contract.ContractPrice,
         Contract.ContractingAuthority,
         Contract.WinnerExecutor,
-        
         Purchase.PurchaseName,
-        
-       
+        Contract.TotalApplications,
+        Contract.AdmittedApplications,
+        Contract.RejectedApplications,
+        Contract.PriceProposal,
+        Contract.Applicant,
+        Contract.Applicant_satatus,
+        Contract.ContractIdentifier,
+        Contract.EndDate,
+        Contract.AdvancePayment, Contract.ReductionNMC, Contract.ReductionNMCPercent,
+        Contract.SupplierProtocol, Contract.ContractFile
+
     )
      .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)))
         self.contracts_list = list(self.contracts.tuples())

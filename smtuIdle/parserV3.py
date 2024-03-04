@@ -704,6 +704,87 @@ def export_to_excel(data, output_excel_path, filters):
     except Exception as e:
         print("Ошибка при экспорте данных в Excel:", e)
 
+def export_to_excel_contract(data, output_excel_path, filters):
+    try:
+        # Создайте DataFrame из данных
+        filter_df = pd.DataFrame([filters],columns=[
+    "filter_criteria",  "start_date", "end_date", "min_price", "max_price"
+])
+        
+        filter_column_translation = {
+    "filter_criteria": "Критерии Фильтра",
+    "start_date": "Дата Начала",
+    "end_date": "Дата Окончания",
+    "min_price": "Минимальная Цена",
+    "max_price": "Максимальная Цена"
+}
+        # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
+        filter_df.fillna('', inplace=True)
+        # selected_data = [tuple[:69] for tuple in data]
+       
+        selected_columns = [ "Purchase.Id",
+"Contract.RegistryNumber",
+"Purchase.RegistryNumber",
+"Contract.ContractNumber",
+"Contract.StartDate",
+"Contract.ContractPrice",
+"Contract.ContractingAuthority",
+"Contract.WinnerExecutor",
+"Purchase.PurchaseName",
+"Contract.TotalApplications",
+"Contract.AdmittedApplications",
+"Contract.RejectedApplications",
+"Contract.PriceProposal",
+"Contract.Applicant",
+"Contract.Applicant_satatus",
+"Contract.ContractIdentifier",
+"Contract.EndDate",
+"Contract.AdvancePayment",
+"Contract.ReductionNMC",
+"Contract.ReductionNMCPercent",
+"Contract.SupplierProtocol",
+"Contract.ContractFile"]
+        selected_data = [[t[selected_columns.index(col)] for col in selected_columns] for t in data]
+        # print(selected_data[0])
+        # Создайте DataFrame с данными
+        data_df = pd.DataFrame(selected_data, columns=selected_columns)
+
+        # Создайте словарь для перевода названий столбцов
+        column_translation = {
+            "Id":"Номер",
+"RegistryNumber": "Реестровый Номер",
+"ContractNumber": "№ договора",
+"StartDate": "Дата начала/подписания",
+"ContractPrice": "Цена договора, руб.",
+"ContractingAuthority": "Заказчик по контракту",
+"WinnerExecutor": "Победитель-исполнитель контракта",
+"PurchaseName": "Название Закупки",
+"TotalApplications": "Общее количество заявок",
+"AdmittedApplications": "Общее количество допущенных заявок",
+"RejectedApplications": "Общее количество отклоненных заявок",
+"PriceProposal": "Ценовое предложение",
+"Applicant": "Заявитель",
+"Applicant_satatus": "Статус заявителя",
+"ContractIdentifier": "Идентификатор договора",
+"EndDate": "Дата окончания/исполнения",
+"AdvancePayment": "Размер авансирования, руб./(%)",
+"ReductionNMC": "Снижение НМЦК, руб.",
+"ReductionNMCPercent": "Снижение НМЦК, %",
+"SupplierProtocol": "Протоколы определения поставщика (выписка)",
+"ContractFile": "Договор"
+
+    }
+
+        filter_df.rename(columns=filter_column_translation, inplace=True)
+
+        data_df.rename(columns=column_translation, inplace=True)
+        with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
+            filter_df.to_excel(writer, index=False)
+            data_df.to_excel(writer, startrow=2, header=True, index=False)
+        return True
+    except Exception as e:
+        print("Ошибка при экспорте данных в Excel:", e)
+
 
 def export_to_excel_all(data, output_excel_path):
     try:
