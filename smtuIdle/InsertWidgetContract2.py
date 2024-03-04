@@ -86,8 +86,8 @@ class InsertWidgetContract2(QWidget):
         layout7 = QHBoxLayout(self)
         layout19 = QHBoxLayout(self)
         self.notification_link_edit_contratc = QLineEdit()
-        browse_button_contratc = QPushButton("Добавить файл Контрактов")
-        browse_button_contratc.clicked.connect(self.browse_file_contract)
+        # browse_button_contratc = QPushButton("Добавить файл Контрактов")
+        # browse_button_contratc.clicked.connect(self.browse_file_contract)
  
 
         layout5.addWidget(label5)
@@ -133,7 +133,7 @@ class InsertWidgetContract2(QWidget):
 
         layout19.addWidget(label17)
         layout19.addWidget(self.notification_link_edit_contratc)
-        layout19.addWidget(browse_button_contratc)
+        # layout19.addWidget(browse_button_contratc)
 
         # Добавляем все строки в вертикальный контейнер
         self.layout1.addWidget(label1)
@@ -214,9 +214,9 @@ class InsertWidgetContract2(QWidget):
                 widget.setParent(None)
                 widget.deleteLater()
     def save_tkp_data(self):
-        self.db_folder = "файлы бд"
+        # self.db_folder = "файлы бд"
         
-        os.makedirs(self.db_folder, exist_ok=True)
+        # os.makedirs(self.db_folder, exist_ok=True)
         self.price_proposal = {}
         self.applicant = {}
         self.status = {}
@@ -242,21 +242,21 @@ class InsertWidgetContract2(QWidget):
                 self.status[key_status] = status_edit.text() if status_edit.text() else "[]"
 
             j += 1
-        try:
+        # try:
            
-            source_path = self.notification_link_edit_contratc.text()
-            purchase = Purchase.get(Purchase.Id == self.purchase_id)
-            purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
-            if not os.path.exists(purchase_folder):
-                os.makedirs(purchase_folder)
-            # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
-            destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
-            destination_path = os.path.basename(destination_path_1)
-            shutil.copy2(source_path, destination_path_1)
+        #     source_path = self.notification_link_edit_contratc.text()
+        #     purchase = Purchase.get(Purchase.Id == self.purchase_id)
+        #     purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+        #     if not os.path.exists(purchase_folder):
+        #         os.makedirs(purchase_folder)
+        #     # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+        #     destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+        #     destination_path = os.path.basename(destination_path_1)
+        #     shutil.copy2(source_path, destination_path_1)
         
             
-        except:
-            pass
+        # except:
+        #     pass
         price_proposal_json = json.dumps(self.price_proposal,ensure_ascii=False)
         applicant_json = json.dumps(self.applicant,ensure_ascii=False)
         status_json = json.dumps(self.status,ensure_ascii=False)
@@ -276,7 +276,7 @@ class InsertWidgetContract2(QWidget):
                                 ContractingAuthority=self.ContractingAuthority.text() if self.ContractingAuthority.text() else 0,
                                 ContractIdentifier=self.ContractIdentifier.text() if self.ContractIdentifier.text() else 0,
                                 RegistryNumber=self.RegistryNumber.text() if self.RegistryNumber.text() else 0,
-                                ContractFile= destination_path if destination_path else "нет данных",
+                                ContractFile= self.notification_link_edit_contratc.text() if self.notification_link_edit_contratc.text() else "нет данных",
                                 PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json).where(Contract.purchase == self.purchase_id).execute()
         except DoesNotExist:
                 Contract.create( purchase = self.purchase_id,
@@ -293,7 +293,7 @@ class InsertWidgetContract2(QWidget):
                                  ContractingAuthority=self.ContractingAuthority.text() if self.ContractingAuthority.text() else 0,
                                 ContractIdentifier=self.ContractIdentifier.text() if self.ContractIdentifier.text() else 0,
                                 RegistryNumber=self.RegistryNumber.text() if self.RegistryNumber.text() else 0,
-                                ContractFile= destination_path if destination_path else "нет данных",
+                                ContractFile= self.notification_link_edit_contratc.text() if self.notification_link_edit_contratc.text() else "нет данных",
                                 PriceProposal=price_proposal_json, Applicant=applicant_json, Applicant_satatus=status_json)
         try:
             # Попытка сохранения данных

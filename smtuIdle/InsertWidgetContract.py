@@ -25,7 +25,7 @@ class InsertWidgetContract(QWidget):
         self.changer = changer
         # Создаем лейблы
         self.setWindowTitle("Результаты закупки")
-        self.setGeometry(100, 100, 900, 400)
+        self.setGeometry(100, 100, 900, 200)
         
         label1 = QLabel("Результаты закупки")
         label1.setAlignment(Qt.AlignCenter)

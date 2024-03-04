@@ -36,8 +36,8 @@ class InsertWidgetNMCK_3(QWidget):
         labelNMCK5 = QLabel("Выбирите файл")
         #файл диалог
         self.notification_link_edit = QLineEdit(self)
-        browse_button = QPushButton("Обзор", self)
-        browse_button.clicked.connect(self.browse_file)
+        # browse_button = QPushButton("Обзор", self)
+        # browse_button.clicked.connect(self.browse_file)
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
         self.edit2 = QDateEdit(self)
@@ -61,7 +61,7 @@ class InsertWidgetNMCK_3(QWidget):
     
         layout5.addWidget(labelNMCK5)
         layout5.addWidget(self.notification_link_edit)
-        layout5.addWidget(browse_button)
+        # layout5.addWidget(browse_button)
         # Добавляем все строки в вертикальный контейнер
         layout1.addWidget(label1)
         layout1.addLayout(layout2)
@@ -123,20 +123,20 @@ class InsertWidgetNMCK_3(QWidget):
         if file_path:
             self.notification_link_edit.setText(file_path)
     def save_tkp_data(self):
-        self.db_folder = "файлы бд"
-        os.makedirs(self.db_folder, exist_ok=True)
-        try:
-            source_path = self.notification_link_edit.text()
-            purchase = Purchase.get(Purchase.Id == self.purchase_id)
-            purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
-            if not os.path.exists(purchase_folder):
-                os.makedirs(purchase_folder)
-            # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
-            destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
-            destination_path = os.path.basename(destination_path_1)
-            shutil.copy2(source_path, destination_path_1)
-        except:
-            pass
+        # self.db_folder = "файлы бд"
+        # os.makedirs(self.db_folder, exist_ok=True)
+        # try:
+        #     source_path = self.notification_link_edit.text()
+        #     purchase = Purchase.get(Purchase.Id == self.purchase_id)
+        #     purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+        #     if not os.path.exists(purchase_folder):
+        #         os.makedirs(purchase_folder)
+        #     # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+        #     destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+        #     destination_path = os.path.basename(destination_path_1)
+        #     shutil.copy2(source_path, destination_path_1)
+        # except:
+        #     pass
      
         
         purchase = Purchase.update(
@@ -145,7 +145,7 @@ class InsertWidgetNMCK_3(QWidget):
                             organization_name = self.edit1.text() if self.edit1.text() else 0,
                             organization_name_date = self.edit2.text() if self.edit2.text() else 0,
                             organization_price = self.edit3.text() if self.edit3.text() else 0,
-                            organization_name_file = destination_path
+                            organization_name_file =  self.notification_link_edit.text() if self.notification_link_edit.text() else "Нет данных"
                             # ResponseCount=int(self.edit2.text()) if self.edit2.text() else 0,
                             # FinancingLimit=int(self.edit3.text()) if self.edit3.text() else 0,
                             # AveragePrice = avg_tkp if avg_tkp else 0,

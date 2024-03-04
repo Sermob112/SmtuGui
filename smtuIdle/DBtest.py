@@ -121,6 +121,7 @@ class PurchasesWidget(QWidget):
         
         # Получаем данные из базы данных и отображаем первую запись
         self.reload_data()
+    
         # self.purchases = Purchase.select()
         # self.purchases = (Purchase
         #         .select()
@@ -365,7 +366,8 @@ class PurchasesWidget(QWidget):
         value_font = QFont()
         value_font.setPointSize(10)
         value_item.setFont(value_font)
-        if label_text == "файл НМЦК" or label_text == "файл протокола" or label_text == "Извещение о закупке" or label_text == "Файл расчета" or label_text == "Файл итогового определения НМЦК с использованием нескольких методов" or label_text == "Договор":
+        
+        if label_text == "Файл НМЦК" or label_text == "Файл протокола" or label_text == "Извещение о закупке" or label_text == "Файл расчета" or label_text == "Файл итогового определения НМЦК с использованием нескольких методов" or label_text == "Договор":
             if value_text != "Нет данных":
                 # Установка цвета фона только для нужных ячеек
                 label_item.setBackground(QColor(200, 255, 200))  # Светло-зеленый
@@ -383,6 +385,7 @@ class PurchasesWidget(QWidget):
         # max_height = 40  # Установите желаемую максимальную высоту здесь
         # self.table.setRowHeight(row_position, min(max_height, self.table.rowHeight(row_position)))
 
+    
     def add_section_to_table(self, section_text):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
@@ -437,7 +440,10 @@ class PurchasesWidget(QWidget):
                 print("Текст содержит символ '№'")
                 url = item.data(Qt.UserRole)
                 QDesktopServices.openUrl(QUrl(url))
-                
+            if "download" in item.text():
+                url_for = item.text()
+                QDesktopServices.openUrl(QUrl(url_for))
+
             else:
                 pass
             #    self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
@@ -480,6 +486,7 @@ class PurchasesWidget(QWidget):
         self.purchases_list = list(self.purchases)
         self.update()
         self.show_current_purchase()
+        
 
     def reload_data_id(self,id):
         self.purchases = Purchase.select().where(Purchase.Id == id)

@@ -39,8 +39,8 @@ class InsertWidgetNMCK_4(QWidget):
         labelNMCK5 = QLabel("Выбирите файл")
         #файл диалог
         self.notification_link_edit = QLineEdit(self)
-        browse_button = QPushButton("Обзор", self)
-        browse_button.clicked.connect(self.browse_file)
+        # browse_button = QPushButton("Обзор", self)
+        # browse_button.clicked.connect(self.browse_file)
         # Создаем поля ввода
         self.edit1 = QLineEdit(self)
         self.edit2 = QLineEdit(self)
@@ -75,7 +75,7 @@ class InsertWidgetNMCK_4(QWidget):
         layout7.addWidget(self.edit6)
         layout8.addWidget(labelNMCK5)
         layout8.addWidget(self.notification_link_edit)
-        layout8.addWidget(browse_button)
+        # layout8.addWidget(browse_button)
         # Добавляем все строки в вертикальный контейнер
         layout1.addWidget(label1)
         layout1.addWidget(label2)
@@ -135,27 +135,27 @@ class InsertWidgetNMCK_4(QWidget):
 
     #     self.add_tkp_button.clicked.connect(self.save_tkp_data)
     #     self.update()
-    def browse_file(self):
-        file_dialog = QFileDialog()
-        file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
+    # def browse_file(self):
+    #     file_dialog = QFileDialog()
+    #     file_path, _ = file_dialog.getOpenFileName(self, "Выберите файл", "", "All Files (*);;Text Files (*.txt);;PDF Files (*.pdf)")
         
-        if file_path:
-            self.notification_link_edit.setText(file_path)
+    #     if file_path:
+    #         self.notification_link_edit.setText(file_path)
     def save_tkp_data(self):
-        self.db_folder = "файлы бд"
-        os.makedirs(self.db_folder, exist_ok=True)
-        try:
-            source_path = self.notification_link_edit.text()
-            purchase = Purchase.get(Purchase.Id == self.purchase_id)
-            purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
-            if not os.path.exists(purchase_folder):
-                os.makedirs(purchase_folder)
-            # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
-            destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
-            destination_path = os.path.basename(destination_path_1)
-            shutil.copy2(source_path, destination_path)
-        except:
-            pass
+        # self.db_folder = "файлы бд"
+        # os.makedirs(self.db_folder, exist_ok=True)
+        # try:
+        #     source_path = self.notification_link_edit.text()
+        #     purchase = Purchase.get(Purchase.Id == self.purchase_id)
+        #     purchase_folder = os.path.join(self.db_folder, str(purchase.RegistryNumber))
+        #     if not os.path.exists(purchase_folder):
+        #         os.makedirs(purchase_folder)
+        #     # destination_path = os.path.join(absolute_db_folder, os.path.basename(source_path))
+        #     destination_path_1 = os.path.join(purchase_folder, os.path.basename(source_path))
+        #     destination_path = os.path.basename(destination_path_1)
+        #     shutil.copy2(source_path, destination_path)
+        # except:
+        #     pass
      
         
         purchase = Purchase.update(
@@ -163,7 +163,7 @@ class InsertWidgetNMCK_4(QWidget):
                             
                             method_direction_requests = self.edit1.text() if self.edit1.text() else "нет данных",
                             method_usage_information = self.edit2.text() if self.edit2.text() else "нет данных",
-                            file_4 = destination_path,
+                            file_4 = self.notification_link_edit.text() if self.notification_link_edit.text() else "нет данных",
                             nmc_various_methods = self.edit3.text() if self.edit3.text() else "нет данных",
                             nmc_cost_method = self.edit4.text() if self.edit4.text() else "нет данных",
                             comparable_product_price = self.edit5.text() if self.edit5.text() else "нет данных",
