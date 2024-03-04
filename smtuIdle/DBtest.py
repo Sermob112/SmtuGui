@@ -20,6 +20,7 @@ from PySide6.QtWidgets import QSizePolicy
 import os
 import subprocess
 from openpyxl import Workbook
+from PySide6.QtCore import Signal
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 
 
@@ -31,6 +32,7 @@ cursor = db.cursor()
 
 
 class PurchasesWidget(QWidget):
+    closingSignal = Signal()
     def __init__(self,main_window,role, user, changer):
         super().__init__()
         self.main_win = main_window
@@ -174,6 +176,10 @@ class PurchasesWidget(QWidget):
                   
         else:
             pass
+    
+    def closeEvent(self, event):
+        self.closingSignal.emit()
+        event.accept()
     def show_current_purchase(self):
      
         if len(self.purchases_list) != 0:
@@ -407,6 +413,7 @@ class PurchasesWidget(QWidget):
      
             self.insert_cont = InsertWidgetPanel(purchase_id,self,self.role,self.user,self.changer)
             # self.insert_cont.setParent(self)
+            self.closingSignal.connect(self.insert_cont.close)
             self.insert_cont.show()
 
     def add_button_contract_clicked(self):
@@ -417,6 +424,7 @@ class PurchasesWidget(QWidget):
      
             self.insert_cont = InsertPanelContract(purchase_id,self,self.role,self.user,self.changer)
             # self.insert_cont.setParent(self)
+            self.closingSignal.connect(self.insert_cont.close)
             self.insert_cont.show()
     
     def open_file(self, item):
