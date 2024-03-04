@@ -11,13 +11,17 @@ import statistics
 import pandas as pd
 import shutil
 import os
+from PySide6.QtCore import Signal
 
 db = SqliteDatabase('test.db')
 
 class InsertWidgetNMCK(QWidget):
+    closed = Signal()
     def __init__(self,purchase_id,db_wind,role,user,changer):
         
         super().__init__()
+     
+        
         self.tkp_data = {}
         self.purchase_id = purchase_id
         self.db_window = db_wind
@@ -84,6 +88,9 @@ class InsertWidgetNMCK(QWidget):
     #     if file_path:
     #         self.notification_link_edit.setText(file_path)
 
+    def closeEvent(self, event):
+        self.closed.emit()
+        event.accept()
     def update_fields(self):
         num_fields = int(self.edit1.text())
         if num_fields > 10:

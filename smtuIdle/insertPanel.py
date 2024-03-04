@@ -20,16 +20,19 @@ from InsertWidgetNMCK_3 import InsertWidgetNMCK_3
 from InsertWidgetNMCK_4 import InsertWidgetNMCK_4
 from InsertWidgetNMCK_5 import InsertWidgetNMCK_5
 db = SqliteDatabase('test.db')
-
+from PySide6.QtCore import Signal
 class InsertWidgetPanel(QWidget):
+    closingSignal = Signal()
     def __init__(self, purchase_id, db_wind,role,user,changer ):
         super().__init__()
+        
         self.tkp_data = {}
         self.purchase_id = purchase_id
         self.db_window = db_wind
         self.role = role
         self.user = user
         self.changer = changer
+        
         # Создаем лейблы
         self.setWindowTitle("Добавить НМЦК")
         self.setGeometry(100, 100, 900, 300)
@@ -150,9 +153,14 @@ class InsertWidgetPanel(QWidget):
 
     def add_button_tkp_clicked(self):
             self.tkp_shower = InsertWidgetNMCK(self.purchase_id, self.db_window,self.role,self.user,self.changer)
-            # self.tkp_shower.setParent(self) 
+            # self.tkp_shower.setParent(self)
+            self.closingSignal.connect(self.tkp_shower.close)
             self.tkp_shower.show()
     
+    def closeEvent(self, event):
+        self.closingSignal.emit()
+        event.accept()
+
     def add_button_cia_clicked(self):   
             self.cia_shower = InsertWidgetNMCK_3(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             # self.cia_shower.setParent(self)
