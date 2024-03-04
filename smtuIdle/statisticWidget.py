@@ -49,7 +49,7 @@ class StatisticWidget(QWidget):
         # self.table.setColumnWidth(1, 100)  # Ширина "223-ФЗ"
         # self.table.setColumnWidth(2, 100)  # Ширина "44-ФЗ"
         # Устанавливаем политику расширения таблицы
-        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        # self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # Установите политику изменения размеров секций горизонтального заголовка
         self.table.horizontalHeader().setStretchLastSection(True)
         # Установите политику изменения размеров колонок содержимого
@@ -62,15 +62,15 @@ class StatisticWidget(QWidget):
         
         self.label_texts = [
             "Анализ методов, использованных для определения НМЦК и ЦКЕП",
-            "Анализ формулировок, применяемых государственными заказчиками, при объявлении закупки",
+            "Анализ формулировок, применяемых государственными\n заказчиками, при объявлении закупки",
             "Анализ по классификации ОКПД2",           
             "Анализ количества заявок на участие в закупке",
-            "Анализ количества допущенных заявок на участие в закупке",
-            "Анализ количества отклоненных заявок на участие в закупке",
-            "Анализ соотношения НМЦК и ЦКЕП и цены контракта, заключенного по результатам конкурса",
-            "Анализ количества ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
-            "Анализ уровеня цены контракта, заключенного по результатам конкурса",
-             "Анализ диапазона значений коэффициента вариации при определении НМЦК и ЦКЕП"
+            "Анализ количества допущенных заявок\n на участие в закупке",
+            "Анализ количества отклоненных заявок\n на участие в закупке",
+            "Анализ соотношения НМЦК и ЦКЕП и цены\n контракта, заключенного по результатам конкурса",
+            "Анализ количества ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
+            "Анализ уровеня цены контракта, заключенного\n по результатам конкурса",
+             "Анализ диапазона значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
         ]
         self.buttons = []
 
@@ -95,7 +95,7 @@ class StatisticWidget(QWidget):
          # Добавляем кнопку выпадающего меню Первый этап
         self.FirstStage = QPushButton("Анализ НМЦК")
         self.FirstStage.setIcon(QIcon("Pics/right-arrow.png"))
-        self.FirstStage.setMaximumWidth(800)
+        self.FirstStage.setMaximumWidth(400)
         self.FirstStage.setStyleSheet("text-align: left; padding-left: 10px;font-size: 11pt;")
         self.FirstStage.clicked.connect(self.toggle_stage_1)
          # колапсирующее окно Первый этап
@@ -104,11 +104,13 @@ class StatisticWidget(QWidget):
         self.Qword = QLabel("Анализ методов и формулировок в государственных закупках")
         menu_layout.addWidget(self.Qword)
         for index, text in enumerate(self.label_texts[:3]):
-            button = QtWidgets.QPushButton(text)
-            button.setFixedSize(800, 30)
+           
+            button = QtWidgets.QPushButton()
+            button.setText(text) 
+            button.setFixedSize(400,50)
             size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
             button.setSizePolicy(size_policy)
-            button.setStyleSheet("text-align: left;")
+            button.setStyleSheet("text-align: left;padding-left: 8px;")
             button.clicked.connect(partial(self.show_specific_data, index, button))
             menu_layout.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
             self.buttons.append(button)
@@ -122,7 +124,7 @@ class StatisticWidget(QWidget):
          # Добавляем кнопку выпадающего меню по цене
         self.SecondStage = QPushButton("Анализ Заявок")
         self.SecondStage.setIcon(QIcon("Pics/right-arrow.png"))
-        self.SecondStage.setMaximumWidth(800)
+        self.SecondStage.setMaximumWidth(400)
         self.SecondStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
         self.SecondStage.clicked.connect(self.toggle_stage_2)
          # колапсирующее окно со списком всех элементов
@@ -132,10 +134,10 @@ class StatisticWidget(QWidget):
         menu_layout_2.addWidget(self.Qword_2)
         for index , text in enumerate(self.label_texts[3:6]):
             button = QtWidgets.QPushButton(text)
-            button.setFixedSize(800, 30)
+            button.setFixedSize(400, 50)
             size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
             button.setSizePolicy(size_policy)
-            button.setStyleSheet("text-align: left;")
+            button.setStyleSheet("text-align: left;padding-left: 8px;")
             button.clicked.connect(partial(self.show_specific_data, index + 3, button))
             menu_layout_2.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
             self.buttons.append(button)
@@ -149,7 +151,7 @@ class StatisticWidget(QWidget):
         # Добавляем кнопку выпадающего меню Первый этап
         self.ThirdStage = QPushButton("Анализ контрактов")
         self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png"))
-        self.ThirdStage.setMaximumWidth(800)
+        self.ThirdStage.setMaximumWidth(400)
         self.ThirdStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
         self.ThirdStage.clicked.connect(self.toggle_stage_3)
          # колапсирующее окно Первый этап
@@ -159,10 +161,11 @@ class StatisticWidget(QWidget):
         menu_layout_3.addWidget(self.Qword_3)
         for index, text in enumerate(self.label_texts[6:]):
             button = QtWidgets.QPushButton(text)
-            button.setFixedSize(800, 30)
+            button.setFixedSize(400, 50)
+            
             size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
             button.setSizePolicy(size_policy)
-            button.setStyleSheet("text-align: left;")
+            button.setStyleSheet("text-align: left;padding-left: 8px;")
             button.clicked.connect(partial(self.show_specific_data, index + 6, button))
             menu_layout_3.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
             self.buttons.append(button)
