@@ -165,21 +165,25 @@ class InsertWidgetPanel(QWidget):
             self.cia_shower = InsertWidgetNMCK_3(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             # self.cia_shower.setParent(self)
             self.cia_shower.show()
+            self.closingSignal.connect(self.cia_shower.close)
 
     def add_button_contract_clicked(self):
             self.insert_cont = InsertWidgetNMCK_2(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             # self.insert_cont.setParent(self)
             self.insert_cont.show()
+            self.closingSignal.connect(self.insert_cont.close)
     def add_button_4_clicked(self):
 
             self.insert_cont_4 = InsertWidgetNMCK_4(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             # self.insert_cont_4.setParent(self)
             self.insert_cont_4.show()
+            self.closingSignal.connect(self.insert_cont_4.close)
     def add_button_files_clicked(self):
 
             self.insert_cont_5 = InsertWidgetNMCK_5(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             # self.insert_cont_4.setParent(self)
             self.insert_cont_5.show()
+            self.closingSignal.connect(self.insert_cont_5.close)
 
     def browse_file_NMCK(self):
         file_dialog = QFileDialog()

@@ -29,6 +29,7 @@ class Ui_MainWindow(QMainWindow):
         super(Ui_MainWindow, self, ).__init__()
         self.auth_window = None  
         self.username = username
+        self.widgets = [] 
         self.setupUi()
     def setupUi(self):
 
@@ -308,7 +309,7 @@ class Ui_MainWindow(QMainWindow):
         self.purchaseViewer.setParent(self)
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
-
+        self.add_child_widget(self.purchaseViewer)
         self.contractFormular = ContractFormularWidget(self,self.users_roles[0],self.username,self.ChangeWindow)
         self.contractFormular.setParent(self)
         layout = QVBoxLayout(self.page8)
@@ -443,6 +444,14 @@ class Ui_MainWindow(QMainWindow):
         self.date = f"Дата сеанса{self.formatted_date}"
         self.totalRecords = f"Закупок в БД {count_total_records()}"
         return self.totalRecords,self.date, self.user
+    
+    def add_child_widget(self, widget):
+        self.widgets.append(widget)
+
+    def closeEvent(self, event):
+        for widget in self.widgets:
+            widget.close()
+        event.accept()
     def export_to_excel_all(self):
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)

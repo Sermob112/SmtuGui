@@ -16,8 +16,9 @@ import datetime
 from InsertWidgetContract import InsertWidgetContract
 from InsertWidgetContract2 import InsertWidgetContract2
 db = SqliteDatabase('test.db')
-
+from PySide6.QtCore import Signal
 class InsertPanelContract(QWidget):
+    closingSignal = Signal()
     def __init__(self, purchase_id, db_wind,role,user,changer ):
         super().__init__()
         self.tkp_data = {}
@@ -47,9 +48,7 @@ class InsertPanelContract(QWidget):
        
         button_NMCK_method_1.setStyleSheet("text-align: left;")
         button_NMCK_method_2.setStyleSheet("text-align: left;")
-        
-
-        
+               
         # Устанавливаем политику размера для автоматического изменения высоты кнопки
         # button_NMCK_method_1.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
         # button_NMCK_method_2.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Expanding)
@@ -74,18 +73,11 @@ class InsertPanelContract(QWidget):
         
         button_NMCK_method_1.clicked.connect(self.add_button_tkp_clicked)
         button_NMCK_method_2.clicked.connect(self.add_button_cia_clicked)
-     
- 
-        
 
         # Добавляем все строки в вертикальный контейнер
         self.layout1.addWidget(label1)
         self.layout1.addLayout(layout2)
-        self.layout1.addLayout(layout3)
-
-
-        
-       
+        self.layout1.addLayout(layout3)    
         scroll_area = QScrollArea(self)
         scroll_area.setWidgetResizable(True)
         scroll_widget = QWidget()
@@ -99,14 +91,20 @@ class InsertPanelContract(QWidget):
 
     def add_button_tkp_clicked(self):
             self.tkp_shower = InsertWidgetContract(self.purchase_id, self.db_window,self.role,self.user,self.changer)
-            # self.tkp_shower.setParent(self) 
+            # self.tkp_shower.setParent(self)
+            self.closingSignal.connect(self.tkp_shower.close)
             self.tkp_shower.show()
     
     def add_button_cia_clicked(self):   
             self.cia_shower = InsertWidgetContract2(self.purchase_id, self.db_window,self.role,self.user,self.changer)
             # self.cia_shower.setParent(self)
+            self.closingSignal.connect(self.cia_shower.close)
             self.cia_shower.show()
 
+
+    def closeEvent(self, event):
+        self.closingSignal.emit()
+        event.accept()
     def show_message(self, title, message):
         msg_box = QMessageBox()
         msg_box.setWindowTitle(title)
