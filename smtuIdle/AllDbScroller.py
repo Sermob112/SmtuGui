@@ -22,7 +22,6 @@ db = SqliteDatabase('test.db')
 cursor = db.cursor()
 
 
-
 class PurchasesWidgetAll(QWidget):
     def __init__(self,main, role):
         super().__init__()
@@ -153,12 +152,14 @@ class PurchasesWidgetAll(QWidget):
         self.unique_values_query = self.findUnic()
         self.search_input.setFixedWidth(300)
         completer = QCompleter(self.unique_values_query )
+        # self.search_input.textChanged.connect(completer.filter)
+        completer.setFilterMode(Qt.MatchContains)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
 
         completer.activated.connect(self.handleActivated)
         self.search_input.setCompleter(completer)
         # Устанавливаем автозавершение для поля ввода
-        self.search_input.setCompleter(completer)
+        # self.search_input.setCompleter(completer)
         # Создаем кнопки для навигации
        
     
@@ -930,8 +931,8 @@ class PurchasesWidgetAll(QWidget):
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.CustomerName ==  self.CustomerName
             )
-        keyword = self.selected_text
-        
+        # keyword = self.selected_text
+        keyword  =self.search_input.text()
 
     # Добавляем фильтр по ключевому слову (RegistryNumber)
         if keyword:
