@@ -7,7 +7,23 @@ import pandas as pd
 from models import Purchase, Contract
 import json
 from functools import partial
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
+class Canvas(FigureCanvas):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super(Canvas, self).__init__(fig)
+        self.setParent(parent)
+
+    def plot(self, data):
+        
+        self.axes.clear()
+        data.plot(kind='bar', x='Победитель-исполнитель контракта', y='Единицы', ax=self.axes)
+        self.axes.set_title('Статистика победителей')
+        self.draw()
 class StatisticWidgetContract(QWidget):
     def __init__(self, all_purches,role):
         super().__init__()
@@ -52,10 +68,14 @@ class StatisticWidgetContract(QWidget):
         # Устанавливаем политику расширения таблицы
         # self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         # Установите политику изменения размеров секций горизонтального заголовка
-        self.table.horizontalHeader().setStretchLastSection(True)
 
+        self.table.horizontalHeader().setStretchLastSection(True)
+        # Установите политику изменения размеров колонок содержимого
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        self.table.resizeColumnsToContents()
+        # self.table.horizontalHeader().setStretchLastSection(True)
+
+        # self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+        
           # Список для хранения всех данных, которые  отобразить в таблице
         self.all_data = [self.winner_analis(), self.count_non_zero_contract_prices(),self.count_non_zero_contract_num()]
         
@@ -208,14 +228,21 @@ class StatisticWidgetContract(QWidget):
         # main_layout.addWidget(scroll_area)
         main_layout.addLayout(self.buttons_layout)
         
-
+        self.buttonConvas = QPushButton('Показать график')
+        
+        self.canvas = Canvas()
+        self.buttonConvas.clicked.connect(self.plot_graph)
         #  вертикальный слой для метки и таблицы
         self.vertical_layout = QVBoxLayout(self)
         self.filter_layout = QHBoxLayout(self)
         self.vertical_layout.addLayout(self.filter_layout)
         self.vertical_layout.addWidget(self.label)
         self.vertical_layout.addWidget(self.table)
+        
+        self.vertical_layout.addWidget(self.canvas)
+        self.vertical_layout.addWidget(self.buttonConvas)
 
+        
         # Добавьте вертикальный слой с меткой и таблицей в горизонтальный слой
         main_layout.addLayout(self.vertical_layout)
 
@@ -250,7 +277,21 @@ class StatisticWidgetContract(QWidget):
             self.toExcel.hide()
         else:
             self.toExcel.show()
+    def plot_graph(self):
+        # self.table.hide()
+        current_policy = self.table.sizeAdjustPolicy()
 
+    # Проверяем текущую политику и переключаем её
+        if current_policy == QtWidgets.QAbstractScrollArea.AdjustToContents:
+            # Если текущая политика - AdjustToContents, устанавливаем AdjustIgnored
+            self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
+            self.buttonConvas.setText('Скрыть график')
+        else:
+            # Иначе (т.е. если текущая политика - AdjustIgnored), устанавливаем AdjustToContents
+            self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+            self.buttonConvas.setText('Показать график')
+        pivot_table, column_sums = self.winner_analis()
+        self.canvas.plot(pivot_table)
     def toggle_stage_1(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame.setVisible(not self.menu_frame.isVisible())
@@ -794,7 +835,7 @@ class StatisticWidgetContract(QWidget):
       
     def populate_table(self, data, sums):
         
-        self.clear_table()
+      
 
         # Получаем список всех уникальных законов
         all_purchase_orders = set(data.columns)
@@ -825,11 +866,12 @@ class StatisticWidgetContract(QWidget):
         for col_index, value in enumerate(sums.iloc[0]):
             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))  # Сдвигаем индекс столбца на 1
 
-
-        self.table.horizontalHeader().setStretchLastSection(True)
-
-        self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-    
+        self.table.resizeColumnsToContents()
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.table.horizontalHeader().setStretchLastSection(True)
+        # self.table_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+       
 
 
     def determine_NMCK_range(self,row):
