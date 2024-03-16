@@ -35,7 +35,7 @@ def insert_in_table(csv_file_path, user,role):
             for row in csv_reader:
                
                 # Обрезка слишком длинных строк
-                max_length = 255  # Максимальная длина для строк
+                max_length = 512  # Максимальная длина для строк
                 purchase_date = row[0][:max_length] if row[0] else 'Нет данных'
                 registry_number = row[1][:max_length] if row[1] else 'Нет данных'
                 procurement_method = row[2][:max_length] if row[2] else 'Нет данных'
@@ -165,7 +165,7 @@ def insert_in_table_full(csv_file_path):
             for row in csv_reader:
                 
                 # Обрезка слишком длинных строк
-                max_length = 255  # Максимальная длина для строк
+                max_length = 512 # Максимальная длина для строк
                 purchase_date = row[2][:max_length] if row[0] else 'Нет данных'
                 registry_number = row[0][:max_length] if row[1] else 'Нет данных'
                 procurement_method = row[3][:max_length] if row[2] else 'Нет данных'

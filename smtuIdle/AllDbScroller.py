@@ -394,24 +394,24 @@ class PurchasesWidgetAll(QWidget):
         layout = QVBoxLayout(tab)
         # Создаем таблицу для отображения данных
         self.table_cont = QTableWidget(self)
-        self.table_cont.setColumnCount(9)
+        self.table_cont.setColumnCount(11)
 
         # Устанавливаем заголовки колонок
         column_headers = ["№ПП", "Реестровый номер договора", "Реестровый номер закупки",
-                          "Номер контракта", "Дата начала/подписания", "Цена договора",
+                          "Номер контракта", "Дата начала/подписания", "Цена контракта",'НМЦК','Разница НМЦК и Цены контракта',
                            "Заказчик по контракту","Победитель", 
                            "Наименование закупки"]
         self.table_cont.resizeColumnsToContents()
         self.table_cont.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.table_cont.setHorizontalHeaderLabels(column_headers)
-        self.table_cont.setColumnWidth(6, 600)
-        self.table_cont.setColumnWidth(7, 600)
         self.table_cont.setColumnWidth(8, 600)
+        self.table_cont.setColumnWidth(9, 600)
+        self.table_cont.setColumnWidth(10, 600)
         self.table_cont.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         # Затем устанавливаем режим изменения размера колонки "Наименование закупки" на фиксированный размер
-        self.table_cont.horizontalHeader().setSectionResizeMode(6, QHeaderView.Fixed)
-        self.table_cont.horizontalHeader().setSectionResizeMode(7, QHeaderView.Fixed)
         self.table_cont.horizontalHeader().setSectionResizeMode(8, QHeaderView.Fixed)
+        self.table_cont.horizontalHeader().setSectionResizeMode(9, QHeaderView.Fixed)
+        self.table_cont.horizontalHeader().setSectionResizeMode(10, QHeaderView.Fixed)
         self.table_cont.setTextElideMode(Qt.ElideRight)
         self.table_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table_cont.setShowGrid(True)
@@ -741,7 +741,7 @@ class PurchasesWidgetAll(QWidget):
                 # Добавляем данные в каждую ячейку для текущей записи
                 for col, value in enumerate([current_purchase[0], current_purchase[1], current_purchase[2],
                                   str(current_purchase[3]), current_purchase[4],
-                                  current_purchase[5],
+                                  current_purchase[5],  current_purchase[22],str( current_purchase[22] - current_purchase[5]),
                                   str(current_purchase[6]), current_purchase[7],
                                   current_purchase[8]
                                   ]):
@@ -1329,7 +1329,8 @@ class PurchasesWidgetAll(QWidget):
         Contract.ReductionNMC,
         Contract.ReductionNMCPercent,
         Contract.SupplierProtocol,
-        Contract.ContractFile
+        Contract.ContractFile,
+        Purchase.InitialMaxContractPrice,
     )
     .join(Purchase, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
     .where(Contract.ContractNumber != "Нет данных"))

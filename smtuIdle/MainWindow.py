@@ -320,6 +320,7 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page2)
         layout.addWidget(self.purchaseViewer)
         self.add_child_widget(self.purchaseViewer)
+
         self.contractFormular = ContractFormularWidget(self,self.users_roles[0],self.username,self.ChangeWindow)
         self.contractFormular.setParent(self)
         layout = QVBoxLayout(self.page8)
@@ -346,19 +347,20 @@ class Ui_MainWindow(QMainWindow):
         self.Statistic.setParent(self)
         layout = QVBoxLayout(self.page3)
         layout.addWidget(self.Statistic)
-
-        #Загрузка виджета помощи
-        
-        self.helper= HelpPanel()
-        self.helper.setParent(self)
-        layout = QVBoxLayout(self.page7)
-
-        #Загрузка виджета статистики контрактов
+              #Загрузка виджета статистики контрактов
         self.loadCsvContract = StatisticWidgetContract(self.purchaseViewerall,self.users_roles[0])
         self.loadCsvContract.setParent(self)
         layout = QVBoxLayout(self.page9)
         layout.addWidget(self.loadCsvContract)
       
+        #Загрузка виджета помощи
+        
+        self.helper= HelpPanel()
+        self.helper.setParent(self)
+        layout = QVBoxLayout(self.page7)
+        layout.addWidget(self.helper)
+
+  
 
         layout.addWidget(self.helper)
         self.purchaseViewerall.window = self
