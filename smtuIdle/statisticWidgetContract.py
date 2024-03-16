@@ -18,12 +18,14 @@ class Canvas(FigureCanvas):
         super(Canvas, self).__init__(fig)
         self.setParent(parent)
 
-    def plot(self, data):
+    def plot(self, data, x_column, y_column):
+        try:
+            self.axes.clear()
+            data.plot(kind='bar', x=x_column, y=y_column, ax=self.axes)
         
-        self.axes.clear()
-        data.plot(kind='bar', x='Победитель-исполнитель контракта', y='Единицы', ax=self.axes)
-        self.axes.set_title('Статистика победителей')
-        self.draw()
+            self.draw()
+        except Exception as e:
+            print("Error plotting graph:", e)
 class StatisticWidgetContract(QWidget):
     def __init__(self, all_purches,role):
         super().__init__()
@@ -118,7 +120,7 @@ class StatisticWidgetContract(QWidget):
         menu_layout = QVBoxLayout()
         self.Qword = QLabel("Анализ количественных характеристик контрактов")
         menu_layout.addWidget(self.Qword)
-        for index, text in enumerate(self.label_texts[:3]):
+        for index, text in enumerate(self.label_texts):
            
             button = QtWidgets.QPushButton()
             button.setText(text) 
@@ -290,8 +292,11 @@ class StatisticWidgetContract(QWidget):
             # Иначе (т.е. если текущая политика - AdjustIgnored), устанавливаем AdjustToContents
             self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
             self.buttonConvas.setText('Показать график')
-        pivot_table, column_sums = self.winner_analis()
-        self.canvas.plot(pivot_table)
+        current_data = self.all_data[self.current_data_index]
+        # pivot_table, column_sums = self.winner_analis()
+        x = current_data[0].columns[0]
+        y = current_data[0].columns[1]
+        self.canvas.plot(current_data[0],x,y)
     def toggle_stage_1(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame.setVisible(not self.menu_frame.isVisible())
