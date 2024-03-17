@@ -717,35 +717,20 @@ class StatisticWidgetContract(QWidget):
     #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
     #         for sheet_name, df in data_to_export.items():
     #             df.to_excel(writer, sheet_name=sheet_name, index=False)
-    def save_to_excel_combined(self, pivot_tables_purchase, column_sums_purchase, pivot_tables_max_price, column_sums_max_price, output_excel_path):
+    def save_to_excel_combined(self, pivot_tables_purchase, column_sums_purchase, output_excel_path):
         data_to_export = {}
 
         for idx, (pivot_table_purchase, column_sum_purchase) in enumerate(zip(pivot_tables_purchase, column_sums_purchase)):
             excel_df_purchase = pd.DataFrame(columns=['Метод'] + list(pivot_table_purchase.columns) + ['Суммы'])
 
             for method, row in pivot_table_purchase.iterrows():
-                excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_purchase.columns)])
+                excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([[method] + list(row) + [str(row['Единицы'])]], columns=excel_df_purchase.columns)])
 
-            column_sums_purchase_row = ['Суммы'] + list(column_sum_purchase) + [column_sum_purchase['Суммы']]
+            column_sums_purchase_row = ['Суммы'] + list(column_sum_purchase) + [column_sum_purchase.sum()]
             if len(column_sums_purchase_row) == len(excel_df_purchase.columns):
                 excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([column_sums_purchase_row], columns=excel_df_purchase.columns)])
 
             data_to_export[self.label_texts[idx][:20]] =excel_df_purchase
-
-        for idx, (pivot_table_max_price, column_sum_max_price) in enumerate(zip(pivot_tables_max_price, column_sums_max_price)):
-            excel_df_max_price = pd.DataFrame(columns=['Метод'] + list(pivot_table_max_price.columns) + ['Суммы'])
-
-            for method, row in pivot_table_max_price.iterrows():
-                excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_max_price.columns)])
-
-            column_sums_max_price_row = ['Суммы'] + list(column_sum_max_price) + [column_sum_max_price['Суммы']]
-            if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
-                excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
-            
-            
-            data_to_export[self.label_texts[idx + 5][:20]] = excel_df_max_price
-            # data_to_export[f'Метод_{idx}'] = excel_df_max_price
-
 
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
