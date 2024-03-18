@@ -84,32 +84,32 @@ class HelpPanel(QWidget):
         self.menu_frame2.layout().addWidget(self.menu_content2)
         self.menu_frame2.setVisible(False)
         #меню по ключевому слову
-        self.menu_content3 = QWidget()
-        menu_layout3 = QVBoxLayout()
-        self.Qword3 = QLabel("Перечень документов по управлению системой")
+        # self.menu_content3 = QWidget()
+        # menu_layout3 = QVBoxLayout()
+        # self.Qword3 = QLabel("Перечень документов по управлению системой")
         
-        menu_layout3.addWidget(self.Qword3)
-        self.files = os.listdir("HelpFiles")
-        for file in self.files[2:3]:
-            if file.endswith(".docx"):
-                button = QPushButton(file)
-                button.setFixedSize(400, 30)
-                button.clicked.connect(lambda checked:  self.open_file(file))
-                menu_layout3.addWidget(button)
+        # menu_layout3.addWidget(self.Qword3)
+        # self.files = os.listdir("HelpFiles")
+        # for file in self.files[2:3]:
+        #     if file.endswith(".docx"):
+        #         button = QPushButton(file)
+        #         button.setFixedSize(400, 30)
+        #         button.clicked.connect(lambda checked:  self.open_file(file))
+        #         menu_layout3.addWidget(button)
        
-        menu_layout3.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
-        self.menu_content3.setLayout(menu_layout3)
-        self.menu_frame3 = QFrame()
-        self.menu_frame3.setLayout(QVBoxLayout())
-        self.menu_frame3.layout().addWidget(self.menu_content3)
-        self.menu_frame3.setVisible(False)
+        # menu_layout3.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
+        # self.menu_content3.setLayout(menu_layout3)
+        # self.menu_frame3 = QFrame()
+        # self.menu_frame3.setLayout(QVBoxLayout())
+        # self.menu_frame3.layout().addWidget(self.menu_content3)
+        # self.menu_frame3.setVisible(False)
         layout = QVBoxLayout(self)
         layout.addWidget(self.QwordFinder)
         layout.addWidget(self.menu_frame)
         layout.addWidget(self.SecSys)
         layout.addWidget(self.menu_frame2)
-        layout.addWidget(self.SecSys2)
-        layout.addWidget(self.menu_frame3)
+        # layout.addWidget(self.SecSys2)
+        # layout.addWidget(self.menu_frame3)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
     def toggle_menu(self):
         # Изменяем видимость содержимого при нажатии на кнопку
