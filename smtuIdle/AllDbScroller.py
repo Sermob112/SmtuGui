@@ -1023,7 +1023,7 @@ class PurchasesWidgetAll(QWidget):
 
         min_price = float(self.min_price_input_contrac.text()) if self.min_price_input_contrac.text() else float('-inf')
         max_price = float(self.max_price_input_contrac.text()) if self.max_price_input_contrac.text() else float('inf')
-
+        
         min_date_str = self.min_data_input_contrac.date()
         max_date_str = self.max_data_input_contrac.date()
 

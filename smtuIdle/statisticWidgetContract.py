@@ -21,11 +21,19 @@ class Canvas(FigureCanvas):
     def plot(self, data, x_column, y_column):
         try:
             self.axes.clear()
+            # Построение графика
             data.plot(kind='bar', x=x_column, y=y_column, ax=self.axes)
-        
             self.draw()
         except Exception as e:
             print("Error plotting graph:", e)
+
+        
+    def plot_pie(self, data, x_column, y_column):
+        self.axes.clear()
+        self.axes.pie(data[y_column], labels=data[x_column], autopct='%1.1f%%', startangle=90)
+        self.draw()
+
+
 class StatisticWidgetContract(QWidget):
     def __init__(self, all_purches,role):
         super().__init__()
@@ -34,6 +42,7 @@ class StatisticWidgetContract(QWidget):
         self.init_ui()
         
     def init_ui(self):
+      
         # Создаем лейбл
         self.label_text = "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП"
         self.label = QLabel(self.label_text)
@@ -57,7 +66,7 @@ class StatisticWidgetContract(QWidget):
         self.Reset_filters.clicked.connect(self.reset_filters)
         # Инициализация переменной для отслеживания текущего индекса данных
         self.current_data_index = 0
-
+    
         # btn_analysis.clicked.connect(self.analisMAxPrice)
         # Создаем таблицу
         # self.table = QTableWidget(self)
@@ -231,9 +240,12 @@ class StatisticWidgetContract(QWidget):
         main_layout.addLayout(self.buttons_layout)
         
         self.buttonConvas = QPushButton('Показать график')
-        
-        self.canvas = Canvas()
-        self.buttonConvas.clicked.connect(self.plot_graph)
+        self.tab_widget = QTabWidget()
+        self.tab_widget.addTab(self.gist(), 'Гистограмма')
+        self.tab_widget.addTab(self.pie(), 'Круговая диаграмма')
+        self.tab_widget.hide()
+       
+        self.buttonConvas.clicked.connect(self.show_convas)
         #  вертикальный слой для метки и таблицы
         self.vertical_layout = QVBoxLayout(self)
         self.filter_layout = QHBoxLayout(self)
@@ -241,9 +253,9 @@ class StatisticWidgetContract(QWidget):
         self.vertical_layout.addWidget(self.label)
         self.vertical_layout.addWidget(self.table)
         
-        self.vertical_layout.addWidget(self.canvas)
+        # self.vertical_layout.addWidget(self.canvas)
         self.vertical_layout.addWidget(self.buttonConvas)
-
+        self.vertical_layout.addWidget(self.tab_widget)
         
         # Добавьте вертикальный слой с меткой и таблицей в горизонтальный слой
         main_layout.addLayout(self.vertical_layout)
@@ -279,8 +291,22 @@ class StatisticWidgetContract(QWidget):
             self.toExcel.hide()
         else:
             self.toExcel.show()
-    def plot_graph(self):
-        # self.table.hide()
+
+    def gist(self):
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        self.canvas_gist = Canvas()
+        layout.addWidget(self.canvas_gist)
+        self.plot_graph()
+        return tab
+    def pie(self):
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        self.canvas_pie = Canvas()
+        layout.addWidget(self.canvas_pie)
+        self.plot_pie()
+        return tab
+    def show_convas(self):
         current_policy = self.table.sizeAdjustPolicy()
 
     # Проверяем текущую политику и переключаем её
@@ -288,15 +314,26 @@ class StatisticWidgetContract(QWidget):
             # Если текущая политика - AdjustToContents, устанавливаем AdjustIgnored
             self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
             self.buttonConvas.setText('Скрыть график')
+            self.tab_widget.show()
         else:
             # Иначе (т.е. если текущая политика - AdjustIgnored), устанавливаем AdjustToContents
             self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
             self.buttonConvas.setText('Показать график')
+            self.tab_widget.hide()
+    def plot_graph(self):
+        # self.table.hide()
         current_data = self.all_data[self.current_data_index]
         # pivot_table, column_sums = self.winner_analis()
         x = current_data[0].columns[0]
         y = current_data[0].columns[1]
-        self.canvas.plot(current_data[0],x,y)
+        self.canvas_gist.plot(current_data[0],x,y)
+    def plot_pie(self):
+        # self.table.hide()
+        current_data = self.all_data[self.current_data_index]
+        # pivot_table, column_sums = self.winner_analis()
+        x = current_data[0].columns[0]
+        y = current_data[0].columns[1]
+        self.canvas_pie.plot_pie(current_data[0],x,y)
     def toggle_stage_1(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame.setVisible(not self.menu_frame.isVisible())
@@ -382,58 +419,7 @@ class StatisticWidgetContract(QWidget):
     def reset_filters(self):
         self.all_purchase.resetFilters()
         self.update_data()
-    # def analisPriceCount(self):
-    #     #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
-    #     query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-    #     t = list(query)
-    #     # print(len(t))
-    #     price_proposals_dict = {}
-    #     i = 0
-    #     for purchase in t:  # Используйте t, а не query
-            
-    #         # Извлекаем данные из результата запроса
-    #         price_proposal = purchase.contract.PriceProposal
 
-    #         # Парсим значение PriceProposal (пример, предполагая, что это JSON-строка)
-    #         price_proposal_dict = json.loads(price_proposal)
-
-    #         # Добавляем данные в общий словарь
-    #         price_proposals_dict[i] = price_proposal_dict
-    #         i = i + 1
-       
-       
-    #     coeff_range_order = [
-    #     'по 1-му предложению поставщиков',
-    #     'по 2-м предложениям поставщиков',
-    #     'по 3-м предложениям поставщиков',
-    #     'по 4-м предложениям поставщиков',
-    #     'по 5-ти предложениям поставщиков',
-    #     'по 6-ти предложениям поставщиков',
-
-    # ]
-    #     # Создаем DataFrame
-    #     query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-    #     t = list(query)
-    #     df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.PriceProposal) for purchase in t], columns=['PurchaseOrder', 'PriceProposal'])
-    #     # df['PriceProposal'] = df.apply(self.determine_price_range, axis=1)
-    #     df['PriceProposal'] = pd.Categorical(df['PriceProposal'], categories=coeff_range_order, ordered=True)
-    #     df = df.sort_values('PriceProposal')
-    #     pivot_table = df.pivot_table(index='PriceProposal', columns='PurchaseOrder', aggfunc='size', fill_value=0)
-    #     column_sums = pivot_table.sum()
-    #     row_totals = pivot_table.sum(axis=1)
-    #     pivot_table['Общий итог'] = row_totals
-    #     column_sums2 = pivot_table.sum()
-    #     column_means2 = pivot_table.mean()
-    #     total_purchase_counts2 = column_sums2.sum()
-    #     column_sums2['Суммы'] = total_purchase_counts2
-    #     print(pivot_table)
-
-    
-    #     # print(pivot_table)
-    #     return pivot_table
-    
-
-  
       
       
     def winner_analis(self):
@@ -664,59 +650,7 @@ class StatisticWidgetContract(QWidget):
 
 
 
-    # def save_to_excel(self, pivot_table, column_sums, output_excel_path):
-    #     excel_df = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table.columns) + ['Суммы'])
-
-    #     for method, row in pivot_table.iterrows():
-    #         excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
-
-    #     excel_df = pd.concat([excel_df, pd.DataFrame([['Суммы'] + list(column_sums) + [column_sums['Суммы']]], columns=excel_df.columns)])
-
-    #     data_to_export = {'Методы закупок': excel_df}
-
-    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-    #         for sheet_name, df in data_to_export.items():
-    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-    # def save_to_excel_max_price(self, pivot_table, column_sums, output_excel_path):
-    #     excel_df = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table.columns) + ['Суммы'])
-
-    #     for method, row in pivot_table.iterrows():
-    #         excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
-
-    #     # Ensure that the number of columns matches
-    #     column_sums_row = ['Суммы'] + list(column_sums) + [column_sums['Суммы']]
-    #     if len(column_sums_row) == len(excel_df.columns):
-    #         excel_df = pd.concat([excel_df, pd.DataFrame([column_sums_row], columns=excel_df.columns)])
-
-    #     data_to_export = {'Уровень цены контракта': excel_df}
-
-    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-    #         for sheet_name, df in data_to_export.items():
-    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-    # def save_to_excel_combined(self, pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, output_excel_path):
-    #     excel_df_purchase = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table_purchase.columns) + ['Суммы'])
-
-    #     for method, row in pivot_table_purchase.iterrows():
-    #         excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_purchase.columns)])
-
-    #     excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([['Суммы'] + list(column_sums_purchase) + [column_sums_purchase['Суммы']]], columns=excel_df_purchase.columns)])
-
-    #     excel_df_max_price = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table_max_price.columns) + ['Суммы'])
-
-    #     for method, row in pivot_table_max_price.iterrows():
-    #         excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_max_price.columns)])
-
-    #     column_sums_max_price_row = ['Суммы'] + list(column_sums_max_price) + [column_sums_max_price['Суммы']]
-    #     if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
-    #         excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
-
-    #     data_to_export = {'Методы закупок': excel_df_purchase, 'Уровень цены контракта': excel_df_max_price}
-
-    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-    #         for sheet_name, df in data_to_export.items():
-    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
+  
     def save_to_excel_combined(self, pivot_tables_purchase, column_sums_purchase, output_excel_path):
         data_to_export = {}
 
@@ -923,12 +857,13 @@ class StatisticWidgetContract(QWidget):
     def show_current_data(self):
         # Очистка таблицы перед обновлением
         self.clear_table()
-
+        self.plot_graph()
+        self.plot_pie()
         # Получение текущих данных
         current_data = self.all_data[self.current_data_index]
-
         # Отображение данных в таблице
         self.populate_table(current_data[0], current_data[1])
+
 
     def show_previous_data(self):
         # Уменьшаем индекс данных, если это возможно
