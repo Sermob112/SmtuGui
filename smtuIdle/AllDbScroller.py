@@ -470,13 +470,23 @@ class PurchasesWidgetAll(QWidget):
 
 
       
-       
+        self.search_input_contract = QLineEdit()
+        self.search_input_contract.setPlaceholderText("Поиск по Реестровому номеру, заказчику, наименованию объекта или организации")
+        self.unique_values_query_contract = self.findUnicContract()
+        self.search_input_contract.setFixedWidth(300)
+        completer = QCompleter(self.unique_values_query_contract )
+        # self.search_input.textChanged.connect(completer.filter)
+        completer.setFilterMode(Qt.MatchContains)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+
+        completer.activated.connect(self.handleActivated)
+        self.search_input_contract.setCompleter(completer)
          #  кнопка "Сбросить фильтры" 
         self.reset_filters_button_contract = QPushButton("Сбросить фильтры контрактов", self)
         self.reset_filters_button_contract.setFixedWidth(250)
         self.reset_filters_button_contract.clicked.connect(self.resetFiltersContract)
         # Создаем поле ввода для поиска
-    
+       
        
     
         button_layout = QHBoxLayout()
@@ -512,6 +522,24 @@ class PurchasesWidgetAll(QWidget):
         self.apply_filter_button_contract.setIcon(icon)
         self.apply_filter_button_contract.clicked.connect(self.apply_filter_contract)
         self.apply_filter_button_contract.setFixedWidth(250)
+        self.QwordFinderContract = QPushButton("Поиск по ключевому слову")
+        self.QwordFinderContract.setIcon(QIcon("Pics/right-arrow.png"))
+        self.QwordFinderContract.setMaximumWidth(300)
+        self.QwordFinderContract.clicked.connect(self.toggle_menu_contract)
+         #меню по ключевому слову
+        self.menu_content_contract = QWidget()
+        menu_layout_contract = QVBoxLayout()
+        self.Qword_contract = QLabel("Поиск по ключевому слову")
+        menu_layout_contract.addWidget(line)
+        menu_layout_contract.addWidget(self.Qword_contract)
+        menu_layout_contract.addWidget(self.search_input_contract)
+        
+        self.menu_content_contract.setLayout(menu_layout_contract)
+        self.menu_frame_contract = QFrame()
+        self.menu_frame_contract.setLayout(QVBoxLayout())
+        self.menu_frame_contract.layout().addWidget(self.menu_content_contract)
+        self.menu_frame_contract.setVisible(False)
+
         # Добавляем кнопку выпадающего меню по фильтрам
         self.FilterCollapseContract = QPushButton("Фильтры")
         self.FilterCollapseContract.setIcon(QIcon("Pics/right-arrow.png"))
@@ -529,16 +557,7 @@ class PurchasesWidgetAll(QWidget):
         self.FilterDateContract.setMaximumWidth(300)
         self.FilterDateContract.clicked.connect(self.toggle_menu_date_contract)
          # Добавляем кнопку выпадающего меню по цене
-        # self.FilterPrice = QPushButton("Цена")
-        # self.FilterPrice.setIcon(QIcon("Pics/right-arrow.png"))
-        # self.FilterPrice.setMaximumWidth(300)
-        # self.FilterPrice.clicked.connect(self.toggle_menu_price)
-        # # Добавляем кнопку выпадающего меню по цене
-        # self.FilterDate = QPushButton("Дата")
-        # self.FilterDate.setIcon(QIcon("Pics/right-arrow.png"))
-        # self.FilterDate.setMaximumWidth(300)
-        # self.FilterDate.clicked.connect(self.toggle_menu_date)
-       
+
         #меню по ключевому фильтрам
         self.menu_content_filters_contract  = QWidget()
         menu_layout_filters = QHBoxLayout()
@@ -608,13 +627,14 @@ class PurchasesWidgetAll(QWidget):
         self.All_parametrs_finder_contract.setFont(font)
         # layout.addWidget(self.search_input)
         button_layout_filters = QHBoxLayout()
-
+        button_layout_filters.addWidget(self.QwordFinderContract)
         button_layout_filters.addWidget(self.FilterCollapseContract)
         button_layout_filters.addWidget(self.FilterPriceContract)
         button_layout_filters.addWidget(self.FilterDateContract)
         button_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addWidget(self.All_parametrs_finder_contract,alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addLayout(button_layout_filters)
+        layout.addWidget(self.menu_frame_contract)
         layout.addWidget(self.menu_frame_filters_contract)
         layout.addWidget(self.menu_frame_price_contrac)
         layout.addWidget(self.menu_frame_data_contrac)
@@ -637,6 +657,7 @@ class PurchasesWidgetAll(QWidget):
         self.max_price_input_contrac.textChanged.connect(self.highlight_input_contract)
         self.min_data_input_contrac.dateChanged.connect(self.highlight_input_contract)
         self.max_data_input_contrac.dateChanged.connect(self.highlight_input_contract)
+        self.search_input_contract.textChanged.connect(self.highlight_input_contract)
         self.apply_filter_button_contract.clicked.connect(self.highlight_apply_filter_button_contract)
        
 
@@ -645,7 +666,13 @@ class PurchasesWidgetAll(QWidget):
         else:
             self.toExcel.show()
         return tab
-
+    def toggle_menu_contract(self):
+        # Изменяем видимость содержимого при нажатии на кнопку
+        self.menu_frame_contract.setVisible(not self.menu_frame_contract.isVisible())
+        if self.menu_frame_contract.isVisible():
+            self.QwordFinderContract.setIcon(QIcon("Pics/arrow-down.png"))
+        else:
+            self.QwordFinderContract.setIcon(QIcon("Pics/right-arrow.png"))
     def toggle_menu(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame.setVisible(not self.menu_frame.isVisible())
@@ -804,7 +831,7 @@ class PurchasesWidgetAll(QWidget):
         max_price = self.max_price_input_contrac.text()
         min_data_valid = self.min_data_input_contrac.date().isValid()
         max_data_valid = self.max_data_input_contrac.date().isValid()
-      
+        search_text = self.search_input_contract.text()
         
         # Подсветка полей в зависимости от введенных данных
         if min_price or max_price:
@@ -822,7 +849,11 @@ class PurchasesWidgetAll(QWidget):
         else:
             self.min_data_input_contrac.setStyleSheet("")
             self.max_data_input_contrac.setStyleSheet("")
-           
+        if search_text:
+            self.search_input_contract.setStyleSheet("background-color: #ccffcc;")
+            self.QwordFinderContract.setStyleSheet("background-color: #ccffcc;")
+        else:
+            self.search_input_contract.setStyleSheet("")
   
         
         
@@ -932,7 +963,7 @@ class PurchasesWidgetAll(QWidget):
                 Purchase.CustomerName ==  self.CustomerName
             )
         # keyword = self.selected_text
-        keyword  =self.search_input.text()
+        keyword  = self.search_input.text()
 
     # Добавляем фильтр по ключевому слову (RegistryNumber)
         if keyword:
@@ -1020,7 +1051,15 @@ class PurchasesWidgetAll(QWidget):
             self.contracts = self.contracts.where(
                 Contract.WinnerExecutor == self.selected_contr )
             
+        keyword  = self.search_input_contract.text()
 
+        if keyword:
+            self.contracts  = self.contracts .where(
+                (Contract.WinnerExecutor.contains(keyword)) |
+                (Contract.ContractingAuthority.contains(keyword)) |
+                     (Purchase.PurchaseName.contains(keyword)) |
+                     (Purchase.CustomerName.contains(keyword))
+            )
         
 
         self.contracts_list = list(self.contracts.order_by(order_by).tuples())
@@ -1058,6 +1097,41 @@ class PurchasesWidgetAll(QWidget):
                     purchase.PurchaseName,
                     purchase.ProcurementOrganization,
                     purchase.RegistryNumber,
+                    purchase.CustomerName
+                ) 
+                for purchase in unique_values_query
+            ]
+
+            # Преобразуем все значения в список строк
+           
+
+            for purchase_name, procurement_organization, registry_number, customer_name in unique_values:
+                unique_values_list.extend([
+                    str(purchase_name) if purchase_name is not None else None,
+                    str(procurement_organization) if procurement_organization is not None else None,
+                    str(registry_number) if registry_number is not None else None,
+                    str(customer_name) if customer_name is not None else None
+                ])
+            unique_values_list = [value for value in unique_values_list if value is not None]
+            return unique_values_list
+    
+    def findUnicContract(self):
+            unique_values_list = []
+            unique_values_query = (Purchase.select(
+            Purchase.PurchaseName, 
+            Contract.WinnerExecutor,  # Исправлено на Contract
+            Contract.ContractingAuthority,  # Исправлено на Contract
+            Purchase.CustomerName,
+            )
+            .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+            .where(Contract.ContractNumber != "Нет данных")
+            .distinct())
+            # Получаем все значения из результата запроса
+            unique_values = [
+                (
+                    purchase.PurchaseName,
+                    purchase.contract.WinnerExecutor,
+                    purchase.contract.ContractingAuthority,
                     purchase.CustomerName
                 ) 
                 for purchase in unique_values_query
@@ -1115,6 +1189,7 @@ class PurchasesWidgetAll(QWidget):
         self.sort_options_contract.setCurrentIndex(0)
         self.sort_by_putch_winner.setCurrentIndex(0)  
         self.current_position = 0
+        self.search_input_contract.clear()
         self.min_price_input_contrac.clear()
         self.max_price_input_contrac.clear()
         self.min_data_input_contrac.setDate(QDate(2000, 1, 1))
@@ -1127,7 +1202,8 @@ class PurchasesWidgetAll(QWidget):
         # Сброс стилей всех элементов к стандартному состоянию
         for input_field in [self.min_price_input, self.max_price_input, self.apply_filter_button,
                              self.sort_by_putch_order, self.search_input, self.sort_by_putch_okpd2, self.sort_options,
-                             self.sort_by_putch_CustomerName,self.sort_by_putch_ProcurementMethod,self.QwordFinder,self.FilterCollapse, self.FilterDate,self.FilterPrice]:
+                             self.sort_by_putch_CustomerName,self.sort_by_putch_ProcurementMethod,self.QwordFinder,self.FilterCollapse,
+                               self.FilterDate,self.FilterPrice]:
             input_field.setStyleSheet("")
         self.max_data_input.setStyleSheet(self.transparent_style) 
         self.min_data_input.setStyleSheet(self.transparent_style) 
@@ -1135,7 +1211,7 @@ class PurchasesWidgetAll(QWidget):
     def reset_styles_contract(self):
         # Сброс стилей всех элементов к стандартному состоянию
         for input_field in [self.min_price_input_contrac, self.max_price_input_contrac, self.apply_filter_button_contract, self.FilterCollapseContract,self.FilterPriceContract,
-                            self.FilterDateContract,self.FilterCollapseContract, self.sort_options_contract,self.sort_by_putch_winner]:
+                            self.FilterDateContract,self.FilterCollapseContract, self.sort_options_contract,self.sort_by_putch_winner,self.Qword_contract, self.QwordFinderContract]:
             input_field.setStyleSheet("")
         self.max_data_input_contrac.setStyleSheet(self.transparent_style) 
         self.min_data_input_contrac.setStyleSheet(self.transparent_style) 
