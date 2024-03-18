@@ -31,6 +31,7 @@ class StatisticWidget(QWidget):
         self.Reset_filters = QPushButton("Сбросить фильтры", self)
         # btn_analysis = QPushButton("Анализ", self)
         self.query = self.all_purchase.return_filtered_purchase()
+        self.query_contract = self.all_purchase.return_filtered_contracts()
         # btn_back.clicked.connect(self.show_previous_data)
         # btn_forward.clicked.connect(self.show_next_data)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
@@ -284,6 +285,7 @@ class StatisticWidget(QWidget):
                          self.analisNMCKReduce(),self.analyze_price_count(),self.analisOKPD2()]
         self.show_current_data()
         self.query = self.all_purchase.return_filtered_purchase()
+        self.query_contract = self.all_purchase.return_filtered_contracts()
         sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2= self.all_purchase.return_filters_variabels()
         self.filter_layout.addWidget(self.label_filter_data)
         self.filter_layout.addWidget(self.label_filter_order)
@@ -522,7 +524,10 @@ class StatisticWidget(QWidget):
 
     ]
         # Создаем DataFrame
-        query = self.query.select(Purchase.PurchaseOrder, Contract.ReductionNMC).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.ReductionNMC.is_null(False))
+        query = (self.query
+         .select(Purchase.PurchaseOrder, Contract.ReductionNMC)
+         .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+         .where((Contract.ReductionNMC.is_null(False)) & (Contract.ContractNumber != "Нет данных")))
         t = list(query)
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.ReductionNMC) for purchase in t], columns=['PurchaseOrder', 'ReductionNMC'])
         df['ReductionNMC'] = df.apply(self.determine_NMCK_range, axis=1)
@@ -539,7 +544,7 @@ class StatisticWidget(QWidget):
         return pivot_table, column_sums2
     
     def analisQueryCount(self):
-        query = self.query.select(Purchase.PurchaseOrder, Contract.TotalApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.TotalApplications.is_null(False))
+        query = self.query.select(Purchase.PurchaseOrder, Contract.TotalApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.TotalApplications.is_null(False)  & (Contract.ContractNumber != "Нет данных"))
         t = list(query)
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.TotalApplications) for purchase in t], columns=['PurchaseOrder', 'TotalApplications'])
         pivot_table = df.pivot_table(index='TotalApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
@@ -553,7 +558,7 @@ class StatisticWidget(QWidget):
         return pivot_table, column_sums
 
     def analisQueryCountAccept(self):
-        query = self.query.select(Purchase.PurchaseOrder, Contract.AdmittedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.AdmittedApplications.is_null(False))
+        query = self.query.select(Purchase.PurchaseOrder, Contract.AdmittedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.AdmittedApplications.is_null(False)& (Contract.ContractNumber != "Нет данных"))
         t = list(query)
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.AdmittedApplications) for purchase in t], columns=['PurchaseOrder', 'AdmittedApplications'])
         pivot_table = df.pivot_table(index='AdmittedApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
@@ -567,7 +572,7 @@ class StatisticWidget(QWidget):
         return pivot_table, column_sums
 
     def analisQueryCountDecline(self):
-        query = self.query.select(Purchase.PurchaseOrder, Contract.RejectedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.RejectedApplications.is_null(False))
+        query = self.query.select(Purchase.PurchaseOrder, Contract.RejectedApplications).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.RejectedApplications.is_null(False) & (Contract.ContractNumber != "Нет данных"))
         t = list(query)
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.RejectedApplications) for purchase in t], columns=['PurchaseOrder', 'RejectedApplications'])
         pivot_table = df.pivot_table(index='RejectedApplications', columns='PurchaseOrder', aggfunc='size', fill_value=0)
@@ -583,59 +588,7 @@ class StatisticWidget(QWidget):
 
 
 
-    # def save_to_excel(self, pivot_table, column_sums, output_excel_path):
-    #     excel_df = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table.columns) + ['Суммы'])
-
-    #     for method, row in pivot_table.iterrows():
-    #         excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
-
-    #     excel_df = pd.concat([excel_df, pd.DataFrame([['Суммы'] + list(column_sums) + [column_sums['Суммы']]], columns=excel_df.columns)])
-
-    #     data_to_export = {'Методы закупок': excel_df}
-
-    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-    #         for sheet_name, df in data_to_export.items():
-    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-    # def save_to_excel_max_price(self, pivot_table, column_sums, output_excel_path):
-    #     excel_df = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table.columns) + ['Суммы'])
-
-    #     for method, row in pivot_table.iterrows():
-    #         excel_df = pd.concat([excel_df, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df.columns)])
-
-    #     # Ensure that the number of columns matches
-    #     column_sums_row = ['Суммы'] + list(column_sums) + [column_sums['Суммы']]
-    #     if len(column_sums_row) == len(excel_df.columns):
-    #         excel_df = pd.concat([excel_df, pd.DataFrame([column_sums_row], columns=excel_df.columns)])
-
-    #     data_to_export = {'Уровень цены контракта': excel_df}
-
-    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-    #         for sheet_name, df in data_to_export.items():
-    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
-
-    # def save_to_excel_combined(self, pivot_table_purchase, column_sums_purchase, pivot_table_max_price, column_sums_max_price, output_excel_path):
-    #     excel_df_purchase = pd.DataFrame(columns=['Методы закупок'] + list(pivot_table_purchase.columns) + ['Суммы'])
-
-    #     for method, row in pivot_table_purchase.iterrows():
-    #         excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_purchase.columns)])
-
-    #     excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([['Суммы'] + list(column_sums_purchase) + [column_sums_purchase['Суммы']]], columns=excel_df_purchase.columns)])
-
-    #     excel_df_max_price = pd.DataFrame(columns=['Уровень цены контракта'] + list(pivot_table_max_price.columns) + ['Суммы'])
-
-    #     for method, row in pivot_table_max_price.iterrows():
-    #         excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_max_price.columns)])
-
-    #     column_sums_max_price_row = ['Суммы'] + list(column_sums_max_price) + [column_sums_max_price['Суммы']]
-    #     if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
-    #         excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
-
-    #     data_to_export = {'Методы закупок': excel_df_purchase, 'Уровень цены контракта': excel_df_max_price}
-
-    #     with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
-    #         for sheet_name, df in data_to_export.items():
-    #             df.to_excel(writer, sheet_name=sheet_name, index=False)
+    
     def save_to_excel_combined(self, pivot_tables_purchase, column_sums_purchase, pivot_tables_max_price, column_sums_max_price, output_excel_path):
         data_to_export = {}
 

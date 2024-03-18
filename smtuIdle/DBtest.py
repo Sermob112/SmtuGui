@@ -148,9 +148,11 @@ class PurchasesWidget(QWidget):
         if self.role == "Гость" or self.role == "Пользователь":
             self.addButtonContract.hide()
             self.deleteButton.hide()
+            self.addButtonTKP.hide()
         else:
             self.addButtonCurrency.show()
             self.deleteButton.show()
+            self.addButtonTKP.show()
     def remove_button_clicked(self):
         # reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
         #                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
