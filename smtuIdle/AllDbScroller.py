@@ -13,6 +13,9 @@ from parserV3 import delete_records_by_id, export_to_excel,export_to_excel_contr
 from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
 from peewee import fn
+from locale import currency,format_string
+import locale
+locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 
 
@@ -27,6 +30,7 @@ class PurchasesWidgetAll(QWidget):
         super().__init__()
         # self.main_win = main_window
         self.selected_text = None
+        self.selected_text_contract = None
         self.main_window = main
         self.role = role
         
@@ -471,15 +475,15 @@ class PurchasesWidgetAll(QWidget):
 
       
         self.search_input_contract = QLineEdit()
-        self.search_input_contract.setPlaceholderText("Поиск по Реестровому номеру, заказчику, наименованию объекта или организации")
+        self.search_input_contract.setPlaceholderText("Поиск по Победителю - исполнителю контракта, заказчику, наименованию объекта или организации")
         self.unique_values_query_contract = self.findUnicContract()
-        self.search_input_contract.setFixedWidth(300)
+        self.search_input_contract.setFixedWidth(500)
         completer = QCompleter(self.unique_values_query_contract )
         # self.search_input.textChanged.connect(completer.filter)
         completer.setFilterMode(Qt.MatchContains)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
 
-        completer.activated.connect(self.handleActivated)
+        completer.activated.connect(self.handleActivatedContract)
         self.search_input_contract.setCompleter(completer)
          #  кнопка "Сбросить фильтры" 
         self.reset_filters_button_contract = QPushButton("Сбросить фильтры контрактов", self)
@@ -725,6 +729,7 @@ class PurchasesWidgetAll(QWidget):
         else:
             self.FilterDateContract.setIcon(QIcon("Pics/right-arrow.png"))
     def show_all_purchases(self):
+      
     # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)
         self.label.setText(f"Всего записей {len(self.purchases_list)}")
@@ -732,16 +737,16 @@ class PurchasesWidgetAll(QWidget):
             for current_position, current_purchase in enumerate(self.purchases_list):
                 # Добавляем новую строку для каждой записи
                 self.table.insertRow(current_position)
-                
+                initial_price =  format_string("%.0f", current_purchase.InitialMaxContractPrice, grouping=True) + ' ₽'
                 # Добавляем данные в каждую ячейку для текущей записи
                 for col, value in enumerate([current_purchase.Id, current_purchase.PurchaseOrder, current_purchase.RegistryNumber,str(current_purchase.PlacementDate)
                                              , current_purchase.PurchaseName,current_purchase.AuctionSubject,
-                                             str(current_purchase.InitialMaxContractPrice), current_purchase.Currency,
+                                             initial_price, current_purchase.Currency,
                                               current_purchase.CustomerName
                                              ]):
                     item = QTableWidgetItem(str(value))
-                    self.table.setItem(current_position, col, item)
-                    item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    
+                   
                     item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                     item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
                     # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
@@ -764,26 +769,31 @@ class PurchasesWidgetAll(QWidget):
             for current_position, current_purchase in enumerate(self.contracts_list):
                 # Добавляем новую строку для каждой записи
                 self.table_cont.insertRow(current_position)
+                total_cost = format_string("%.0f", current_purchase[22], grouping=True) + ' ₽'
+                difference = format_string("%.0f", current_purchase[22] - current_purchase[5], grouping=True) + ' ₽'
+                advance_payment = format_string("%.0f", current_purchase[5], grouping=True) + ' ₽'
+                # total_cost = currency(current_purchase[22], grouping=True )
+                # total_cost = format_string("%.0f", current_purchase[22], grouping=True)
+                # difference = currency(current_purchase[22] - current_purchase[5], grouping=True)
+                # advance_payment = currency(current_purchase[5], grouping=True)
+
                 
                 # Добавляем данные в каждую ячейку для текущей записи
                 for col, value in enumerate([current_purchase[0], current_purchase[1], current_purchase[2],
                                   str(current_purchase[3]), current_purchase[4],
-                                  current_purchase[5],  current_purchase[22],str( current_purchase[22] - current_purchase[5]),
+                                   advance_payment,
+                                  total_cost,
+                                  difference
+                                  ,
                                   str(current_purchase[6]), current_purchase[7],
                                   current_purchase[8]
                                   ]):
                     item = QTableWidgetItem(str(value))
-                    self.table_cont.setItem(current_position, col, item)
-                    item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                     item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                     item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
-                    # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
                     self.table_cont.setItem(current_position, col, item)
-                    # if col == 6:  # Индексация колонок начинается с 0
-                    #     item.setTextAlignment(Qt.AlignRight | Qt.AlignTop)
-                    # Устанавливаем перенос текста в ячейке путем увеличения высоты строки
-                    self.table_cont.setRowHeight(current_position, self.table_cont.rowHeight(current_position) + 3)  # Увеличиваем высоту строки                        
-                    # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
+                    self.table_cont.setRowHeight(current_position, self.table_cont.rowHeight(current_position) + 3)
+        
         else:
             self.label_cont.setText("Нет записей")     
     def highlight_apply_filter_button(self):
@@ -1153,6 +1163,9 @@ class PurchasesWidgetAll(QWidget):
         # Обработка выбора элемента из автозаполнения
         self.selected_text = text
 
+    def handleActivatedContract(self, text):
+        # Обработка выбора элемента из автозаполнения
+        self.selected_text_contract = text
 
     def return_filtered_purchase(self):
         return self.purchases
@@ -1186,6 +1199,7 @@ class PurchasesWidgetAll(QWidget):
 
     def resetFiltersContract(self):
         # Очищаем все поля ввода
+        self.selected_text_contract = None
         self.sort_options_contract.setCurrentIndex(0)
         self.sort_by_putch_winner.setCurrentIndex(0)  
         self.current_position = 0

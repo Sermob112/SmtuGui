@@ -6,6 +6,7 @@ from peewee import *
 import pandas as pd
 from models import *
 import json
+import locale
 from functools import partial
 system_db = PostgresqlDatabase('testGui', user='postgres', password='sa', host='localhost', port=5432)
 system_db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate,UserLog,ChangedDate ])
@@ -39,7 +40,12 @@ system_db.close()
 #     .join(Purchase, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
 #     .where(Contract.ContractNumber != "Нет данных"))
 
-    
+purchase = Purchase.select().first()
+initial_price = purchase.InitialMaxContractPrice
+formatted_price = '{:,.0f}'.format(initial_price).replace(',', ' ')
+
+print(formatted_price)
+
 # df = pd.DataFrame([(contract.WinnerExecutor, 1) for contract in contracts], columns=['WinnerExecutor', 'Count'])
 
 # # Создаем сводную таблицу по победителям
