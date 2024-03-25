@@ -43,8 +43,8 @@ class StatisticWidget(QWidget):
         # btn_analysis.clicked.connect(self.analisMAxPrice)
         # Создаем таблицу
         self.table = QTableWidget(self)
-        self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Метод", "223-ФЗ", "44-ФЗ", "Общий итог"])
+        # self.table.setColumnCount(4)
+        # self.table.setHorizontalHeaderLabels(["Метод", "223-ФЗ", "44-ФЗ", "Общий итог"])
 
         # self.table.setColumnWidth(0, 300)  # Ширина "Метод"
         # self.table.setColumnWidth(1, 100)  # Ширина "223-ФЗ"
@@ -56,11 +56,6 @@ class StatisticWidget(QWidget):
         # Установите политику изменения размеров колонок содержимого
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
           # Список для хранения всех данных, которые  отобразить в таблице
-        self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
-                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()]
-        
-        
         self.label_texts = [
             "Анализ методов, использованных для определения НМЦК и ЦКЕП",
             "Анализ формулировок, применяемых государственными\n заказчиками, при объявлении закупки",
@@ -73,6 +68,12 @@ class StatisticWidget(QWidget):
             "Анализ уровеня цены контракта, заключенного\n по результатам конкурса",
              "Анализ диапазона значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
         ]
+        self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
+                         self.analisQueryCountAccept(),self.analisQueryCountDecline(),
+                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()]
+        
+        
+        
         self.buttons = []
 
         # Добавляем горизонтальную линию
@@ -297,12 +298,12 @@ class StatisticWidget(QWidget):
         self.label_filter_okpd2.setText(f"Фильтр по ОКПД2:{okpd2}")
     def analyze_price_count(self):
         coeff_range_order = [
-            'Ценовое предложение №1',
-            'Ценовое предложение №2',
-            'Ценовое предложение №3',
-            'Ценовое предложение №4',
-            'Ценовое предложение №5',
-            'Ценовое предложение №6',
+            'Одно',
+            'Два',
+            'Три',
+            'Четыре',
+            'Пять',
+            'Более пяти',
         ]
 
         query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.PriceProposal.is_null(False))
@@ -403,8 +404,8 @@ class StatisticWidget(QWidget):
    
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
         purchases = self.query
-        df = pd.DataFrame([(purchase.ProcurementMethod, purchase.PurchaseOrder) for purchase in purchases], columns=['ProcurementMethod', 'PurchaseOrder'])
-        pivot_table = df.pivot_table(index='ProcurementMethod', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        df = pd.DataFrame([(purchase.ProcurementMethod, purchase.PurchaseOrder) for purchase in purchases], columns=['ProcurementMethod', f'{self.label_texts[0]}'])
+        pivot_table = df.pivot_table(index='ProcurementMethod', columns=f'{self.label_texts[0]}', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
         
         row_totals = pivot_table.sum(axis=1)
@@ -412,7 +413,8 @@ class StatisticWidget(QWidget):
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
         # print(column_sums)
-        # print(pivot_table)
+        pivot_table.index.name = 'Анализ методов, использованных для определения НМЦК и ЦКЕП'
+        print(pivot_table)
         return pivot_table, column_sums 
     
     
@@ -677,13 +679,13 @@ class StatisticWidget(QWidget):
         # Получаем список всех уникальных законов
         all_purchase_orders = set(data.columns.tolist())
         all_purchase_orders.remove('Общий итог')
-
+        first_column_name = data.index.name
         # Устанавливаем количество столбцов в таблице
-        num_columns = len(all_purchase_orders) + 2  # Плюс два для "Метод" и "Общий итог"
+        num_columns = len(all_purchase_orders) + 1  # Плюс два для "Метод" и "Общий итог"
         self.table.setColumnCount(num_columns)
         
         # Устанавливаем заголовки столбцов
-        header_labels = ["Метод"] + list(all_purchase_orders) + ["Общий итог"]
+        header_labels = first_column_name + list(all_purchase_orders) + ["Общий итог"]
         self.table.setHorizontalHeaderLabels(header_labels)
 
         # Добавляем строки в таблицу

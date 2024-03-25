@@ -324,9 +324,9 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("Дата начала/подписания", str(contract.StartDate))
                 self.add_row_to_table("Дата окончания/исполнения", str(contract.EndDate))
                 self.add_row_to_table("Цена договора, руб.", str(contract.ContractPrice))
-                self.add_row_to_table("Размер авансирования, руб./(%)", str(contract.AdvancePayment))
-                self.add_row_to_table("Снижение НМЦК, руб.", str(contract.ReductionNMC))
-                self.add_row_to_table("Снижение НМЦК, %", str(contract.ReductionNMCPercent))
+                self.add_row_to_table("Размер авансирования, руб", str(contract.AdvancePayment))
+                self.add_row_to_table("Снижение НМЦК, руб.", str(contract.ReductionNMC ))
+                self.add_row_to_table("Снижение НМЦК, %", str(contract.ReductionNMCPercent * 100) + " %")
                 self.add_row_to_table("Протоколы определения поставщика (выписка)", contract.SupplierProtocol)
                 self.add_row_to_table("Договор", contract.ContractFile)
 
