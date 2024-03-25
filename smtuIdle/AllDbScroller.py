@@ -93,14 +93,14 @@ class PurchasesWidgetAll(QWidget):
 
 
       
-        unique_purchase_OKPD2 = Purchase.select(Purchase.OKPD2Classification).distinct()
+        unique_purchase_OKPD2 = Purchase.select(Purchase.OKPD2Classification).distinct().order_by(fn.Lower(Purchase.OKPD2Classification))
         self.sort_by_putch_okpd2 = QComboBox()
         self.sort_by_putch_okpd2.addItem("Фильтрация по ОКПД2")
         self.sort_by_putch_okpd2.setFixedWidth(250)
         for order in unique_purchase_OKPD2:
             self.sort_by_putch_okpd2.addItem(str(order.OKPD2Classification))
 
-        unique_purchase_CustomerName = Purchase.select(Purchase.CustomerName).distinct()
+        unique_purchase_CustomerName = Purchase.select(Purchase.CustomerName).distinct().order_by(fn.Lower(Purchase.CustomerName))
         self.sort_by_putch_CustomerName = QComboBox()
         self.sort_by_putch_CustomerName.addItem("Фильтрация по Заказчикам")
         self.sort_by_putch_CustomerName.setFixedWidth(250)
@@ -109,7 +109,7 @@ class PurchasesWidgetAll(QWidget):
 
         self.transparent_style = "QDateEdit { color: transparent; }"
 
-        unique_purchase_ProcurementMethod = Purchase.select(Purchase.ProcurementMethod).distinct()
+        unique_purchase_ProcurementMethod = Purchase.select(Purchase.ProcurementMethod).distinct().order_by(fn.Lower(Purchase.ProcurementMethod))
         self.sort_by_putch_ProcurementMethod = QComboBox()
         self.sort_by_putch_ProcurementMethod.addItem("Фильтрация по Методу закупки")
         self.sort_by_putch_ProcurementMethod.setFixedWidth(250)
@@ -120,7 +120,7 @@ class PurchasesWidgetAll(QWidget):
         self.min_price_label = QLabel("Минимальная цена")
         self.min_price_input = QLineEdit()
         self.min_price_input.setFixedWidth(100)
-        self.max_price_label = QLabel("Максимальная цена")
+        self.max_price_label = QLabel("Максимальная цена (в рублях)")
         self.max_price_input = QLineEdit()
         self.max_price_input.setFixedWidth(100)
         self.toExcel = QPushButton("Экспорт в Excel", self)
@@ -427,7 +427,7 @@ class PurchasesWidgetAll(QWidget):
         self.min_price_label_contrac = QLabel("Минимальная цена ")
         self.min_price_input_contrac = QLineEdit()
         self.min_price_input_contrac.setFixedWidth(100)
-        self.max_price_label_contrac = QLabel("Максимальная цена")
+        self.max_price_label_contrac = QLabel("Максимальная цена (в рублях)")
         self.max_price_input_contrac = QLineEdit()
         self.max_price_input_contrac.setFixedWidth(100)
         self.toExcel_contract = QPushButton("Экспорт в Excel", self)
@@ -464,7 +464,7 @@ class PurchasesWidgetAll(QWidget):
        
         self.sort_options_contract.setFixedWidth(250)
         self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item_contract)
-        unique_contract_winnter = Contract.select(Contract.WinnerExecutor).distinct()
+        unique_contract_winnter = Contract.select(Contract.WinnerExecutor).distinct().order_by(fn.Lower(Contract.WinnerExecutor))
         self.sort_by_putch_winner = QComboBox()
         self.sort_by_putch_winner.addItem("Фильтрация по Победителю-исполнителю контракта")
         self.sort_by_putch_winner.setFixedWidth(250)
