@@ -994,33 +994,6 @@ class PurchasesWidgetAll(QWidget):
     def apply_filter_contract(self):
         self.current_position = 0
         self.selected_option_contract = self.sort_options_contract.currentText()
-    #     self.contracts  = (
-    # Purchase.select(
-    #     Purchase.Id,
-    #     Contract.RegistryNumber,
-    #     Purchase.RegistryNumber,
-    #     Contract.ContractNumber,
-    #     Contract.StartDate,
-    #     Contract.ContractPrice,
-    #     Contract.ContractingAuthority,
-    #     Contract.WinnerExecutor,
-    #     Purchase.PurchaseName,
-    #     Contract.TotalApplications,
-    #     Contract.AdmittedApplications,
-    #     Contract.RejectedApplications,
-    #     Contract.PriceProposal,
-    #     Contract.Applicant,
-    #     Contract.Applicant_satatus,
-    #     Contract.ContractIdentifier,
-    #     Contract.EndDate,
-    #     Contract.AdvancePayment,
-    #     Contract.ReductionNMC,
-    #     Contract.ReductionNMCPercent,
-    #     Contract.SupplierProtocol,
-    #     Contract.ContractFile
-    # )
-    # .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-    # .where(Contract.ContractNumber != "Нет данных"))
         
         if  self.selected_option_contract == "Сортировать по Цене (Возростание)":
             order_by = Contract.ContractPrice
