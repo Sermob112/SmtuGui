@@ -96,31 +96,35 @@ def insert_in_table(csv_file_path, user,role):
                 except ValueError:
                     AuctionDate = None
                 # Вставка данных в таблицу
-                sql = """
-     
-                   
-                    INSERT INTO purchase (
-                            PurchaseOrder, RegistryNumber, ProcurementMethod, PurchaseName,
-                            AuctionSubject, PurchaseIdentificationCode, LotNumber, LotName,
-                            InitialMaxContractPrice, Currency, InitialMaxContractPriceInCurrency, 
-                            ContractCurrency,OKDPClassification,OKPDClassification,
-                            OKPD2Classification,PositionCode,CustomerName,ProcurementOrganization,PlacementDate,
-                            UpdateDate,ProcurementStage,ProcurementFeatures,ApplicationStartDate,ApplicationEndDate,
-                            AuctionDate
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
+        
                 
-                data = (
-                    purchase_date, registry_number, procurement_method, purchase_name,
-                    auction_subject, purchase_identification_code, lot_number, lot_name,
-                    initial_max_contract_price,Currency,InitialMaxContractPriceInCurrency,ContractCurrency,
-                    OKDPClassification,OKPDClassification,
-                    OKPD2Classification,PositionCode,CustomerName,ProcurementOrganization,placementDate,
-                    updateDate,ProcurementStage,ProcurementFeatures,applicationStartDate, applicationEndDate,
-                    datetime.datetime.strftime(AuctionDate, '%Y-%m-%d') if AuctionDate else None
-
-                     )
+                    Purchase.create(
+                    PurchaseOrder=purchase_date, 
+                    RegistryNumber=registry_number, 
+                    ProcurementMethod=procurement_method, 
+                    PurchaseName=purchase_name,
+                    AuctionSubject=auction_subject, 
+                    PurchaseIdentificationCode=purchase_identification_code, 
+                    LotNumber=lot_number, 
+                    LotName=lot_name,
+                    InitialMaxContractPrice=initial_max_contract_price,
+                    Currency=Currency, 
+                    InitialMaxContractPriceInCurrency=InitialMaxContractPriceInCurrency, 
+                    ContractCurrency=ContractCurrency,
+                    OKDPClassification=OKDPClassification,
+                    OKPDClassification=OKPDClassification,
+                    OKPD2Classification=OKPD2Classification,
+                    PositionCode=PositionCode,
+                    CustomerName=CustomerName,
+                    ProcurementOrganization=ProcurementOrganization,
+                    PlacementDate=placementDate,
+                    UpdateDate=updateDate,
+                    ProcurementStage=ProcurementStage,
+                    ProcurementFeatures=ProcurementFeatures,
+                    ApplicationStartDate=applicationStartDate, 
+                    ApplicationEndDate=applicationEndDate,
+                    AuctionDate=AuctionDate
+                )
                 
                 changed_date = ChangedDate(
                     RegistryNumber=registry_number,
@@ -131,8 +135,8 @@ def insert_in_table(csv_file_path, user,role):
                     Type='Добавлены новая запись'
                 )
                 changed_date.save()
-                cursor.execute(sql, data)
-                inserted_rows += cursor.rowcount
+             
+                inserted_rows += 1
         
         
         connection.commit()
@@ -359,60 +363,124 @@ def insert_in_table_full(csv_file_path):
                 ContractFile = 'Нет данных'
                 SupplierProtocol = 'Нет данных'
               # Вставка данных в таблицу purchase
-                sql = """
+            #     sql = """
      
                    
-                    INSERT INTO purchase (
-                            PurchaseOrder, RegistryNumber, ProcurementMethod, PurchaseName,
-                            AuctionSubject, PurchaseIdentificationCode, LotNumber, LotName,
-                            InitialMaxContractPrice, Currency, InitialMaxContractPriceInCurrency, 
-                            ContractCurrency,OKDPClassification,OKPDClassification,
-                            OKPD2Classification,PositionCode,CustomerName,ProcurementOrganization,PlacementDate,
-                            UpdateDate,ProcurementStage,ProcurementFeatures,ApplicationStartDate,ApplicationEndDate,
-                            AuctionDate,TKPData,
-                            QueryCount,ResponseCount, AveragePrice,MinPrice,
-                            MaxPrice ,StandardDeviation, CoefficientOfVariation, NMCKMarket ,FinancingLimit,
-                            PurchaseStatus,quantity_units,nmck_per_unit,notification_link
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?,?)
-            """
+            #         INSERT INTO purchase (
+            #                 PurchaseOrder, RegistryNumber, ProcurementMethod, PurchaseName,
+            #                 AuctionSubject, PurchaseIdentificationCode, LotNumber, LotName,
+            #                 InitialMaxContractPrice, Currency, InitialMaxContractPriceInCurrency, 
+            #                 ContractCurrency,OKDPClassification,OKPDClassification,
+            #                 OKPD2Classification,PositionCode,CustomerName,ProcurementOrganization,PlacementDate,
+            #                 UpdateDate,ProcurementStage,ProcurementFeatures,ApplicationStartDate,ApplicationEndDate,
+            #                 AuctionDate,TKPData,
+            #                 QueryCount,ResponseCount, AveragePrice,MinPrice,
+            #                 MaxPrice ,StandardDeviation, CoefficientOfVariation, NMCKMarket ,FinancingLimit,
+            #                 PurchaseStatus,quantity_units,nmck_per_unit,notification_link
+            #         )
+            #         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?,?)
+            # """
                
-                data = (
-                    purchase_date, registry_number, procurement_method, purchase_name,
-                    auction_subject, purchase_identification_code, lot_number, lot_name,
-                    initial_max_contract_price,Currency,InitialMaxContractPriceInCurrency,ContractCurrency,
-                    OKDPClassification,OKPDClassification,
-                    OKPD2Classification,PositionCode,CustomerName,ProcurementOrganization,placementDate,
-                    updateDate,ProcurementStage,ProcurementFeatures,applicationStartDate, applicationEndDate,
-                    datetime.datetime.strftime(AuctionDate, '%Y-%m-%d') if AuctionDate else None, tkp_data_json,
-                    QueryCount,ResponseCount ,AveragePrice ,MinPrice ,MaxPrice, StandardDeviation, CoefficientOfVariation,
-                    NMCKMarket ,FinancingLimit,PurchaseStatus,quantity_units,nmck_per_unit,notification_link
+            #     data = (
+            #         purchase_date, registry_number, procurement_method, purchase_name,
+            #         auction_subject, purchase_identification_code, lot_number, lot_name,
+            #         initial_max_contract_price,Currency,InitialMaxContractPriceInCurrency,ContractCurrency,
+            #         OKDPClassification,OKPDClassification,
+            #         OKPD2Classification,PositionCode,CustomerName,ProcurementOrganization,placementDate,
+            #         updateDate,ProcurementStage,ProcurementFeatures,applicationStartDate, applicationEndDate,
+            #         datetime.datetime.strftime(AuctionDate, '%Y-%m-%d') if AuctionDate else None, tkp_data_json,
+            #         QueryCount,ResponseCount ,AveragePrice ,MinPrice ,MaxPrice, StandardDeviation, CoefficientOfVariation,
+            #         NMCKMarket ,FinancingLimit,PurchaseStatus,quantity_units,nmck_per_unit,notification_link
 
-                     )
+            #          )
                 
+                    
+                Purchase.create(
+                PurchaseOrder=purchase_date, 
+                RegistryNumber=registry_number, 
+                ProcurementMethod=procurement_method, 
+                PurchaseName=purchase_name,
+                AuctionSubject=auction_subject, 
+                PurchaseIdentificationCode=purchase_identification_code, 
+                LotNumber=lot_number, 
+                LotName=lot_name,
+                InitialMaxContractPrice=initial_max_contract_price,
+                Currency=Currency, 
+                InitialMaxContractPriceInCurrency=InitialMaxContractPriceInCurrency, 
+                ContractCurrency=ContractCurrency,
+                OKDPClassification=OKDPClassification,
+                OKPDClassification=OKPDClassification,
+                OKPD2Classification=OKPD2Classification,
+                PositionCode=PositionCode,
+                CustomerName=CustomerName,
+                ProcurementOrganization=ProcurementOrganization,
+                PlacementDate=placementDate,
+                UpdateDate=updateDate,
+                ProcurementStage=ProcurementStage,
+                ProcurementFeatures=ProcurementFeatures,
+                ApplicationStartDate=applicationStartDate, 
+                ApplicationEndDate=applicationEndDate,
+                AuctionDate=AuctionDate,
+                TKPData=tkp_data_json,
+                QueryCount=QueryCount,
+                ResponseCount=ResponseCount,
+                AveragePrice=AveragePrice,
+                MinPrice=MinPrice,
+                MaxPrice=MaxPrice,
+                StandardDeviation=StandardDeviation,
+                CoefficientOfVariation=CoefficientOfVariation,
+                NMCKMarket=NMCKMarket,
+                FinancingLimit=FinancingLimit,
+                PurchaseStatus=PurchaseStatus,
+                quantity_units=quantity_units,
+                nmck_per_unit=nmck_per_unit,
+                notification_link=notification_link
+            )
 
-
-                sqlContract = """
+            #     sqlContract = """
      
                    
-                    INSERT INTO contract (
-                           TotalApplications,AdmittedApplications,RejectedApplications,PriceProposal,Applicant,
-                           Applicant_satatus,purchase_id,ContractingAuthority,WinnerExecutor,
-                           ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,StartDate,
-                            EndDate,AdvancePayment,ReductionNMCPercent,ReductionNMC,ContractFile,SupplierProtocol
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?,? , ?, ?, ?, ?, ?, ?,?, ?, ?, ? ,?, ? ,?)
-            """
+            #         INSERT INTO contract (
+            #                TotalApplications,AdmittedApplications,RejectedApplications,PriceProposal,Applicant,
+            #                Applicant_satatus,purchase_id,ContractingAuthority,WinnerExecutor,
+            #                ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,StartDate,
+            #                 EndDate,AdvancePayment,ReductionNMCPercent,ReductionNMC,ContractFile,SupplierProtocol
+            #         )
+            #         VALUES (?, ?, ?, ?, ?, ?,? , ?, ?, ?, ?, ?, ?,?, ?, ?, ? ,?, ? ,?)
+            # """
                 
-                dataContracts = (
-                    TotalApplications,AdmittedApplications,RejectedApplications,price_proposal_json,applicant_json,
-                           applicant_status_json,purchase_id,ContractingAuthority,WinnerExecutor,
-                           ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,startDate,
-                            endDate,AdvancePayment,ReductionNMCPercent,ReductionNMC,ContractFile,SupplierProtocol
+            #     dataContracts = (
+            #         TotalApplications,AdmittedApplications,RejectedApplications,price_proposal_json,applicant_json,
+            #                applicant_status_json,purchase_id,ContractingAuthority,WinnerExecutor,
+            #                ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,startDate,
+            #                 endDate,AdvancePayment,ReductionNMCPercent,ReductionNMC,ContractFile,SupplierProtocol
 
-                     )
-                cursor.execute(sql, data)
-                cursor.execute(sqlContract, dataContracts)
+            #          )
+                
+                Contract.create(
+                TotalApplications=TotalApplications,
+                AdmittedApplications=AdmittedApplications,
+                RejectedApplications=RejectedApplications,
+                PriceProposal=price_proposal_json,
+                Applicant=applicant_json,
+                Applicant_satatus=applicant_status_json,
+                purchase_id=purchase_id,
+                ContractingAuthority=ContractingAuthority,
+                WinnerExecutor=WinnerExecutor,
+                ContractIdentifier=ContractIdentifier,
+                RegistryNumber=RegistryNumber,
+                ContractNumber=ContractNumber,
+                ContractPrice=ContractPrice,
+                StartDate=startDate,
+                EndDate=endDate,
+                AdvancePayment=AdvancePayment,
+                ReductionNMCPercent=ReductionNMCPercent,
+                ReductionNMC=ReductionNMC,
+                ContractFile=ContractFile,
+                SupplierProtocol=SupplierProtocol
+            )
+                # cursor.execute(sql, data)
+                # cursor.execute(sqlContract, dataContracts)
                 inserted_rows += cursor.rowcount
 
     #     with db.atomic():
@@ -915,39 +983,61 @@ def export_to_excel_all(data, output_excel_path):
 
 def find_records_with_differences():
     try:
-        connection = connector()
-        cursor = connection.cursor()
+    #     connection = connector()
+    #     cursor = connection.cursor()
 
-        # SQL-запрос для поиска записей с одинаковым "RegistryNumber", но различными значениями в полях "AuctionDate", "ApplicationStartDate", "ApplicationEndDate", "UpdateDate" и "PlacementDate"
-        sql = """
-        SELECT Id, RegistryNumber, AuctionDate, ApplicationStartDate, ApplicationEndDate, UpdateDate, PlacementDate,LotNumber
-        FROM purchase
-        WHERE RegistryNumber IN (
-            SELECT RegistryNumber
-            FROM purchase
-            GROUP BY RegistryNumber
-            HAVING COUNT(*) > 1
-        )
-    """
-        cursor.execute(sql)
-        records_with_differences = cursor.fetchall()
+    #     # SQL-запрос для поиска записей с одинаковым "RegistryNumber", но различными значениями в полях "AuctionDate", "ApplicationStartDate", "ApplicationEndDate", "UpdateDate" и "PlacementDate"
+    #     sql = """
+    #     SELECT Id, RegistryNumber, AuctionDate, ApplicationStartDate, ApplicationEndDate, UpdateDate, PlacementDate,LotNumber
+    #     FROM purchase
+    #     WHERE RegistryNumber IN (
+    #         SELECT RegistryNumber
+    #         FROM purchase
+    #         GROUP BY RegistryNumber
+    #         HAVING COUNT(*) > 1
+    #     )
+    # """
+    #     cursor.execute(sql)
+    #     records_with_differences = cursor.fetchall()
+        query = (Purchase
+         .select(Purchase.Id, Purchase.RegistryNumber, Purchase.AuctionDate, 
+                 Purchase.ApplicationEndDate, Purchase.ApplicationEndDate, 
+                 Purchase.UpdateDate, Purchase.PlacementDate, Purchase.LotNumber)
+         .where(Purchase.RegistryNumber.in_(
+             Purchase
+             .select(Purchase.RegistryNumber)
+             .group_by(Purchase.RegistryNumber)
+             .having(fn.COUNT(Purchase.Id) > 1)
+         )))
+        records_with_differences = [(
+        purchase.Id, purchase.RegistryNumber, purchase.AuctionDate, purchase.ApplicationStartDate,
+        purchase.ApplicationEndDate, purchase.UpdateDate, purchase.PlacementDate, purchase.LotNumber
+            ) for purchase in query]
+
 
         # SQL-запрос для подсчета числа записей с повторами
-        count_sql = """
-        SELECT COUNT(*)
-        FROM (
-            SELECT RegistryNumber
-            FROM purchase
-            GROUP BY RegistryNumber
-            HAVING COUNT(*) > 1
-        ) AS DuplicateRegistryNumbers
-        """
+        # count_sql = """
+        # SELECT COUNT(*)
+        # FROM (
+        #     SELECT RegistryNumber
+        #     FROM purchase
+        #     GROUP BY RegistryNumber
+        #     HAVING COUNT(*) > 1
+        # ) AS DuplicateRegistryNumbers
+        # """
 
-        cursor.execute(count_sql)
-        count_of_duplicates = cursor.fetchone()[0]
+        # cursor.execute(count_sql)
+        # count_of_duplicates = cursor.fetchone()[0]
+        query = (Purchase
+        .select(fn.COUNT(Purchase.RegistryNumber))
+        .group_by(Purchase.RegistryNumber)
+        .having(fn.COUNT(Purchase.RegistryNumber) > 1))
+
+        # Выполнение запроса и получение количества дубликатов
+        count_of_duplicates = query.count()
 
         # Закрытие соединения
-        connection.close()
+        # connection.close()
 
         return records_with_differences, count_of_duplicates
 
@@ -980,22 +1070,22 @@ def count_total_records():
         cursor = connection.cursor()
 
         # Выполнение запроса на подсчет общего количества записей
-        cursor.execute("SELECT COUNT(*) FROM purchase")
-        result = cursor.fetchone()
-
+        # cursor.execute("SELECT COUNT(*) FROM purchase")
+        # result = cursor.fetchone()
+        count_of_records = Purchase.select().count()
         # Если запрос вернул результат, выведите общее количество записей
-        if result:
-            total_records = result[0]
+        # if result:
+        #     total_records = result[0]
             # print(f"Общее количество записей в таблице: {total_records}")
-        else:
-            print("Не удалось получить общее количество записей.")
+        # else:
+        #     print("Не удалось получить общее количество записей.")
 
     except sqlite3.Error as e:
         print("Ошибка при подсчете общего количества записей:", e)
     
     finally:
         connection.close()
-    return total_records
+    return count_of_records
 
 
 
