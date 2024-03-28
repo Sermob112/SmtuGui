@@ -1060,9 +1060,9 @@ class PurchasesWidgetAll(QWidget):
     def handle_cell_click_contract(self, row, column):
         # Получаем Id из выбранной строки и выводим в консоль
 
-        selected_id = self.table.item(row, 0).text()
+        selected_id = self.table_cont.item(row, 0).text()
         self.window.stackedWidget.setCurrentIndex(8)
-        self.window.ContractFormularWidget.reload_data_id(selected_id)
+        self.window.contractFormular.reload_data_id(selected_id)
 
 
     def findUnic(self):
