@@ -8,61 +8,56 @@ from models import *
 import json
 import locale
 from functools import partial
-system_db = PostgresqlDatabase('testGui', user='postgres', password='sa', host='localhost', port=5432)
-system_db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate,UserLog,ChangedDate ])
-system_db.close()
-        #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
-# contracts =  (
-#     Contract.select(
-#         Purchase.Id,
-#         Contract.RegistryNumber,
-#         Purchase.RegistryNumber,
-#         Contract.ContractNumber,
-#         Contract.StartDate,
-#         Contract.ContractPrice,
-#         Contract.ContractingAuthority,
-#         Contract.WinnerExecutor,
-#         Purchase.PurchaseName,
-#         Contract.TotalApplications,
-#         Contract.AdmittedApplications,
-#         Contract.RejectedApplications,
-#         Contract.PriceProposal,
-#         Contract.Applicant,
-#         Contract.Applicant_satatus,
-#         Contract.ContractIdentifier,
-#         Contract.EndDate,
-#         Contract.AdvancePayment,
-#         Contract.ReductionNMC,
-#         Contract.ReductionNMCPercent,
-#         Contract.SupplierProtocol,
-#         Contract.ContractFile
-#     )
-#     .join(Purchase, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-#     .where(Contract.ContractNumber != "Нет данных"))
+def count_non_empty_values(dictionary):
+        count = 0
+        for key, value in dictionary.items():
+            if value != "Нет данных" :
+                count += 1
+        return count
+coeff_range_order = [
+        'Ценовое предложение №1',
+        'Ценовое предложение №2',
+        'Ценовое предложение №3',
+        'Ценовое предложение №4',
+        'Ценовое предложение №5',
+        'Ценовое предложение №6',
+]
+new_column_names = [
+    'Одно',
+    'Два',
+    'Три',
+    'Четыре',
+    'Пять',
+    'Более пяти'
+]
+query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.PriceProposal.is_null(False))
+data = list(query)
+df_data = []
 
-purchase = Purchase.select().first()
-initial_price = purchase.InitialMaxContractPrice
-formatted_price = '{:,.0f}'.format(initial_price).replace(',', ' ')
+for purchase in data:
+    price_proposal_dict = json.loads(purchase.contract.PriceProposal)
+  
+    row_data = [purchase.PurchaseOrder]
+    for key in coeff_range_order:
+        value = price_proposal_dict.get(key, "")
+        row_data.append(count_non_empty_values({key: value}))
 
-print(formatted_price)
+    # Переместите эту строку внутрь цикла for
+    df_data.append(row_data)  # Эта строка должна быть внутри цикла
 
-# df = pd.DataFrame([(contract.WinnerExecutor, 1) for contract in contracts], columns=['WinnerExecutor', 'Count'])
+df_columns = ['PurchaseOrder'] + coeff_range_order
+df = pd.DataFrame(df_data, columns=df_columns)
+df.rename(columns=dict(zip(coeff_range_order, new_column_names)), inplace=True)
 
-# # Создаем сводную таблицу по победителям
-# pivot_table = df.pivot_table(index='WinnerExecutor', aggfunc='size', fill_value=0)
+# Создание сводной таблицы
+pivot_table = df.pivot_table(index='PurchaseOrder', aggfunc='sum', fill_value=0)
+# Суммы по строкам и столбцам
 
-# pivot_table.columns = ['Победитель-исполнитель контракта', 'Единицы']
-
-# column_sums = pivot_table.sum()
-# total_purchase_counts = column_sums.sum()
-# # row_totals = pivot_table.sum(axis=1)
-# # pivot_table['Общий итог'] = row_totals
-# total_counts = pd.DataFrame({'Суммы': [total_purchase_counts]})
-# total_counts.index = ['Итого']
-
-# # row_totals = pivot_table.sum(axis=1)
-# # pivot_table['Общий итог'] = row_totals
-# # total_purchase_counts = column_sums.sum()
-# # column_sums['Суммы'] = total_purchase_counts
-# print(pivot_table)
-# print(total_counts)
+transposed_table = pivot_table.T
+row_totals = transposed_table.sum(axis=1)
+transposed_table['Общий итог'] = row_totals
+column_sums = transposed_table.sum()
+total_counts = column_sums.sum()
+column_sums['Суммы'] = total_counts
+transposed_table = transposed_table.reindex(new_column_names, axis=0)
+print(transposed_table)
