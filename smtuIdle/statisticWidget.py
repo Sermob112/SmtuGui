@@ -83,7 +83,8 @@ class StatisticWidget(QWidget):
         ]
         self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()]
+                        #  self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
+                        ]
         
         
         
@@ -163,33 +164,33 @@ class StatisticWidget(QWidget):
         self.menu_frame_2.layout().addWidget(self.menu_content_2)
         self.menu_frame_2.setVisible(False)
 
-        # Добавляем кнопку выпадающего меню Первый этап
-        self.ThirdStage = QPushButton("Анализ контрактов")
-        self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png"))
-        self.ThirdStage.setMaximumWidth(400)
-        self.ThirdStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
-        self.ThirdStage.clicked.connect(self.toggle_stage_3)
-         # колапсирующее окно Первый этап
-        self.menu_content_3 = QWidget()
-        menu_layout_3 = QVBoxLayout()
-        self.Qword_3 = QLabel("Анализ заключенных контрактов и разницы НМЦК и ЦКЕИ")
-        menu_layout_3.addWidget(self.Qword_3)
-        for index, text in enumerate(self.label_texts[6:]):
-            button = QtWidgets.QPushButton(text)
-            button.setFixedSize(400, 50)
+        # # Добавляем кнопку выпадающего меню Первый этап
+        # self.ThirdStage = QPushButton("Анализ контрактов")
+        # self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png"))
+        # self.ThirdStage.setMaximumWidth(400)
+        # self.ThirdStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
+        # self.ThirdStage.clicked.connect(self.toggle_stage_3)
+        #  # колапсирующее окно Первый этап
+        # self.menu_content_3 = QWidget()
+        # menu_layout_3 = QVBoxLayout()
+        # self.Qword_3 = QLabel("Анализ заключенных контрактов и разницы НМЦК и ЦКЕИ")
+        # menu_layout_3.addWidget(self.Qword_3)
+        # for index, text in enumerate(self.label_texts[6:]):
+        #     button = QtWidgets.QPushButton(text)
+        #     button.setFixedSize(400, 50)
             
-            size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
-            button.setSizePolicy(size_policy)
-            button.setStyleSheet("text-align: left;padding-left: 8px;")
-            button.clicked.connect(partial(self.show_specific_data, index + 6, button))
-            menu_layout_3.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
-            self.buttons.append(button)
-        # menu_layout.addWidget(line)
-        self.menu_content_3.setLayout(menu_layout_3)
-        self.menu_frame_3 = QFrame()
-        self.menu_frame_3.setLayout(QVBoxLayout())
-        self.menu_frame_3.layout().addWidget(self.menu_content_3)
-        self.menu_frame_3.setVisible(False)
+        #     size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+        #     button.setSizePolicy(size_policy)
+        #     button.setStyleSheet("text-align: left;padding-left: 8px;")
+        #     button.clicked.connect(partial(self.show_specific_data, index + 6, button))
+        #     menu_layout_3.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
+        #     self.buttons.append(button)
+        # # menu_layout.addWidget(line)
+        # self.menu_content_3.setLayout(menu_layout_3)
+        # self.menu_frame_3 = QFrame()
+        # self.menu_frame_3.setLayout(QVBoxLayout())
+        # self.menu_frame_3.layout().addWidget(self.menu_content_3)
+        # self.menu_frame_3.setVisible(False)
         
         #ЦИКЛ кнопок 
         # for index, text in enumerate(self.label_texts[:3]):
@@ -220,8 +221,8 @@ class StatisticWidget(QWidget):
         self.buttons_layout.addWidget(self.menu_frame)
         self.buttons_layout.addWidget(self.SecondStage)
         self.buttons_layout.addWidget(self.menu_frame_2)
-        self.buttons_layout.addWidget(self.ThirdStage)
-        self.buttons_layout.addWidget(self.menu_frame_3)
+        # self.buttons_layout.addWidget(self.ThirdStage)
+        # self.buttons_layout.addWidget(self.menu_frame_3)
         self.buttons_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         # scroll_area.setWidget(scroll_widget)
@@ -296,7 +297,9 @@ class StatisticWidget(QWidget):
     def update_data(self):
         self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()]
+                        #  self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
+                         
+                         ]
         self.show_current_data()
         self.query = self.all_purchase.return_filtered_purchase()
         self.query_contract = self.all_purchase.return_filtered_contracts()
@@ -830,10 +833,10 @@ class StatisticWidget(QWidget):
         pivot_tables_purchase3, column_sums_purchase3 = self.analisQueryCount()
         pivot_tables_purchase4, column_sums_purchase4 = self.analisQueryCountAccept()
         pivot_tables_purchase5, column_sums_purchase5 = self.analisQueryCountDecline()
-        pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
-        pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
-        pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
-        pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
+        # pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
+        # pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
+        # pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
+        # pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
         pivot_tables_max_price5, column_sums_max_price5= self.analisOKPD2()
         sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2 = self.all_purchase.return_filters_variabels()
         filters = []
@@ -859,8 +862,10 @@ class StatisticWidget(QWidget):
         self.save_to_excel_combined(
         [pivot_tables_purchase1, pivot_tables_purchase2, pivot_tables_purchase3, pivot_tables_purchase4, pivot_tables_purchase5],
         [column_sums_purchase1, column_sums_purchase2, column_sums_purchase3, column_sums_purchase4, column_sums_purchase5],
-        [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4,pivot_tables_max_price5],
-        [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4,column_sums_max_price5],
+        # [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4,pivot_tables_max_price5],
+        # [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4,column_sums_max_price5],
+         [pivot_tables_max_price5],
+        [column_sums_max_price5],
         file_name
     )
     def show_specific_data(self, index, button):
