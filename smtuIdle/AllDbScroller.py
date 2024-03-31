@@ -1394,6 +1394,8 @@ class PurchasesWidgetAll(QWidget):
         Contract.SupplierProtocol,
         Contract.ContractFile,
         Purchase.InitialMaxContractPrice,
+        Purchase.PurchaseOrder,
+        Purchase.CoefficientOfVariation,
     )
     .join(Purchase, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
     .where(Contract.ContractNumber != "Нет данных"))

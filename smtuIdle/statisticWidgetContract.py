@@ -42,7 +42,18 @@ class StatisticWidgetContract(QWidget):
         self.init_ui()
         
     def init_ui(self):
-      
+        self.formular_texts = [
+            "Методы, использованных для определения НМЦК и ЦКЕП",
+            "Формулировки, применяемых государственными\n заказчиками, при объявлении закупки",
+            "Классификации ОКПД2",           
+            "Количество заявок на участие в закупке",
+            "Количество допущенных заявок\n на участие в закупке",
+            "Количество отклоненных заявок\n на участие в закупке",
+            "Соотношения НМЦК и ЦКЕП и цены\n контракта, заключенного по результатам конкурса",
+            "Количество ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
+            "Уровень цены контракта, заключенного\n по результатам конкурса",
+             "Диапазон значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
+        ]
         # Создаем лейбл
         self.label_text = "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП"
         self.label = QLabel(self.label_text)
@@ -88,7 +99,9 @@ class StatisticWidgetContract(QWidget):
         # self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         
           # Список для хранения всех данных, которые  отобразить в таблице
-        self.all_data = [self.winner_analis(), self.count_non_zero_contract_prices(),self.count_non_zero_contract_num()]
+        self.all_data = [self.winner_analis(), self.count_non_zero_contract_prices()
+                         ,self.count_non_zero_contract_num(),self.analisNMCKReduce()
+                         ,self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()]
         
         
         self.label_texts = [
@@ -96,6 +109,10 @@ class StatisticWidgetContract(QWidget):
             "Анализ количества побидителей",
              "Анализ количества заключенных контрактов",
              "Анализ количества указаных № контрактов",
+            "Анализ соотношения НМЦК и ЦКЕП и цены\n контракта, заключенного по результатам конкурса",
+            "Анализ количества ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
+            "Анализ уровеня цены контракта, заключенного\n по результатам конкурса",
+             "Анализ диапазона значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
      
         ]
         self.buttons = []
@@ -129,7 +146,7 @@ class StatisticWidgetContract(QWidget):
         menu_layout = QVBoxLayout()
         self.Qword = QLabel("Анализ количественных характеристик контрактов")
         menu_layout.addWidget(self.Qword)
-        for index, text in enumerate(self.label_texts):
+        for index, text in enumerate(self.label_texts[:3]):
            
             button = QtWidgets.QPushButton()
             button.setText(text) 
@@ -141,12 +158,40 @@ class StatisticWidgetContract(QWidget):
             menu_layout.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
             self.buttons.append(button)
         # menu_layout.addWidget(line)
+        
         self.menu_content.setLayout(menu_layout)
         self.menu_frame = QFrame()
         self.menu_frame.setLayout(QVBoxLayout())
         self.menu_frame.layout().addWidget(self.menu_content)
         self.menu_frame.setVisible(False)
 
+
+        self.ThirdStage = QPushButton("Анализ контрактов")
+        self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png"))
+        self.ThirdStage.setMaximumWidth(400)
+        self.ThirdStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
+        self.ThirdStage.clicked.connect(self.toggle_stage_3)
+         # колапсирующее окно Первый этап
+        self.menu_content_3 = QWidget()
+        menu_layout_3 = QVBoxLayout()
+        self.Qword_3 = QLabel("Анализ заключенных контрактов и разницы НМЦК и ЦКЕИ")
+        menu_layout_3.addWidget(self.Qword_3)
+        for index, text in enumerate(self.label_texts[3:]):
+            button = QtWidgets.QPushButton(text)
+            button.setFixedSize(400, 50)
+            
+            size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
+            button.setSizePolicy(size_policy)
+            button.setStyleSheet("text-align: left;padding-left: 8px;")
+            button.clicked.connect(partial(self.show_specific_data, index + 3, button))
+            menu_layout_3.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
+            self.buttons.append(button)
+        # menu_layout.addWidget(line)
+        self.menu_content_3.setLayout(menu_layout_3)
+        self.menu_frame_3 = QFrame()
+        self.menu_frame_3.setLayout(QVBoxLayout())
+        self.menu_frame_3.layout().addWidget(self.menu_content_3)
+        self.menu_frame_3.setVisible(False)
         #  # Добавляем кнопку выпадающего меню по цене
         # self.SecondStage = QPushButton("Анализ Заявок")
         # self.SecondStage.setIcon(QIcon("Pics/right-arrow.png"))
@@ -229,6 +274,8 @@ class StatisticWidgetContract(QWidget):
         # scroll_widget.setLayout(self.buttons_layout)
         self.buttons_layout.addWidget(self.FirstStage)
         self.buttons_layout.addWidget(self.menu_frame)
+        self.buttons_layout.addWidget(self.ThirdStage)
+        self.buttons_layout.addWidget(self.menu_frame_3)
         # self.buttons_layout.addWidget(self.SecondStage)
         # self.buttons_layout.addWidget(self.menu_frame_2)
         # self.buttons_layout.addWidget(self.ThirdStage)
@@ -357,7 +404,9 @@ class StatisticWidgetContract(QWidget):
         else:
             self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png")) 
     def update_data(self):
-        self.all_data = [self.winner_analis(), self.count_non_zero_contract_prices(),self.count_non_zero_contract_num()]
+        self.all_data = [self.winner_analis(), self.count_non_zero_contract_prices()
+                         ,self.count_non_zero_contract_num(),self.analisNMCKReduce()
+                         ,self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()]
         self.show_current_data()
         self.query = self.all_purchase.return_filtered_contracts()
         sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2= self.all_purchase.return_filters_variabels()
@@ -378,7 +427,14 @@ class StatisticWidgetContract(QWidget):
             'Ценовое предложение №5',
             'Ценовое предложение №6',
         ]
-
+        new_column_names = [
+            'Одно',
+            'Два',
+            'Три',
+            'Четыре',
+            'Пять',
+            'Более пяти'
+        ]
         query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.PriceProposal.is_null(False))
         data = list(query)
         df_data = []
@@ -398,6 +454,7 @@ class StatisticWidgetContract(QWidget):
 
         df_columns = ['PurchaseOrder'] + coeff_range_order
         df = pd.DataFrame(df_data, columns=df_columns)
+        df.rename(columns=dict(zip(coeff_range_order, new_column_names)), inplace=True)
 
         # Создание сводной таблицы
         pivot_table = df.pivot_table(index='PurchaseOrder', aggfunc='sum', fill_value=0)
@@ -408,6 +465,7 @@ class StatisticWidgetContract(QWidget):
         column_sums = transposed_table.sum()
         total_counts = column_sums.sum()
         column_sums['Суммы'] = total_counts
+        transposed_table = transposed_table.reindex(new_column_names, axis=0)
 
         return transposed_table,column_sums
     def count_non_empty_values(self, dictionary):
@@ -519,7 +577,7 @@ class StatisticWidgetContract(QWidget):
       
 
     def analisMAxPrice(self):
-        purchases = self.query.where(Contract.InitialMaxContractPrice.is_null(False))
+        purchases = self.query
         price_range_order = [
             'Цена контракта более 100 000 000 тыс.руб.',
             'Цена контракта 5 000 000 - 10 000 000 тыс.руб.',
@@ -531,12 +589,12 @@ class StatisticWidgetContract(QWidget):
           
         ]
         # Создаем DataFrame
-        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.InitialMaxContractPrice) for purchase in purchases],
-                        columns=['PurchaseOrder', 'InitialMaxContractPrice'])
-        df['PriceRange'] = df.apply(self.determine_price_range, axis=1)
-        df['PriceRange'] = pd.Categorical(df['PriceRange'], categories=price_range_order, ordered=True)
-        df = df.sort_values('PriceRange')
-        pivot_table = df.pivot_table(index='PriceRange', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        df = pd.DataFrame([(purchase.purchase.PurchaseOrder, purchase.ContractPrice) for purchase in purchases],
+                       columns=['PurchaseOrder',f'{self.formular_texts[8]}'])
+        df[f'{self.formular_texts[8]}'] = df.apply(self.determine_price_range, axis=1)
+        df[f'{self.formular_texts[8]}'] = pd.Categorical(df[f'{self.formular_texts[8]}'], categories=price_range_order, ordered=True)
+        df = df.sort_values(f'{self.formular_texts[8]}')
+        pivot_table = df.pivot_table(index=f'{self.formular_texts[8]}', columns='PurchaseOrder', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
         row_totals = pivot_table.sum(axis=1)
         pivot_table['Общий итог'] = row_totals
@@ -550,7 +608,7 @@ class StatisticWidgetContract(QWidget):
 
         return pivot_table, column_sums2 
     def analisCoeffVar(self):
-        purchases = self.query.where(Purchase.CoefficientOfVariation.is_null(False))
+        purchases = self.query
         coeff_range_order = [
         'Значение коэффициента вариации 0%',
         'значение коэффициента вариации 0-1%',
@@ -562,12 +620,12 @@ class StatisticWidgetContract(QWidget):
         'более 33%'
     ]
         # Создаем DataFrame
-        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.CoefficientOfVariation) for purchase in purchases],
-                        columns=['PurchaseOrder', 'CoefficientOfVariation'])
-        df['CoeffRange'] = df.apply(self.determine_var_range, axis=1)
-        df['CoeffRange'] = pd.Categorical(df['CoeffRange'], categories=coeff_range_order, ordered=True)
-        df = df.sort_values('CoeffRange')
-        pivot_table = df.pivot_table(index='CoeffRange', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        df = pd.DataFrame([(purchase.purchase.PurchaseOrder, purchase.purchase.CoefficientOfVariation) for purchase in purchases],
+                       columns=['PurchaseOrder', f'{self.formular_texts[9]}'])
+        df[f'{self.formular_texts[9]}'] = df.apply(self.determine_var_range, axis=1)
+        df[f'{self.formular_texts[9]}'] = pd.Categorical(df[f'{self.formular_texts[9]}'], categories=coeff_range_order, ordered=True)
+        df = df.sort_values(f'{self.formular_texts[9]}')
+        pivot_table = df.pivot_table(index=f'{self.formular_texts[9]}', columns='PurchaseOrder', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
         row_totals = pivot_table.sum(axis=1)
         pivot_table['Общий итог'] = row_totals
@@ -589,13 +647,14 @@ class StatisticWidgetContract(QWidget):
 
     ]
         # Создаем DataFrame
-        query = self.query.select(Purchase.PurchaseOrder, Contract.ReductionNMC).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.ReductionNMC.is_null(False))
+        query = self.query
         t = list(query)
-        df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.ReductionNMC) for purchase in t], columns=['PurchaseOrder', 'ReductionNMC'])
-        df['ReductionNMC'] = df.apply(self.determine_NMCK_range, axis=1)
-        df['ReductionNMC'] = pd.Categorical(df['ReductionNMC'], categories=coeff_range_order, ordered=True)
-        df = df.sort_values('ReductionNMC')
-        pivot_table = df.pivot_table(index='ReductionNMC', columns='PurchaseOrder', aggfunc='size', fill_value=0)
+        df = pd.DataFrame([(purchase.purchase.PurchaseOrder, purchase.ReductionNMC) for purchase in t],
+                           columns=['PurchaseOrder',f'{self.formular_texts[7]}'])
+        df[f'{self.formular_texts[7]}'] = df.apply(self.determine_NMCK_range, axis=1)
+        df[f'{self.formular_texts[7]}'] = pd.Categorical(df[f'{self.formular_texts[7]}'], categories=coeff_range_order, ordered=True)
+        df = df.sort_values(f'{self.formular_texts[7]}')
+        pivot_table = df.pivot_table(index=f'{self.formular_texts[7]}', columns='PurchaseOrder', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
         row_totals = pivot_table.sum(axis=1)
         pivot_table['Общий итог'] = row_totals
@@ -651,9 +710,9 @@ class StatisticWidgetContract(QWidget):
 
 
   
-    def save_to_excel_combined(self, pivot_tables_purchase, column_sums_purchase, output_excel_path):
+    def save_to_excel_combined(self, pivot_tables_purchase, column_sums_purchase, pivot_tables_max_price, column_sums_max_price, output_excel_path):
         data_to_export = {}
-
+   
         for idx, (pivot_table_purchase, column_sum_purchase) in enumerate(zip(pivot_tables_purchase, column_sums_purchase)):
             excel_df_purchase = pd.DataFrame(columns=['Метод'] + list(pivot_table_purchase.columns) + ['Суммы'])
 
@@ -665,6 +724,18 @@ class StatisticWidgetContract(QWidget):
                 excel_df_purchase = pd.concat([excel_df_purchase, pd.DataFrame([column_sums_purchase_row], columns=excel_df_purchase.columns)])
 
             data_to_export[self.label_texts[idx][:20]] =excel_df_purchase
+        for idx, (pivot_table_max_price, column_sum_max_price) in enumerate(zip(pivot_tables_max_price, column_sums_max_price)):
+            excel_df_max_price = pd.DataFrame(columns=['Метод'] + list(pivot_table_max_price.columns) + ['Суммы'])
+
+            for method, row in pivot_table_max_price.iterrows():
+                excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([[method] + list(row) + [row.sum()]], columns=excel_df_max_price.columns)])
+
+            column_sums_max_price_row = ['Суммы'] + list(column_sum_max_price) + [column_sum_max_price['Суммы']]
+            if len(column_sums_max_price_row) == len(excel_df_max_price.columns):
+                excel_df_max_price = pd.concat([excel_df_max_price, pd.DataFrame([column_sums_max_price_row], columns=excel_df_max_price.columns)])
+            
+            
+            data_to_export[self.label_texts[idx + 3][:20]] = excel_df_max_price
 
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
@@ -687,79 +758,46 @@ class StatisticWidgetContract(QWidget):
     def clear_table(self):
         self.table.setRowCount(0)
 
-    # def populate_table(self, data, sums):
-    #     # Очищаем таблицу перед обновлением
-    #     self.clear_table()
-       
-    #     # Добавляем строки в таблицу
-    #     for index, row in data.iterrows():
-    #         row_position = self.table.rowCount()
-    #         self.table.insertRow(row_position)
+    def populate_table_2(self, data, sums):
+    # Очищаем таблицу перед обновлением
+        self.clear_table()
 
-    #         # Заполняем ячейки в строке
-    #         self.table.setItem(row_position, 0, QTableWidgetItem(index))
-    #         for col_index, value in enumerate(row):
-    #             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
-
-    #     # Добавляем строку с суммами
-    #     row_position = self.table.rowCount()
-    #     self.table.insertRow(row_position)
-    #     self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
-
-    #     # Добавляем суммы значений из столбцов '223-ФЗ' и '44-ФЗ'
-    #     for col_index in range(1, self.table.columnCount() - 1):
-    #         column_name = self.table.horizontalHeaderItem(col_index).text()
-    #         sum_value = sums.get(column_name, 0)
-    #         self.table.setItem(row_position, col_index, QTableWidgetItem(str(sum_value)))
-
-    #     # Добавляем сумму значений '223-ФЗ' и '44-ФЗ' в последний столбец 'Общий итог'
-    #     last_col_index = self.table.columnCount() - 1
-    #     sum_value_total = sums.get('223-ФЗ', 0) + sums.get('44-ФЗ', 0)
-    #     self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
-
-    # def populate_table(self, data, sums):
-    # # Очищаем таблицу перед обновлением
-    #     self.clear_table()
-
-    #     # Получаем список всех уникальных законов
-    #     all_purchase_orders = set(data.columns.tolist())
-    #     all_purchase_orders.remove('Общий итог')
-
-    #     # Устанавливаем количество столбцов в таблице
-    #     num_columns = len(all_purchase_orders) + 2  # Плюс два для "Метод" и "Общий итог"
-    #     self.table.setColumnCount(num_columns)
+        # Получаем список всех уникальных законов
+        all_purchase_orders = set(data.columns.tolist())
+        all_purchase_orders.remove('Общий итог')
+        first_column_name = data.index.name
+        # Устанавливаем количество столбцов в таблице
+        num_columns = len(all_purchase_orders) + 2  # Плюс два для "Метод" и "Общий итог"
+        self.table.setColumnCount(num_columns)
         
-    #     # Устанавливаем заголовки столбцов
-    #     header_labels = ["Метод"] + list(all_purchase_orders) + ["Общий итог"]
-    #     self.table.setHorizontalHeaderLabels(header_labels)
+        # Устанавливаем заголовки столбцов
+        header_labels = [first_column_name] + list(all_purchase_orders) + ["Общий итог"]
+        self.table.setHorizontalHeaderLabels(header_labels)
 
-    #     # Добавляем строки в таблицу
-    #     for index, row in data.iterrows():
-    #         row_position = self.table.rowCount()
-    #         self.table.insertRow(row_position)
+        # Добавляем строки в таблицу
+        for index, row in data.iterrows():
+            row_position = self.table.rowCount()
+            self.table.insertRow(row_position)
 
-    #         # Заполняем ячейки в строке
-    #         self.table.setItem(row_position, 0, QTableWidgetItem(index))  # Метод
-    #         for col_index, purchase_order in enumerate(all_purchase_orders):
-    #             value = row.get(purchase_order, 0)  # Получаем значение из DataFrame, если оно есть, иначе 0
-    #             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
-    #     for row_index, row_sum in enumerate(data['Общий итог']):
-    #         item = QTableWidgetItem(str(row_sum))
-    #         self.table.setItem(row_index, self.table.columnCount() - 1, item)
+            # Заполняем ячейки в строке
+            self.table.setItem(row_position, 0, QTableWidgetItem(index))  # Метод
+            for col_index, purchase_order in enumerate(all_purchase_orders):
+                value = row.get(purchase_order, 0)  # Получаем значение из DataFrame, если оно есть, иначе 0
+                self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
+        for row_index, row_sum in enumerate(data['Общий итог']):
+            item = QTableWidgetItem(str(row_sum))
+            self.table.setItem(row_index, self.table.columnCount() - 1, item)
 
       
-    #     # Добавляем строку с суммами
-    #     row_position = self.table.rowCount()
-    #     self.table.insertRow(row_position)
-    #     self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
+        # Добавляем строку с суммами
+        row_position = self.table.rowCount()
+        self.table.insertRow(row_position)
+        self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
 
-    #     for col_index, key in enumerate(sums.keys()):
-    #         value = sums[key]
-    #         self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
-      
+        for col_index, key in enumerate(sums.keys()):
+            value = sums[key]
+            self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
     def populate_table(self, data, sums):
-        
-      
 
         # Получаем список всех уникальных законов
         all_purchase_orders = set(data.columns)
@@ -799,16 +837,17 @@ class StatisticWidgetContract(QWidget):
 
 
     def determine_NMCK_range(self,row):
+        term =  row[f'{self.formular_texts[7]}'] 
         try:
-            if row['ReductionNMC'] * 100 == 0:
+            if term * 100 == 0:
                 return 'Цена контракта совпадает с НМЦК и ЦКЕП'
-            elif 0 <= row['ReductionNMC'] * 100 <= 1:
+            elif 0 <= term * 100 <= 1:
                 return 'Цена контракта ниже НМЦК и ЦКЕП на 0-1%'
-            elif 1 <= row['ReductionNMC'] * 100 <= 5:
+            elif 1 <= term * 100 <= 5:
                 return 'Цена контракта ниже НМЦК и ЦКЕП на 1-5%'
-            elif 5 <= row['ReductionNMC'] * 100<= 10:
+            elif 5 <= term * 100<= 10:
                 return 'Цена контракта ниже НМЦК и ЦКЕП на 5-10%'
-            elif 10 <= row['ReductionNMC'] * 100 <= 20:
+            elif 10 <= term * 100 <= 20:
                 return 'Цена контракта ниже НМЦК и ЦКЕП на 10-20%'
             else:
                 return 'Цена контракта ниже НМЦК и ЦКЕП более 20%'
@@ -816,20 +855,21 @@ class StatisticWidgetContract(QWidget):
             pass
         
     def determine_var_range(self,row):
+        term =  row[f'{self.formular_texts[9]}'] 
         try:
-            if row['CoefficientOfVariation'] * 100 == 0:
+            if term * 100 == 0:
                 return 'Значение коэффициента вариации 0%'
-            elif 0 <= row['CoefficientOfVariation'] * 100 <= 1:
+            elif 0 <= term * 100 <= 1:
                 return 'значение коэффициента вариации 0-1%'
-            elif 1 <= row['CoefficientOfVariation'] * 100 <= 2:
+            elif 1 <= term * 100 <= 2:
                 return 'значение коэффициента вариации 1-2%'
-            elif 2 <= row['CoefficientOfVariation'] * 100<= 5:
+            elif 2 <= term * 100<= 5:
                 return 'значение коэффициента вариации 2-5%'
-            elif 5 <= row['CoefficientOfVariation'] * 100<= 10:
+            elif 5 <= term * 100<= 10:
                 return 'значение коэффициента вариации 5-10%'
-            elif 10 <= row['CoefficientOfVariation']* 100 <= 20:
+            elif 10 <= term* 100 <= 20:
                 return 'значение коэффициента вариации 10-20%'
-            elif 20 <= row['CoefficientOfVariation']* 100 <= 33:
+            elif 20 <= term* 100 <= 33:
                 return 'значение коэффициента вариации 10-20%'
             else:
                 return 'более 33%'
@@ -837,17 +877,18 @@ class StatisticWidgetContract(QWidget):
             pass
         
     def determine_price_range(self,row):
-        if row['InitialMaxContractPrice'] > 100000000:
+        qyt = row[f'{self.formular_texts[8]}'] 
+        if qyt > 100000000:
             return 'Цена контракта более 100 000 000 тыс.руб.'
-        elif 5000000 <= row['InitialMaxContractPrice'] <= 10000000:
+        elif 5000000 <= qyt <= 10000000:
             return 'Цена контракта 5 000 000 - 10 000 000 тыс.руб.'
-        elif 1000000 <= row['InitialMaxContractPrice'] <= 5000000:
+        elif 1000000 <= qyt <= 5000000:
             return 'Цена контракта 1 000 000 - 5 000 000 тыс.руб.'
-        elif 500000 <= row['InitialMaxContractPrice'] <= 1000000:
+        elif 500000 <= qyt <= 1000000:
             return 'Цена контракта 500 000-  1 000 000 тыс.руб.'
-        elif 200000 <= row['InitialMaxContractPrice'] <= 500000:
+        elif 200000 <= qyt <= 500000:
             return 'Цена контракта 200 000 - 500 000 тыс.руб.'
-        elif 100000 <= row['InitialMaxContractPrice'] <= 200000:
+        elif 100000 <= qyt <= 200000:
             return 'Цена контракта 100 000 - 200 000 тыс.руб.'
         # elif 100000 <= row['InitialMaxContractPrice']:
         #     return 'Менее 100 тыс.руб'
@@ -862,7 +903,10 @@ class StatisticWidgetContract(QWidget):
         # Получение текущих данных
         current_data = self.all_data[self.current_data_index]
         # Отображение данных в таблице
-        self.populate_table(current_data[0], current_data[1])
+        if self.current_data_index < 3:
+            self.populate_table(current_data[0], current_data[1])
+        else:
+            self.populate_table_2(current_data[0], current_data[1])
 
 
     def show_previous_data(self):
@@ -884,6 +928,10 @@ class StatisticWidgetContract(QWidget):
         pivot_tables_purchase1, column_sums_purchase1 = self.winner_analis()
         pivot_tables_purchase2, column_sums_purchase2 = self.count_non_zero_contract_prices()
         pivot_tables_purchase3, column_sums_purchase3 = self.count_non_zero_contract_num()
+        pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
+        pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
+        pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
+        pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
         sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2 = self.all_purchase.return_filters_variabels()
         filters = []
 
@@ -904,10 +952,12 @@ class StatisticWidgetContract(QWidget):
             filters.append(str(max_price))
         
        
-        file_name = f"Данные статистики по Фильтрам {' '.join(filters)}.xlsx"
+        file_name = f"Данные статистики по Фильтрам контракта {' '.join(filters)}.xlsx"
         self.save_to_excel_combined(
         [pivot_tables_purchase1, pivot_tables_purchase2, pivot_tables_purchase3],
         [column_sums_purchase1, column_sums_purchase2, column_sums_purchase3],
+        [pivot_tables_max_price1, pivot_tables_max_price2, pivot_tables_max_price3, pivot_tables_max_price4],
+        [column_sums_max_price1, column_sums_max_price2, column_sums_max_price3, column_sums_max_price4],
        
         file_name
     )
