@@ -21,6 +21,9 @@ import os
 import subprocess
 from openpyxl import Workbook
 from PySide6.QtCore import Signal
+
+from  locale import format_string,setlocale,LC_ALL
+setlocale(LC_ALL, 'ru_RU.UTF-8')
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 
 
@@ -39,6 +42,7 @@ class PurchasesWidget(QWidget):
         self.selected_text = None
         self.role = role
         self.user = user
+        self.symbol = ' ₽'
         self.changer = changer
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
@@ -209,11 +213,11 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Код идентификации закупки", current_purchase.PurchaseIdentificationCode if current_purchase.PurchaseIdentificationCode else "Нет данных")
             self.add_row_to_table("Номер лота", str(current_purchase.LotNumber) if current_purchase.LotNumber is not None else "Нет данных")
             self.add_row_to_table("Наименование лота", current_purchase.LotName if current_purchase.LotName else "Нет данных")
-            self.add_row_to_table("Начальная максимальная цена контракта", str(current_purchase.InitialMaxContractPrice) if current_purchase.InitialMaxContractPrice is not None else "Нет данных")
+            self.add_row_to_table("Начальная максимальная цена контракта", format_string("%.0f", current_purchase.InitialMaxContractPrice, grouping=True) + self.symbol if current_purchase.InitialMaxContractPrice is not None else "Нет данных")
             self.add_row_to_table("Валюта", current_purchase.Currency if current_purchase.Currency else "Нет данных")
             self.add_row_to_table("Начальная максимальная цена контракта в валюте", str(current_purchase.InitialMaxContractPriceInCurrency) if current_purchase.InitialMaxContractPriceInCurrency is not None else "Нет данных")
             self.add_row_to_table("Количество единиц", str(current_purchase.quantity_units) if current_purchase.quantity_units is not None else "Нет данных")
-            self.add_row_to_table("НМЦК за единицу", str(current_purchase.nmck_per_unit) if current_purchase.nmck_per_unit is not None else "Нет данных")
+            self.add_row_to_table("НМЦК за единицу", format_string("%.0f",current_purchase.nmck_per_unit, grouping=True)+ self.symbol if current_purchase.nmck_per_unit is not None else "Нет данных")
             self.add_row_to_table("Валюта контракта", current_purchase.ContractCurrency if current_purchase.ContractCurrency else "Нет данных")
             self.add_row_to_table("Классификация ОКДП", current_purchase.OKDPClassification if current_purchase.OKDPClassification else "Нет данных")
             self.add_row_to_table("Классификация ОКПД", current_purchase.OKPDClassification if current_purchase.OKPDClassification else "Нет данных")
@@ -240,16 +244,16 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("ТКП", "нет данных")
             else:
                 for key, value in tkp_proposal_dict.items():
-                        self.add_row_to_table(key, str(value))
+                        self.add_row_to_table(key , format_string("%.0f" ,value,grouping=True) + self.symbol)
             self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount) if current_purchase.QueryCount is not None else "Нет данных")
             self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount) if current_purchase.ResponseCount is not None else "Нет данных")
-            self.add_row_to_table("Среднее значение цены", str(current_purchase.AveragePrice) if current_purchase.AveragePrice is not None else "Нет данных")
-            self.add_row_to_table("Минимальная цена", str(current_purchase.MinPrice) if current_purchase.MinPrice is not None else "Нет данных")
-            self.add_row_to_table("Максимальная цена", str(current_purchase.MaxPrice) if current_purchase.MaxPrice is not None else "Нет данных")
-            self.add_row_to_table("Среднее квадратичное отклонение", str(current_purchase.StandardDeviation) if current_purchase.StandardDeviation is not None else "Нет данных")
-            self.add_row_to_table("Коэффициент вариации", str(current_purchase.CoefficientOfVariation) if current_purchase.CoefficientOfVariation is not None else "Нет данных")
-            self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket) if current_purchase.NMCKMarket is not None else "Нет данных")
-            self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit) if current_purchase.FinancingLimit is not None else "Нет данных")
+            self.add_row_to_table("Среднее значение цены", format_string("%.0f",current_purchase.AveragePrice,grouping=True) + self.symbol if current_purchase.AveragePrice is not None else "Нет данных")
+            self.add_row_to_table("Минимальная цена", format_string("%.0f",current_purchase.MinPrice,grouping=True) + self.symbol if current_purchase.MinPrice is not None else "Нет данных")
+            self.add_row_to_table("Максимальная цена", format_string("%.0f",current_purchase.MaxPrice,grouping=True) + self.symbol if current_purchase.MaxPrice is not None else "Нет данных")
+            self.add_row_to_table("Среднее квадратичное отклонение", format_string("%.0f",current_purchase.StandardDeviation,grouping=True) + self.symbol if current_purchase.StandardDeviation is not None else "Нет данных")
+            self.add_row_to_table("Коэффициент вариации %", format_string("%.0f",current_purchase.CoefficientOfVariation * 100,grouping=True) + ' %' if current_purchase.CoefficientOfVariation is not None else "Нет данных")
+            self.add_row_to_table("НМЦК рыночная", format_string("%.0f",current_purchase.NMCKMarket,grouping=True) + self.symbol if current_purchase.NMCKMarket is not None else "Нет данных")
+            self.add_row_to_table("Лимит финансирования", format_string("%.0f",current_purchase.FinancingLimit,grouping=True) + self.symbol if current_purchase.FinancingLimit is not None  else "Нет данных")
             self.add_section_to_table("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
             nmc_1_proposal_dict = {}
             if current_purchase.NMCK_1:
@@ -258,7 +262,7 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("Цена судна приведенная к уровню цен года его поставки", "нет данных")
             else:
                 for key, value in nmc_1_proposal_dict.items():
-                    self.add_row_to_table(key, str(value))
+                    self.add_row_to_table(key, format_string("%.0f" ,value,grouping=True) + self.symbol)
                     
             nmc_2_proposal_dict = {}
             if current_purchase.NMCK_2:
@@ -267,7 +271,7 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("Цена судна приведенная к уровню цен первого года периода строительства судна", "нет данных")
             else:
                 for key, value in nmc_2_proposal_dict.items():
-                    self.add_row_to_table(key, str(value))
+                    self.add_row_to_table(key, format_string("%.0f" ,value,grouping=True) + self.symbol)
                 
             nmc_3_proposal_dict = {}
             if current_purchase.NMCK_3:
@@ -276,11 +280,11 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("Цена судна приведенная к уровню цен текущих лет на периода строительства судна", "Нет данных")
             else:
                 for key, value in nmc_3_proposal_dict.items():
-                    self.add_row_to_table(key, str(value))
+                    self.add_row_to_table(key, format_string("%.0f" ,value,grouping=True) + self.symbol)
             self.add_section_to_table("3.Определение НМЦК затратным методом")
             self.add_row_to_table("Наименование организации", str(current_purchase.organization_name) if current_purchase.organization_name else "Нет данных")
             self.add_row_to_table("Дата расчета", str(current_purchase.organization_name_date) if current_purchase.organization_name_date else "Нет данных")
-            self.add_row_to_table("Цена", str(current_purchase.organization_price) if current_purchase.organization_price else "Нет данных")
+            self.add_row_to_table("Цена", format_string("%.0f",current_purchase.organization_price,grouping=True) + self.symbol if current_purchase.organization_price else "Нет данных")
             self.add_row_to_table("Файл расчета", str(current_purchase.organization_name_file) if current_purchase.organization_name_file else "Нет данных")
             self.add_section_to_table("4.Итоговое определение НМЦК с использованием нескольких методов")
             self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации потенциальным исполнителям", 
@@ -308,7 +312,13 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("Общее количество отклоненных заявок", str(contract.RejectedApplications))
                 price_proposal_dict = json.loads(contract.PriceProposal)
                 for key, value in price_proposal_dict.items():
-                    self.add_row_to_table(key, str(value))
+                    try:
+                        numeric_value = float(value)  # Пробуем преобразовать в число
+                        # Если преобразование удалось, добавляем число в таблицу
+                        self.add_row_to_table(key, format_string("%.0f", numeric_value, grouping=True) + self.symbol)
+                    except ValueError:
+                        # Если возникла ошибка при преобразовании, добавляем значение как строку
+                        self.add_row_to_table(key, str(value))
                 Applicant_dict = json.loads( contract.Applicant)
                 for key, value in Applicant_dict.items():
                     self.add_row_to_table(key, str(value))
@@ -323,10 +333,10 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("№ договора", contract.ContractNumber)
                 self.add_row_to_table("Дата начала/подписания", str(contract.StartDate))
                 self.add_row_to_table("Дата окончания/исполнения", str(contract.EndDate))
-                self.add_row_to_table("Цена договора, руб.", str(contract.ContractPrice))
-                self.add_row_to_table("Размер авансирования, руб", str(contract.AdvancePayment))
-                self.add_row_to_table("Снижение НМЦК, руб.", str(contract.ReductionNMC ))
-                self.add_row_to_table("Снижение НМЦК, %", str(contract.ReductionNMCPercent * 100) + " %")
+                self.add_row_to_table("Цена договора, руб.", format_string("%.0f",contract.ContractPrice,grouping=True) + self.symbol)
+                self.add_row_to_table("Размер авансирования, руб",format_string("%.0f",contract.AdvancePayment,grouping=True) + self.symbol)
+                self.add_row_to_table("Снижение НМЦК, руб.",  format_string("%.0f",contract.ReductionNMC ,grouping=True) + self.symbol)
+                self.add_row_to_table("Снижение НМЦК, %", format_string("%.0f",contract.ReductionNMCPercent) + " %")
                 self.add_row_to_table("Протоколы определения поставщика (выписка)", contract.SupplierProtocol)
                 self.add_row_to_table("Договор", contract.ContractFile)
 
@@ -348,7 +358,7 @@ class PurchasesWidget(QWidget):
             # if current_purchase.isChanged == True:
             #     self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
             #     for curr in self.currency:
-            #         self.add_section_to_table("Изминения валюты")
+            #         self.add_section_to_table("Изменения валюты")
             #         self.add_row_to_table("Значение валюты", str(curr.CurrencyValue))
             #         self.add_row_to_table("Текущая валюта", str(curr.CurrentCurrency))
             #         self.add_row_to_table("Дата изменения значения валюты", str(curr.DateValueChanged))

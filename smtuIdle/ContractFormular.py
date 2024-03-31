@@ -20,6 +20,8 @@ from PySide6.QtWidgets import QSizePolicy
 import os
 import subprocess
 from openpyxl import Workbook
+from  locale import format_string,setlocale,LC_ALL
+setlocale(LC_ALL, 'ru_RU.UTF-8')
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 
 
@@ -36,6 +38,7 @@ class ContractFormularWidget(QWidget):
         self.main_win = main_window
         self.selected_text = None
         self.role = role
+        self.symbol = ' ₽'
         self.user = user
         self.changer = changer
         # Создаем таблицу для отображения данных
@@ -186,109 +189,13 @@ class ContractFormularWidget(QWidget):
         # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)
         if len(self.purchases_list) != 0:
-            # Получаем текущую запись
+            
             self.current_purchase = self.purchases_list[self.current_position]
-
-            # # Добавляем данные в виде "название поля - значение поля"
             self.add_section_to_table("Описание закупки")
             self.add_row_to_table("№ПП", str(current_purchase.Id))
-            # self.add_row_to_table("Закон", current_purchase.PurchaseOrder if current_purchase.PurchaseOrder else "Нет данных")
             self.add_row_to_table("Реестровый номер", current_purchase.RegistryNumber if current_purchase.RegistryNumber else "Нет данных")
-            # self.add_row_to_table("Метод закупки", current_purchase.ProcurementMethod if current_purchase.ProcurementMethod else "Нет данных")
             self.add_row_to_table("Наименование закупки", current_purchase.PurchaseName if current_purchase.PurchaseName else "Нет данных")
-            # self.add_row_to_table("Предмет аукциона", current_purchase.AuctionSubject if current_purchase.AuctionSubject else "Нет данных")
-            # self.add_row_to_table("Код идентификации закупки", current_purchase.PurchaseIdentificationCode if current_purchase.PurchaseIdentificationCode else "Нет данных")
-            # self.add_row_to_table("Номер лота", str(current_purchase.LotNumber) if current_purchase.LotNumber is not None else "Нет данных")
-            # self.add_row_to_table("Наименование лота", current_purchase.LotName if current_purchase.LotName else "Нет данных")
-            # self.add_row_to_table("Начальная максимальная цена контракта", str(current_purchase.InitialMaxContractPrice) if current_purchase.InitialMaxContractPrice is not None else "Нет данных")
-            # self.add_row_to_table("Валюта", current_purchase.Currency if current_purchase.Currency else "Нет данных")
-            # self.add_row_to_table("Начальная максимальная цена контракта в валюте", str(current_purchase.InitialMaxContractPriceInCurrency) if current_purchase.InitialMaxContractPriceInCurrency is not None else "Нет данных")
-            # self.add_row_to_table("Количество единиц", str(current_purchase.quantity_units) if current_purchase.quantity_units is not None else "Нет данных")
-            # self.add_row_to_table("НМЦК за единицу", str(current_purchase.nmck_per_unit) if current_purchase.nmck_per_unit is not None else "Нет данных")
-            # self.add_row_to_table("Валюта контракта", current_purchase.ContractCurrency if current_purchase.ContractCurrency else "Нет данных")
-            # self.add_row_to_table("Классификация ОКДП", current_purchase.OKDPClassification if current_purchase.OKDPClassification else "Нет данных")
-            # self.add_row_to_table("Классификация ОКПД", current_purchase.OKPDClassification if current_purchase.OKPDClassification else "Нет данных")
-            # self.add_row_to_table("Классификация ОКПД2", current_purchase.OKPD2Classification if current_purchase.OKPD2Classification else "Нет данных")
-            # self.add_row_to_table("Код позиции", current_purchase.PositionCode if current_purchase.PositionCode else "Нет данных")
-            # self.add_row_to_table("Наименование заказчика", current_purchase.CustomerName if current_purchase.CustomerName else "Нет данных")
-            # self.add_row_to_table("Организация закупки", current_purchase.ProcurementOrganization if current_purchase.ProcurementOrganization else "Нет данных")
-            # self.add_row_to_table("Дата размещения", str(current_purchase.PlacementDate) if current_purchase.PlacementDate else "Нет данных")
-            # self.add_row_to_table("Дата обновления", str(current_purchase.UpdateDate) if current_purchase.UpdateDate else "Нет данных")
-            # self.add_row_to_table("Этап закупки", current_purchase.ProcurementStage if current_purchase.ProcurementStage else "Нет данных")
-            # self.add_row_to_table("Особенности закупки", current_purchase.ProcurementFeatures if current_purchase.ProcurementFeatures else "Нет данных")
-            # self.add_row_to_table("Дата начала заявки", str(current_purchase.ApplicationStartDate) if current_purchase.ApplicationStartDate else "Нет данных")
-            # self.add_row_to_table("Дата окончания заявки", str(current_purchase.ApplicationEndDate) if current_purchase.ApplicationEndDate else "Нет данных")
-            # self.add_row_to_table("Дата аукциона", str(current_purchase.AuctionDate) if current_purchase.AuctionDate else "Нет данных")
-            # self.add_row_to_table("Извещение о закупке", str(current_purchase.notification_link) if current_purchase.notification_link else "Нет данных")
-            # self.add_row_to_table("Файл НМЦК", str(current_purchase.nmck_file) if current_purchase.nmck_file else "Нет данных")
-            # self.add_row_to_table("Файл протокола", str(current_purchase.protocol_file) if current_purchase.protocol_file else "Нет данных")
-            # self.add_section_to_table("Определение НМЦК и ЦКЕИ")
-            # self.add_section_to_table("1.Определение НМЦК методом сопоставимых рыночных цен")
-            # tkp_proposal_dict = {}
-            # if current_purchase.TKPData:
-            #     tkp_proposal_dict = json.loads(current_purchase.TKPData)
-            # if not tkp_proposal_dict:
-            #     self.add_row_to_table("ТКП", "нет данных")
-            # else:
-            #     for key, value in tkp_proposal_dict.items():
-            #             self.add_row_to_table(key, str(value))
-            # self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount) if current_purchase.QueryCount is not None else "Нет данных")
-            # self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount) if current_purchase.ResponseCount is not None else "Нет данных")
-            # self.add_row_to_table("Среднее значение цены", str(current_purchase.AveragePrice) if current_purchase.AveragePrice is not None else "Нет данных")
-            # self.add_row_to_table("Минимальная цена", str(current_purchase.MinPrice) if current_purchase.MinPrice is not None else "Нет данных")
-            # self.add_row_to_table("Максимальная цена", str(current_purchase.MaxPrice) if current_purchase.MaxPrice is not None else "Нет данных")
-            # self.add_row_to_table("Среднее квадратичное отклонение", str(current_purchase.StandardDeviation) if current_purchase.StandardDeviation is not None else "Нет данных")
-            # self.add_row_to_table("Коэффициент вариации", str(current_purchase.CoefficientOfVariation) if current_purchase.CoefficientOfVariation is not None else "Нет данных")
-            # self.add_row_to_table("НМЦК рыночная", str(current_purchase.NMCKMarket) if current_purchase.NMCKMarket is not None else "Нет данных")
-            # self.add_row_to_table("Лимит финансирования", str(current_purchase.FinancingLimit) if current_purchase.FinancingLimit is not None else "Нет данных")
-            # self.add_section_to_table("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
-            # nmc_1_proposal_dict = {}
-            # if current_purchase.NMCK_1:
-            #     nmc_1_proposal_dict = json.loads(current_purchase.NMCK_1)
-            # if not nmc_1_proposal_dict:
-            #     self.add_row_to_table("Цена судна приведенная к уровню цен года его поставки", "нет данных")
-            # else:
-            #     for key, value in nmc_1_proposal_dict.items():
-            #         self.add_row_to_table(key, str(value))
-                    
-            # nmc_2_proposal_dict = {}
-            # if current_purchase.NMCK_2:
-            #     nmc_2_proposal_dict = json.loads(current_purchase.NMCK_2)
-            # if not nmc_2_proposal_dict:
-            #     self.add_row_to_table("Цена судна приведенная к уровню цен первого года периода строительства судна", "нет данных")
-            # else:
-            #     for key, value in nmc_2_proposal_dict.items():
-            #         self.add_row_to_table(key, str(value))
-                
-            # nmc_3_proposal_dict = {}
-            # if current_purchase.NMCK_3:
-            #     nmc_3_proposal_dict = json.loads(current_purchase.NMCK_3)
-            # if not nmc_3_proposal_dict:
-            #     self.add_row_to_table("Цена судна приведенная к уровню цен текущих лет на периода строительства судна", "Нет данных")
-            # else:
-            #     for key, value in nmc_3_proposal_dict.items():
-            #         self.add_row_to_table(key, str(value))
-            # self.add_section_to_table("3.Определение НМЦК затратным методом")
-            # self.add_row_to_table("Наименование организации", str(current_purchase.organization_name) if current_purchase.organization_name else "Нет данных")
-            # self.add_row_to_table("Дата расчета", str(current_purchase.organization_name_date) if current_purchase.organization_name_date else "Нет данных")
-            # self.add_row_to_table("Цена", str(current_purchase.organization_price) if current_purchase.organization_price else "Нет данных")
-            # self.add_row_to_table("Файл расчета", str(current_purchase.organization_name_file) if current_purchase.organization_name_file else "Нет данных")
-            # self.add_section_to_table("4.Итоговое определение НМЦК с использованием нескольких методов")
-            # self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации потенциальным исполнителям", 
-            #           str(current_purchase.method_direction_requests) if current_purchase.method_direction_requests else "Нет данных")
-            # self.add_row_to_table("Способ использования общедоступной информации при осуществлении поиска ценовой информации в реестре государственных контрактов", 
-            #           str(current_purchase.method_usage_information) if current_purchase.method_usage_information else "Нет данных")
-            # self.add_row_to_table("НМЦК, полученный различными способами в рамках метода сопостовимых рыночных цен", 
-            #           str(current_purchase.nmc_various_methods) if current_purchase.nmc_various_methods else "Нет данных")
-            # self.add_row_to_table("НМЦК на основе затратного метода", 
-            #           str(current_purchase.nmc_cost_method) if current_purchase.nmc_cost_method else "Нет данных")
-            # self.add_row_to_table("Цена сравнимой продукции, приведенная в соответствие к условиям закупки судна, НМЦК которого определяется", 
-            #           str(current_purchase.comparable_product_price) if current_purchase.comparable_product_price else "Нет данных")
-            # self.add_row_to_table("НМЦК, полученная с применением двух методов: метода сопоставимых рыночных цен и затратного метода", 
-            #           str(current_purchase.nmc_two_methods) if current_purchase.nmc_two_methods else "Нет данных")
-            # self.add_row_to_table("Файл итогового определения НМЦК с использованием нескольких методов", 
-            #           str(current_purchase.file_4) if current_purchase.file_4 else "Нет данных")
-
+       
             # Получаем связанные записи из модели Contract
             self.contracts = Contract.select().where(Contract.purchase == current_purchase)
             for contract in self.contracts:
@@ -299,7 +206,13 @@ class ContractFormularWidget(QWidget):
                 self.add_row_to_table("Общее количество отклоненных заявок", str(contract.RejectedApplications))
                 price_proposal_dict = json.loads(contract.PriceProposal)
                 for key, value in price_proposal_dict.items():
-                    self.add_row_to_table(key, str(value))
+                    try:
+                        numeric_value = float(value)  # Пробуем преобразовать в число
+                        # Если преобразование удалось, добавляем число в таблицу
+                        self.add_row_to_table(key, format_string("%.0f", numeric_value, grouping=True) + self.symbol)
+                    except ValueError:
+                        # Если возникла ошибка при преобразовании, добавляем значение как строку
+                        self.add_row_to_table(key, str(value))
                 Applicant_dict = json.loads( contract.Applicant)
                 for key, value in Applicant_dict.items():
                     self.add_row_to_table(key, str(value))
@@ -314,10 +227,10 @@ class ContractFormularWidget(QWidget):
                 self.add_row_to_table("№ договора", contract.ContractNumber)
                 self.add_row_to_table("Дата начала/подписания", str(contract.StartDate))
                 self.add_row_to_table("Дата окончания/исполнения", str(contract.EndDate))
-                self.add_row_to_table("Цена договора, руб.", str(contract.ContractPrice))
-                self.add_row_to_table("Размер авансирования, руб./(%)", str(contract.AdvancePayment))
-                self.add_row_to_table("Снижение НМЦК, руб.", str(contract.ReductionNMC))
-                self.add_row_to_table("Снижение НМЦК, %", str(contract.ReductionNMCPercent))
+                self.add_row_to_table("Цена договора, руб.", format_string("%.0f",contract.ContractPrice,grouping=True) + self.symbol)
+                self.add_row_to_table("Размер авансирования, руб",format_string("%.0f",contract.AdvancePayment,grouping=True) + self.symbol)
+                self.add_row_to_table("Снижение НМЦК, руб.",  format_string("%.0f",contract.ReductionNMC ,grouping=True) + self.symbol)
+                self.add_row_to_table("Снижение НМЦК, %", format_string("%.0f",contract.ReductionNMCPercent) + " %")
                 self.add_row_to_table("Протоколы определения поставщика (выписка)", contract.SupplierProtocol)
                 self.add_row_to_table("Договор", contract.ContractFile)
 
