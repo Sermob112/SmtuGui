@@ -14,18 +14,19 @@ from peewee import SqliteDatabase
 # port=5432
 # port = connection.settings_dict.get('PORT', '')
 # hostname = connection.settings_dict['HOST', '']
-db = SqliteDatabase('test.db')
+# db = SqliteDatabase('test.db')
+db = PostgresqlExtDatabase('boatbase', user='postgres', password='sa',
+                                 host='localhost', port=5432)
 
 
-
-def connector():
-    connection = sqlite3.connect('test.db')
-    return connection
+# def connector():
+#     connection = sqlite3.connect('test.db')
+#     return connection
 def insert_in_table(csv_file_path, user,role):
     errors = []
     inserted_rows = 0 
     try:
-        connection = connector()
+        
         print("Успешное подключение к базе данных")
         cursor = connection.cursor()
         with open(csv_file_path, 'r', encoding='windows-1251') as csv_file:
@@ -139,15 +140,13 @@ def insert_in_table(csv_file_path, user,role):
                 inserted_rows += 1
         
         
-        connection.commit()
+        
     
     
     except Exception as e:
         print("Ошибка подключения или вставки данных:", e)
         errors.append(str(e))  # Добавьте ошибку в список ошибок
 
-    finally:
-        connection.close()
     return inserted_rows, errors
 
 
@@ -159,9 +158,9 @@ def insert_in_table_full(csv_file_path):
     errors = []
     inserted_rows = 0 
     try:
-        connection = connector()
+        # connection = connector()
         print("Успешное подключение к базе данных")
-        cursor = connection.cursor()
+        # cursor = connection.cursor()
         with open(csv_file_path, 'r', encoding='windows-1251') as csv_file:
             csv_reader = csv.reader(csv_file, delimiter = ';')
             next(csv_reader)  # Пропустите заголовок, если он есть
@@ -186,13 +185,16 @@ def insert_in_table_full(csv_file_path):
                 
                 try:
                     initial_max_contract_price = float(row[8])
+        
                 except ValueError:
-                    initial_max_contract_price = 0.0  # Если не удалось преобразовать в float, устанавливаем значение по умолчанию
+                    initial_max_contract_price = 0
+
+
                 Currency = row[63] if row[63]  else 'Нет данных'
                 try:
-                    InitialMaxContractPriceInCurrency = float(row[10])
+                    initialMaxContractPriceInCurrency = float(row[10])
                 except ValueError:
-                    InitialMaxContractPriceInCurrency = 0
+                    initialMaxContractPriceInCurrency = 0
                 ContractCurrency =   row[63] if row[63]  else 'Нет данных'
                 OKDPClassification =  'Нет данных'
                 OKPDClassification =  'Нет данных'
@@ -204,31 +206,31 @@ def insert_in_table_full(csv_file_path):
                 try:
                     placementDate = datetime.datetime.strptime(PlacementDate, '%d.%m.%Y').date()
                 except ValueError:
-                    placementDate = 'Нет данных'
+                    placementDate = None
                 UpdateDate = row[1]
                 try:
                     updateDate = datetime.datetime.strptime(UpdateDate, '%d.%m.%Y').date()
                 except ValueError:
-                    updateDate ='Нет данных'
+                    updateDate =None
                 ProcurementStage = 'Нет данных'
                 ProcurementFeatures = 'Нет данных'
                 ApplicationStartDate = row[10] 
                 try:
                     applicationStartDate = datetime.datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
                 except ValueError:
-                    applicationStartDate =  'Нет данных'
+                    applicationStartDate =  None
 
                 ApplicationEndDate = row[1]
                 try:
                     applicationEndDate = datetime.datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
                 except ValueError:
-                    applicationEndDate = 'Нет данных'
+                    applicationEndDate = None
 
                 auctionDate = row[1]
                 try:
                     AuctionDate = datetime.datetime.strptime(auctionDate, '%d.%m.%Y').date()
                 except ValueError:
-                    AuctionDate = 'Нет данных'
+                    AuctionDate = None
 
                 tkp_data_dict = {}
                 for i in range(10):
@@ -339,13 +341,13 @@ def insert_in_table_full(csv_file_path):
                 try:
                     startDate = datetime.datetime.strptime(StartDate, '%d.%m.%Y').date()
                 except ValueError:
-                    startDate = 'Нет данных'
+                    startDate = None
 
                 EndDate = row[60]
                 try:
                     endDate = datetime.datetime.strptime(EndDate, '%d.%m.%Y').date()
                 except ValueError:
-                    endDate = 'Нет данных'
+                    endDate = None
                 try:
                     AdvancePayment = float(row[61]) if row[61] else 0
                 except ValueError:
@@ -396,6 +398,7 @@ def insert_in_table_full(csv_file_path):
                 
                     
                 Purchase.create(
+              
                 PurchaseOrder=purchase_date, 
                 RegistryNumber=registry_number, 
                 ProcurementMethod=procurement_method, 
@@ -406,7 +409,7 @@ def insert_in_table_full(csv_file_path):
                 LotName=lot_name,
                 InitialMaxContractPrice=initial_max_contract_price,
                 Currency=Currency, 
-                InitialMaxContractPriceInCurrency=InitialMaxContractPriceInCurrency, 
+                InitialMaxContractPriceInCurrency=initialMaxContractPriceInCurrency, 
                 ContractCurrency=ContractCurrency,
                 OKDPClassification=OKDPClassification,
                 OKPDClassification=OKPDClassification,
@@ -434,7 +437,7 @@ def insert_in_table_full(csv_file_path):
                 PurchaseStatus=PurchaseStatus,
                 quantity_units=quantity_units,
                 nmck_per_unit=nmck_per_unit,
-                notification_link=notification_link
+                notification_link=notification_link,
             )
 
             #     sqlContract = """
@@ -481,7 +484,7 @@ def insert_in_table_full(csv_file_path):
             )
                 # cursor.execute(sql, data)
                 # cursor.execute(sqlContract, dataContracts)
-                inserted_rows += cursor.rowcount
+                # inserted_rows += cursor.rowcount
 
     #     with db.atomic():
     # # Iterate through all records and update fields with None values
@@ -496,18 +499,198 @@ def insert_in_table_full(csv_file_path):
     #                 if getattr(contact, field_name) is None:
     #                     setattr(contact, field_name, field.default if field.default is not None else "Нет данных")
     #             contact.save()
-        connection.commit()
+        # connection.commit()
     
     
     except Exception as e:
         print("Ошибка подключения или вставки данных:", e)
         errors.append(str(e))  # Добавьте ошибку в список ошибок
 
-    finally:
-        connection.close()
+    # finally:
+    #     connection.close()
     return inserted_rows, errors
-# insert_in_table('C:/Users/Sergey/Desktop/Работа/SmtuGui/smtuIdle/OrderSearch(1-500)_20.11.2023.csv')
+# insert_in_table_full('C:/Users/Sergey/Desktop/Работа/SmtuGui/Отладка 2 — копия.csv')
 
+
+
+
+
+
+def test_postgres(filename):
+    try:
+        # connection = connector()
+        print("Успешное подключение к базе данных")
+        # cursor = connection.cursor()
+        with open(filename, 'r', encoding='windows-1251') as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter = ';')
+            next(csv_reader)  # Пропустите заголовок, если он есть
+            j = 1
+            for row in csv_reader:
+                
+                # Обрезка слишком длинных строк
+                max_length = 512 # Максимальная длина для строк
+                purchase_date = row[2][:max_length] if row[0] else 'Нет данных'
+                registry_number = row[0][:max_length] if row[1] else 'Нет данных'
+                procurement_method = row[3][:max_length] if row[2] else 'Нет данных'
+                purchase_name = row[4][:max_length] if row[3] else 'Нет данных'
+                auction_subject = row[7][:max_length] if row[4] else 'Нет данных'
+                purchase_identification_code = 'Нет данных'
+                
+                try:
+                    lot_number = int(row[6])
+                except ValueError:
+                    lot_number = 0  # Если не удалось преобразовать в int, устанавливаем значение по умолчанию
+                
+                lot_name = row[7][:max_length] if row[7] else 'Нет данных'
+                try:
+                    initial_max_contract_price = float(row[8])
+                    initial_max_contract_price = int(initial_max_contract_price)  # Convert float to int if it's successful
+                except ValueError:
+                    initial_max_contract_price = 0
+
+                ContractCurrency =   row[63] if row[63]  else 'Нет данных'
+                OKDPClassification =  'Нет данных'
+                OKPDClassification =  'Нет данных'
+                OKPD2Classification = row[64] if row[64]  else 'Нет данных'
+                PositionCode = 'Нет данных'
+                CustomerName = row[5][:max_length] if row[5] else 'Нет данных'
+                ProcurementOrganization = 'Нет данных'
+                PlacementDate = row[1]
+                try:
+                    placementDate = datetime.datetime.strptime(PlacementDate, '%d.%m.%Y').date()
+                except ValueError:
+                    placementDate = None
+                UpdateDate = row[1]
+                try:
+                    updateDate = datetime.datetime.strptime(UpdateDate, '%d.%m.%Y').date()
+                except ValueError:
+                    updateDate =None
+                ProcurementStage = 'Нет данных'
+                ProcurementFeatures = 'Нет данных'
+                ApplicationStartDate = row[10] 
+                try:
+                    applicationStartDate = datetime.datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
+                except ValueError:
+                    applicationStartDate =  None
+
+                ApplicationEndDate = row[1]
+                try:
+                    applicationEndDate = datetime.datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
+                except ValueError:
+                    applicationEndDate = None
+
+                auctionDate = row[1]
+                try:
+                    AuctionDate = datetime.datetime.strptime(auctionDate, '%d.%m.%Y').date()
+                except ValueError:
+                    AuctionDate = None
+                try:
+                    initialMaxContractPriceInCurrency = float(row[10])
+                except ValueError:
+                    initialMaxContractPriceInCurrency = 0
+                quantity_units = int(row[6]) if row[6] else 0
+                nmck_per_unit = float(row[9]) if row[9] else 0
+                notification_link =  "Нет данных"
+
+                tkp_data_dict = {}
+                for i in range(10):
+                    column_name = f"ТКП №{1 + i}"
+                    try:
+                        tkp_value = int(row[13 + i])
+                        tkp_data_dict[column_name] = tkp_value
+                    except (ValueError, IndexError):
+                        # Handle errors or missing values as needed
+                        pass
+                tkp_data_json = json.dumps(tkp_data_dict, ensure_ascii=False)
+                try:
+                    QueryCount = int(row[11]) if row[11] else 0
+                except ValueError:
+                    QueryCount = 0
+
+                try:
+                    ResponseCount = int(row[12]) if row[12] else 0
+                except ValueError:
+                    ResponseCount = 0
+
+                try:
+                    AveragePrice = float(row[23]) if row[23] else 0
+                except ValueError:
+                    AveragePrice = 0
+
+                try:
+                    MinPrice = float(row[24]) if row[24] else 0
+                except ValueError:
+                    MinPrice = 0
+
+                try:
+                    MaxPrice = float(row[25]) if row[25] else 0
+                except ValueError:
+                    MaxPrice = 0
+
+                try:
+                    StandardDeviation = float(row[26]) if row[26] else 0
+                except ValueError:
+                    StandardDeviation = 0
+
+                try:
+                    CoefficientOfVariation = float(row[27]) if row[27] else 0
+                except ValueError:
+                    CoefficientOfVariation = 0
+
+                try:
+                    NMCKMarket = float(row[29]) if row[29] else 0
+                except ValueError:
+                    NMCKMarket = 0
+
+                try:
+                    FinancingLimit = float(row[30]) if row[30] else 0
+                except ValueError:
+                    FinancingLimit = 0
+                PurchaseStatus = row[31][:max_length] if row[31] else 'Нет данных'        
+        Test.create(
+            PurchaseOrder=purchase_date, 
+            RegistryNumber=registry_number, 
+            ProcurementMethod=procurement_method, 
+            PurchaseName=purchase_name,
+            AuctionSubject=auction_subject, 
+            PurchaseIdentificationCode=purchase_identification_code, 
+            LotNumber=lot_number, 
+            LotName=lot_name,
+            InitialMaxContractPrice=initial_max_contract_price,
+            InitialMaxContractPriceInCurrency=initialMaxContractPriceInCurrency, 
+            ContractCurrency=ContractCurrency,
+            OKDPClassification=OKDPClassification,
+            OKPDClassification=OKPDClassification,
+            OKPD2Classification=OKPD2Classification,
+            PositionCode=PositionCode,
+            CustomerName=CustomerName,
+            ProcurementOrganization=ProcurementOrganization,
+            PlacementDate=placementDate,
+            UpdateDate=updateDate,
+            ProcurementStage=ProcurementStage,
+            ProcurementFeatures=ProcurementFeatures,
+            ApplicationStartDate=applicationStartDate, 
+            ApplicationEndDate=applicationEndDate,
+            AuctionDate=AuctionDate,
+            nmck_per_unit=nmck_per_unit,
+            notification_link=notification_link,
+            quantity_units = quantity_units,
+            TKPData=tkp_data_json,
+            QueryCount=QueryCount,
+            ResponseCount=ResponseCount,
+            AveragePrice=AveragePrice,
+            MinPrice=MinPrice,
+            MaxPrice=MaxPrice,
+            StandardDeviation=StandardDeviation,
+            CoefficientOfVariation=CoefficientOfVariation,
+            NMCKMarket=NMCKMarket,
+            FinancingLimit=FinancingLimit,
+            PurchaseStatus=PurchaseStatus,
+        )
+    except Exception as E:
+        print(E)
+# test_postgres('C:/Users/Sergey/Desktop/Работа/SmtuGui/Отладка 2 — копия.csv')
+        
 
 # Пример использования
 # csv_file_path = 'C:/Users/Sergey/Desktop/Работа/SmtuGui/smtuIdle/OrderSearch(1-500)_20.11.2023.csv'
@@ -524,9 +707,9 @@ def insert_in_table_full(csv_file_path):
 def insert_in_table_for_users(csv_file_path):
     errors = []
     try:
-        connection = connector()
+
         print("Успешное подключение к базе данных")
-        cursor = connection.cursor()
+      
         with open(csv_file_path, 'r', encoding='windows-1251') as csv_file:
             csv_reader = csv.reader(csv_file, delimiter = ';')
             next(csv_reader)  # Пропустите заголовок, если он есть
@@ -1066,9 +1249,7 @@ def find_records_with_differences():
 
 def count_total_records():
     try:
-        connection = connector()
-        cursor = connection.cursor()
-
+       
         # Выполнение запроса на подсчет общего количества записей
         # cursor.execute("SELECT COUNT(*) FROM purchase")
         # result = cursor.fetchone()
@@ -1083,8 +1264,7 @@ def count_total_records():
     except sqlite3.Error as e:
         print("Ошибка при подсчете общего количества записей:", e)
     
-    finally:
-        connection.close()
+  
     return count_of_records
 
 
@@ -1092,8 +1272,7 @@ def count_total_records():
 # print(count_total_records())
 def delete_records_by_id(record_ids, user,role):
     try:
-        # Подключение к базе данных
-        connection = connector()
+  
          
         # SQL-запрос для удаления записей по Id
         query = Purchase.delete().where(Purchase.Id.in_(record_ids))
@@ -1112,8 +1291,7 @@ def delete_records_by_id(record_ids, user,role):
             purchase.delete_instance(recursive=True)
         query.execute()
 
-        # Закрытие соединения
-        connection.close()
+
 
         return True
 

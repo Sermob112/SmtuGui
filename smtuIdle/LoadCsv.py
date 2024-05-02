@@ -43,7 +43,7 @@ class CsvLoaderWidget(QWidget):
         layout.addLayout(h_layout)
 
         # Добавляем надпись
-        lbl_info = QLabel('Информация о дублировании или загрузке новых закупок', self)
+        lbl_info = QLabel('Информация о версиях закупок и загрузке новых закупок', self)
         lbl_info.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_info)
 
@@ -58,7 +58,7 @@ class CsvLoaderWidget(QWidget):
         layout.addWidget(self.table)
 
         # Добавляем лейбл под таблицей
-        lbl_table_info = QLabel('Таблица дубликатов', self)
+        lbl_table_info = QLabel('Таблица версий закупок', self)
         lbl_table_info.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_table_info)
        

@@ -93,28 +93,28 @@ class PurchasesWidgetAll(QWidget):
 
 
       
-        unique_purchase_OKPD2 = Purchase.select(Purchase.OKPD2Classification).distinct().order_by(fn.Lower(Purchase.OKPD2Classification))
+        unique_purchase_OKPD2 = Purchase.select(Purchase.OKPD2Classification).order_by(fn.Lower(Purchase.OKPD2Classification)).distinct()
         self.sort_by_putch_okpd2 = QComboBox()
         self.sort_by_putch_okpd2.addItem("Фильтрация по ОКПД2")
         self.sort_by_putch_okpd2.setFixedWidth(250)
-        for order in unique_purchase_OKPD2:
-            self.sort_by_putch_okpd2.addItem(str(order.OKPD2Classification))
+        # for order in unique_purchase_OKPD2:
+        #     self.sort_by_putch_okpd2.addItem(str(order.OKPD2Classification))
 
-        unique_purchase_CustomerName = Purchase.select(Purchase.CustomerName).distinct().order_by(fn.Lower(Purchase.CustomerName))
+        unique_purchase_CustomerName = Purchase.select(Purchase.CustomerName).order_by(fn.Lower(Purchase.CustomerName)).distinct()
         self.sort_by_putch_CustomerName = QComboBox()
         self.sort_by_putch_CustomerName.addItem("Фильтрация по Заказчикам")
         self.sort_by_putch_CustomerName.setFixedWidth(250)
-        for order in unique_purchase_CustomerName:
-            self.sort_by_putch_CustomerName.addItem(str(order.CustomerName))
+        # for order in unique_purchase_CustomerName:
+        #     self.sort_by_putch_CustomerName.addItem(str(order.CustomerName))
 
         self.transparent_style = "QDateEdit { color: transparent; }"
 
-        unique_purchase_ProcurementMethod = Purchase.select(Purchase.ProcurementMethod).distinct().order_by(fn.Lower(Purchase.ProcurementMethod))
+        unique_purchase_ProcurementMethod = Purchase.select(Purchase.ProcurementMethod).order_by(fn.Lower(Purchase.ProcurementMethod)).distinct()
         self.sort_by_putch_ProcurementMethod = QComboBox()
         self.sort_by_putch_ProcurementMethod.addItem("Фильтрация по Методу закупки")
         self.sort_by_putch_ProcurementMethod.setFixedWidth(250)
-        for order in unique_purchase_ProcurementMethod:
-            self.sort_by_putch_ProcurementMethod.addItem(str(order.ProcurementMethod))
+        # for order in unique_purchase_ProcurementMethod:
+        #     self.sort_by_putch_ProcurementMethod.addItem(str(order.ProcurementMethod))
         # Создаем метки и поля для ввода минимальной и максимальной цены
         self.sort_by_putch_okpd2.currentIndexChanged.connect(self.highlight_current_item)
         self.min_price_label = QLabel("Минимальная цена")
@@ -469,8 +469,8 @@ class PurchasesWidgetAll(QWidget):
         self.sort_by_putch_winner.addItem("Фильтрация по Победителю-исполнителю контракта")
         self.sort_by_putch_winner.setFixedWidth(250)
         self.sort_by_putch_winner.currentIndexChanged.connect(self.highlight_current_item_contract)
-        for order in unique_contract_winnter:
-            self.sort_by_putch_winner.addItem(str(order.WinnerExecutor))
+        # for order in unique_contract_winnter:
+        #     self.sort_by_putch_winner.addItem(str(order.WinnerExecutor))
 
 
       

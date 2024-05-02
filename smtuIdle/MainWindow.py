@@ -17,6 +17,7 @@ from ContractFormular import ContractFormularWidget
 from AllDbScroller import PurchasesWidgetAll
 from ChangeLogWindow import ChangeLogWindow
 from statisticWidgetContract import StatisticWidgetContract
+from Viewer import MyWindow
 from parserV3 import count_total_records
 from datetime import datetime
 from parserV3 import export_to_excel_all
@@ -163,6 +164,11 @@ class Ui_MainWindow(QMainWindow):
     
         # self.leftPanelFrame = QtWidgets.QFrame(self.centralwidget)
         self.leftPanelLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+
+        self.pushButtonParser = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonParser.setObjectName("pushButtonParser")
+        self.leftPanelLayout.addWidget(self.pushButtonParser)
+        self.leftPanelLayout.addSpacing(20)
         self.pushButton0 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton0.setObjectName("pushButton0")
         self.leftPanelLayout.addWidget(self.pushButton0)
@@ -209,7 +215,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.setObjectName("pushButton7")
         self.leftPanelLayout.addWidget(self.pushButton7)
         self.leftPanelLayout.addSpacing(20)
-        
+     
 
 
   
@@ -243,12 +249,13 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.setIcon(QIcon("Pics/7.png"))
         self.pushButton8.setIcon(QIcon("Pics/4.png"))
         self.pushButton9.setIcon(QIcon("Pics/4.png"))
+        self.pushButtonParser.setIcon(QIcon("Pics/5.png"))
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
         self.buttons = [
             self.pushButton0, self.pushButton1, self.pushButton2,
             self.pushButton3, self.pushButton4,self.pushButton5_1, self.pushButton6,
-            self.pushButton7,self.pushButton8,self.pushButton9,self.pushButton5
+            self.pushButton7,self.pushButton8,self.pushButton9,self.pushButtonParser,self.pushButton5
         ]
         self.update_button_style_all()
 
@@ -303,12 +310,20 @@ class Ui_MainWindow(QMainWindow):
         self.page9 = QtWidgets.QWidget()
         self.label9 = QtWidgets.QLabel(self.page9)
         self.stackedWidget.addWidget(self.page9)
+
+
+        self.page10 = QtWidgets.QWidget()
+        self.label10 = QtWidgets.QLabel(self.page10)
+        self.stackedWidget.addWidget(self.page10)
         #Загрузка виджета изминений бд
         self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
         self.ChangeWindow.setParent(self)
         layout = QVBoxLayout(self.page5)
         layout.addWidget(self.ChangeWindow)
 
+        self.parserWindow = MyWindow()
+        layout = QVBoxLayout(self.page10)
+        layout.addWidget(self.parserWindow)
          #Загрузка виджета БД 
         self.purchaseViewerall = PurchasesWidgetAll(self,self.users_roles[0])
         self.purchaseViewerall.setParent(self)
@@ -387,6 +402,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(7))
         self.pushButton8.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(8))
         self.pushButton9.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(9))
+        self.pushButtonParser.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(10))
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -403,6 +419,7 @@ class Ui_MainWindow(QMainWindow):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
+        self.pushButtonParser.setText(_translate("MainWindow", "Парсер"))
         self.pushButton0.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton1.setText(_translate("MainWindow", "Ввод данных по закупкам"))
         self.pushButton2.setText(_translate("MainWindow", "Просмотр Формуляра Закупки"))
@@ -414,6 +431,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.setText(_translate("MainWindow", "Файлы Руководства"))
         self.pushButton8.setText(_translate("MainWindow", "Просмотр Формуляра Контрактов"))
         self.pushButton9.setText(_translate("MainWindow", "Статистический анализ контрактов"))
+        
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         # self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
