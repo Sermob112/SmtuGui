@@ -4,10 +4,12 @@ import os
 
 system_db = PostgresqlDatabase('postgres', user='postgres', password='sa', host='localhost', port=5432)
 
-def initialize_database():
+
+def initialize_database(db_name = 'еуые',user='postgres', password='sa', host='localhost', port=5432 ):
+    
     try:
         system_db.execute_sql("CREATE DATABASE boatbase")
-        db = PostgresqlDatabase('boatbase', user='postgres', password='sa', host='localhost', port=5432)
+        db = PostgresqlDatabase(db_name, user=user, password=password, host=host, port=port)
         db.create_tables([Purchase,Contract,FinalDetermination,CurrencyRate,User,Role,UserRole,UserLog,ChangedDate,Boat,Test], safe=True)
         admin_user = User.create(username='Якупов', password='1')
         readactor = User.create(username='Померанец', password='2')
@@ -22,8 +24,10 @@ def initialize_database():
         UserRole.create(user=readactor, role=readactor_role)
         UserRole.create(user=gost, role=gost_role)
         system_db.close()
+        return True
     except Exception as E:
         print(E)
+        return False
 
 
 

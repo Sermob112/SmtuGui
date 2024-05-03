@@ -7,20 +7,98 @@ from MainWindow import Ui_MainWindow
 from PySide6.QtGui import QFont,QIcon,QPixmap
 from datetime import datetime
 from PySide6.QtCore import Qt,QRect,QCoreApplication
-class AuthWindow(QWidget):
+class GrandWindow(QMainWindow):
     def __init__(self):
-        super(AuthWindow, self).__init__()
+        super().__init__()
 
+        self.stack_layout = QStackedLayout()
+        self.central_widget = QWidget()
+        self.central_widget.setLayout(self.stack_layout)
+        self.setCentralWidget(self.central_widget)
+
+        self.auth_window = AuthWindow(self)
+        self.db_connection_window = DBConnectionWindow(self.stack_layout)
+
+        self.stack_layout.addWidget(self.auth_window)
+        self.stack_layout.addWidget(self.db_connection_window)
+
+        self.auth_window.connect_button.clicked.connect(self.switch_to_db_connection_window)
+
+    def switch_to_db_connection_window(self):
+        self.stack_layout.setCurrentIndex(1)
+
+
+
+class DBConnectionWindow(QWidget):
+    def __init__(self, stack_layout):
+        super().__init__()
+        self.setWindowTitle("Окно подключения к БД")
+        self.setGeometry(100, 100, 600, 400)
+        self.stack_layout = stack_layout
+        # Создаем элементы управления для ввода информации о подключении
+        layout = QVBoxLayout()
+        
+        self.db_name_edit = QLineEdit()
+        self.db_user_edit = QLineEdit()
+        self.db_password_edit = QLineEdit()
+        self.db_host_edit = QLineEdit()
+        self.db_port_edit = QLineEdit()
+        
+        layout.addWidget(QLabel("Имя базы данных:"))
+        layout.addWidget(self.db_name_edit)
+        
+        layout.addWidget(QLabel("Пользователь:"))
+        layout.addWidget(self.db_user_edit)
+        
+        layout.addWidget(QLabel("Пароль:"))
+        layout.addWidget(self.db_password_edit)
+        
+        layout.addWidget(QLabel("Хост:"))
+        layout.addWidget(self.db_host_edit)
+        
+        layout.addWidget(QLabel("Порт:"))
+        layout.addWidget(self.db_port_edit)
+        
+        connect_button = QPushButton("Подключиться")
+        connect_button.clicked.connect(self.connect_to_database)
+        
+        layout.addWidget(connect_button)
+        
+        back_button = QPushButton("Назад")
+        back_button.clicked.connect(self.switch_to_auth_window)
+        
+        layout.addWidget(back_button)
+        
+        self.setLayout(layout)
+    def connect_to_database(self):
+        success = initialize_database(self.db_name_edit.text(), self.db_user_edit.text(),
+                                    self.db_password_edit.text(), self.db_host_edit.text(),
+                                    self.db_port_edit.text())
+        if success:
+            QMessageBox.information(self, "Успешное подключение к БД", "Успешное подключение к БД")
+        else:
+            QMessageBox.warning(self, "Неудачное подключение к БД", "Неудачное подключение к БД")
+
+    def switch_to_auth_window(self):
+        self.stack_layout.setCurrentIndex(0)
+
+       
+        
+class AuthWindow(QWidget):
+    def __init__(self, main_wind):
+        super(AuthWindow, self).__init__()
+        self.main_wind = main_wind
         self.setWindowTitle("Окно авторизации")
         self.setGeometry(100, 100, 1000, 600)
         self.auth = AuthManager()
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
         app.setStyle(style)
-        initialize_database()
+        # initialize_database()
 
         main_layout = QVBoxLayout()
         pics_layout = QHBoxLayout()
+        connect_layout = QHBoxLayout()
         # Создайте макет для формы
         form_layout = QVBoxLayout()
         form_logPass = QVBoxLayout()
@@ -38,7 +116,11 @@ class AuthWindow(QWidget):
         image_label_top_left.setPixmap(pixmap)
         image_label_top_left.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         pics_layout.addWidget(image_label_top_left)
-        
+        self.connect_button = QPushButton("Подключиться к БД")
+        self.connect_button.setFixedWidth(320)
+        # self.connect_button.clicked.connect(self.switch_to_new_window)
+
+        connect_layout.addWidget(self.connect_button,alignment=Qt.AlignCenter)
         image_label_top_right = QLabel()
         pixmap = QPixmap("Pics/4.png")
         pixmap = pixmap.scaledToWidth(50)  # Масштабирование изображения по ширине
@@ -90,11 +172,20 @@ class AuthWindow(QWidget):
         form_logPass.addLayout(form_layoutForLogPAs)
         form_logPass.addLayout(form_layout)
         # Добавьте макет формы в центральный макет
+        verticalSpacer1 = QSpacerItem(20, 100, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        main_layout.addItem(verticalSpacer1)
         main_layout.addLayout(label_layout)
+        verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        main_layout.addItem(verticalSpacer)
         main_layout.addLayout(form_logPass)
+        main_layout.addLayout(connect_layout)
         # main_layout.addLayout(form_layout)
+    # def switch_to_new_window(self):
+    #     self.db_connection_window = DBConnectionWindow()
+    #     self.db_connection_window.show()
+    #     self.hide()
+    #     self.db_connection_window.closed.connect(self.show)
 
-       
 
     def authenticate(self):
         username = self.username_edit.text()
@@ -107,13 +198,16 @@ class AuthWindow(QWidget):
             
             ui = Ui_MainWindow(username)
             ui.show()
-            self.close()
+
+            self.main_wind.close()
 
         else:
             QMessageBox.warning(self, "Ошибка", "Ошибка входа")
 
+
+       
 if __name__ == "__main__":
     app = QApplication([])
-    auth_window = AuthWindow()
-    auth_window.show()
+    main_window = GrandWindow()
+    main_window.show()
     app.exec()

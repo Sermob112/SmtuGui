@@ -462,8 +462,8 @@ class Ui_MainWindow(QMainWindow):
         if result == 1:
             self.write_logout_log()
             self.close()
-            from start import AuthWindow
-            self.auth_window = AuthWindow()
+            from start import GrandWindow
+            self.auth_window = GrandWindow()
             self.auth_window.show()
         else:
             pass
