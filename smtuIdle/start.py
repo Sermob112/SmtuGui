@@ -39,37 +39,83 @@ class DBConnectionWindow(QWidget):
         layout = QVBoxLayout()
         
         self.db_name_edit = QLineEdit()
+        self.db_name_edit.setFixedWidth(320)
+
         self.db_user_edit = QLineEdit()
+        self.db_user_edit.setFixedWidth(320)
+
         self.db_password_edit = QLineEdit()
+        self.db_password_edit.setFixedWidth(320)
+
         self.db_host_edit = QLineEdit()
+        self.db_host_edit.setFixedWidth(320)
+
         self.db_port_edit = QLineEdit()
-        
-        layout.addWidget(QLabel("Имя базы данных:"))
-        layout.addWidget(self.db_name_edit)
-        
-        layout.addWidget(QLabel("Пользователь:"))
-        layout.addWidget(self.db_user_edit)
-        
-        layout.addWidget(QLabel("Пароль:"))
-        layout.addWidget(self.db_password_edit)
-        
-        layout.addWidget(QLabel("Хост:"))
-        layout.addWidget(self.db_host_edit)
-        
-        layout.addWidget(QLabel("Порт:"))
-        layout.addWidget(self.db_port_edit)
-        
+        self.db_port_edit.setFixedWidth(320)
+        label_db_name = QLabel("Имя базы данных:")
+        label_db_name.setMaximumWidth(100)
+
+        label_db_user = QLabel("Пользователь:")
+        label_db_user.setMaximumWidth(100)
+
+        label_db_password = QLabel("Пароль:")
+        label_db_password.setMaximumWidth(100)
+
+        label_db_host = QLabel("Хост:")
+        label_db_host.setMaximumWidth(100)
+
+        label_db_port = QLabel("Порт:")
+        label_db_port.setMaximumWidth(100)
+
+        layout1 = QHBoxLayout()
+        layout2 = QHBoxLayout()
+        layout3 = QHBoxLayout()
+        layout4 = QHBoxLayout()
+        layout5 = QHBoxLayout()
+        layout6 = QHBoxLayout()
+        layout7 = QHBoxLayout()
+        layout1 = QHBoxLayout()
+        layout1.addWidget(label_db_name)
+        layout1.addWidget(self.db_name_edit)
+
+        layout2 = QHBoxLayout()
+        layout2.addWidget(label_db_user)
+        layout2.addWidget(self.db_user_edit)
+
+        layout3 = QHBoxLayout()
+        layout3.addWidget(label_db_password)
+        layout3.addWidget(self.db_password_edit)
+
+        layout4 = QHBoxLayout()
+        layout4.addWidget(label_db_host)
+        layout4.addWidget(self.db_host_edit)
+
+        layout5 = QHBoxLayout()
+        layout5.addWidget(label_db_port)
+        layout5.addWidget(self.db_port_edit)
         connect_button = QPushButton("Подключиться")
+        connect_button.setFixedWidth(320)
         connect_button.clicked.connect(self.connect_to_database)
         
-        layout.addWidget(connect_button)
+        layout6.addWidget(connect_button)
         
         back_button = QPushButton("Назад")
+        back_button.setFixedWidth(320)
         back_button.clicked.connect(self.switch_to_auth_window)
         
-        layout.addWidget(back_button)
+        layout7.addWidget(back_button)
         
+        layout.addLayout(layout1)
+        layout.addLayout(layout2)
+        layout.addLayout(layout3)
+        layout.addLayout(layout4)
+        layout.addLayout(layout5)
+        layout.addLayout(layout6)
+        layout.addLayout(layout7)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
         self.setLayout(layout)
+        
     def connect_to_database(self):
         success = initialize_database(self.db_name_edit.text(), self.db_user_edit.text(),
                                     self.db_password_edit.text(), self.db_host_edit.text(),
