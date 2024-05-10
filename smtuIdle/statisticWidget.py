@@ -269,8 +269,10 @@ class StatisticWidget(QWidget):
         # self.analyze_price_count()
         if self.role == "Гость":
             self.toExcel.hide()
+            
         else:
             self.toExcel.show()
+
 
     def toggle_stage_1(self):
         # Изменяем видимость содержимого при нажатии на кнопку

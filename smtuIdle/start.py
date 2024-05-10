@@ -110,7 +110,7 @@ class AuthWindow(QWidget):
             self.close()
 
         else:
-            QMessageBox.warning(self, "Ошибка", "Ошибка входа")
+            QMessageBox.warning(self, "Ошибка", "Неверный логин или пароль")
 
 if __name__ == "__main__":
     app = QApplication([])

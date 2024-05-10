@@ -395,10 +395,13 @@ class Ui_MainWindow(QMainWindow):
         else:
             self.pushButton6.hide()
         
-        if self.users_roles[0] == "Гость":
+        if self.users_roles[0] == "Гость" and self.users_roles[0] == "Пользователь" :
             self.pushButton5.hide()
+            self.pushButton1.hide()
         else:
             self.pushButton5.show()
+            self.pushButton1.show()
+  
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -410,7 +413,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
         self.pushButton5.setText(_translate("MainWindow", "Экспорт БД НМЦК в Excel"))
         self.pushButton5_1.setText(_translate("MainWindow", "Панель изменений"))
-        self.pushButton6.setText(_translate("MainWindow", "Отладка"))
+        self.pushButton6.setText(_translate("MainWindow", "Администрирование"))
         self.pushButton7.setText(_translate("MainWindow", "Файлы Руководства"))
         self.pushButton8.setText(_translate("MainWindow", "Просмотр Формуляра Контрактов"))
         self.pushButton9.setText(_translate("MainWindow", "Статистический анализ контрактов"))

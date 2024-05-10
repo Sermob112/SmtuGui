@@ -146,8 +146,10 @@ class PurchasesWidget(QWidget):
 
         if self.role == "Гость":
             self.addButtonCurrency.hide()
+            self.label_form.hide()
         else:
             self.addButtonCurrency.show()
+            self.label_form.hide()
 
         if self.role == "Гость" or self.role == "Пользователь":
             self.addButtonContract.hide()
