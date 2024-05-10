@@ -58,7 +58,7 @@ class CsvLoaderWidget(QWidget):
         layout.addWidget(self.table)
 
         # Добавляем лейбл под таблицей
-        lbl_table_info = QLabel('Таблица дубликатов', self)
+        lbl_table_info = QLabel('Таблица версий закупок', self)
         lbl_table_info.setAlignment(Qt.AlignCenter)
         layout.addWidget(lbl_table_info)
        
@@ -74,7 +74,7 @@ class CsvLoaderWidget(QWidget):
         # Добавляем кнопку "Удалить выбранные записи"
         h_layout2 = QHBoxLayout()
         h_layout2.addStretch()
-        btn_delete_selected = QPushButton('Удалить выбранные дубликаты', self)
+        btn_delete_selected = QPushButton('Удалить выбранные записи', self)
         btn_delete_selected.clicked.connect(self.delete_selected_records)
         btn_delete_selected.setMaximumWidth(250)
         btn_delete_selected.setMinimumWidth(250)

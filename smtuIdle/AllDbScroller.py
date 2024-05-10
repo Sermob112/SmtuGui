@@ -667,8 +667,10 @@ class PurchasesWidgetAll(QWidget):
 
         if self.role == "Гость":
             self.toExcel.hide()
+            self.toExcel_contract.hide()
         else:
             self.toExcel.show()
+            self.toExcel_contract.show()
         return tab
     def toggle_menu_contract(self):
         # Изменяем видимость содержимого при нажатии на кнопку

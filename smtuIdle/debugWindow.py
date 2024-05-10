@@ -27,7 +27,7 @@ class DebugWidget(QWidget):
         tab_widget = QTabWidget()
 
         # Добавляем вкладки
-        tab_widget.addTab(self.create_logs_tab(), 'Логи')
+        tab_widget.addTab(self.create_logs_tab(), 'Журнал ')
         tab_widget.addTab(self.create_users_tab(), 'Пользователи и роли')
         tab_widget.addTab(self.bd_contoll(), 'Управление БД')
 

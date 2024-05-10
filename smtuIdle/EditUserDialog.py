@@ -20,6 +20,12 @@ class EditUserDialog(QDialog):
         layout.addWidget(label2)
         layout.addWidget(self.username_edit)
 
+        label3 = QLabel("Изменить пароль")
+        self.username_password = QLineEdit()
+        layout.addWidget(label3)
+        layout.addWidget(self.username_password)
+
+
         self.edit_button = QPushButton('Редактировать')
         self.edit_button.clicked.connect(self.edit_user)
         layout.addWidget(self.edit_button)
