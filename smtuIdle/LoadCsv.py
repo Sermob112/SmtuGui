@@ -130,7 +130,7 @@ class CsvLoaderWidget(QWidget):
                     reply.addButton("да", QMessageBox.YesRole)
                     result = reply.exec()
                     if result == 1:
-                        self.cur = CurrencyWidget()
+                        self.cur = CurrencyWidget(self.role)
                         self.cur.populate_table()
                         self.cur.show()
                     else:
