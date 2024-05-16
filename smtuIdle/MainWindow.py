@@ -45,13 +45,7 @@ class Ui_MainWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.topLayout = QtWidgets.QHBoxLayout()
-        # Статический виджет в центре
-        # self.centerWidget = QtWidgets.QWidget(self.centralwidget)
-        # self.centerLayout = QtWidgets.QVBoxLayout(self.centerWidget)
-        # self.topLayout.addWidget(self.centerWidget)
-     
-        # self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
-        # self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
+
         self.layoutBut = QHBoxLayout()
         self.logoutButton = QPushButton("Выйти")
         self.logoutButton.setFixedWidth(150)
@@ -63,7 +57,7 @@ class Ui_MainWindow(QMainWindow):
         current_date = datetime.now()
         latest_record = ChangedDate.select().order_by(ChangedDate.chenged_time.desc()).first()
         if latest_record:
-            # Получаем поле chenged_time из последней записи
+           
             latest_changed_time = latest_record.chenged_time.strftime('%d.%m.%Y %H:%M') 
                
         else:
@@ -73,14 +67,14 @@ class Ui_MainWindow(QMainWindow):
         user = User.get(User.username == self.username)
         user_roles = UserRole.select().where(UserRole.user == user)
         self.users_roles = [user_role.role.name for user_role in user_roles]
-        # Получаем самую раннюю дату
+    
         
         earliest_date = Purchase.select(fn.Min(Purchase.PlacementDate)).scalar()
         if earliest_date:
             erli = earliest_date.strftime('%d.%m.%Y')
         else:
             erli = "Нет данных"
-        # Получаем самую позднюю дату
+       
        
         latest_date = Purchase.select(fn.Max(Purchase.PlacementDate)).scalar()
         if latest_date:
@@ -95,7 +89,7 @@ class Ui_MainWindow(QMainWindow):
         self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
         self.dbLabel.setText("БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ")
 
-        # Установка максимальной высоты
+       
         self.dbLabel.setFixedWidth(480)
   
         self.dbLabel.setWordWrap(True)
@@ -223,6 +217,7 @@ class Ui_MainWindow(QMainWindow):
         button_height = 30  # Задайте желаемую высоту
 
         self.leftPanelLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.pushButtonParser.setFixedHeight(button_height)
         self.pushButton0.setFixedHeight(button_height)
         self.pushButton1.setFixedHeight(button_height)
         self.pushButton2.setFixedHeight(button_height)
