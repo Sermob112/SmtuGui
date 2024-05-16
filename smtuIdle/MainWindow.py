@@ -52,6 +52,10 @@ class Ui_MainWindow(QMainWindow):
         # self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
         # self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
         self.layoutBut = QHBoxLayout()
+        self.updateButton = QPushButton("Обновить БД")
+        self.updateButton.setFixedWidth(150)
+        self.updateButton.clicked.connect(self.GlobalUpdate)
+        self.layoutBut.addWidget(self.updateButton)
         self.logoutButton = QPushButton("Выйти")
         self.logoutButton.setFixedWidth(150)
         self.logoutButton.clicked.connect(self.exit)
@@ -546,6 +550,19 @@ class Ui_MainWindow(QMainWindow):
     #         event.accept()
     #     else:
     #         event.ignore()
+    def GlobalUpdate(self):
+        self.ChangeWindow.populate_table()
+        self.purchaseViewerall.reload_data()
+        self.purchaseViewerall.reload_data_cont()
+        self.contractFormular.reload_data()
+        self.purchaseViewer.reload_data()
+        self.Insert.populate_table()
+        self.loadCsv.update_table()
+        self.loadCsv.update_second_table()
+        self.updatePurchaseLabel()
+        self.Statistic.update_data()
+        self.loadCsvContract.update_data()
+        self.ChangeWindow.populate_table()
 
     def write_logout_log(self):
         # Запись лога выхода пользователя при закрытии приложения

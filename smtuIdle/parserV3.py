@@ -90,53 +90,53 @@ def insert_in_table(csv_file_path, user,role):
                 except ValueError:
                     applicationEndDate = None
 
-                auctionDate = row[23]
+                auctionDate = row[24]
                 try:
                     AuctionDate = datetime.datetime.strptime(auctionDate, '%d.%m.%Y').date()
                 except ValueError:
                     AuctionDate = None
                 # Вставка данных в таблицу
-        
-                
-                    Purchase.create(
-                    PurchaseOrder=purchase_date, 
-                    RegistryNumber=registry_number, 
-                    ProcurementMethod=procurement_method, 
-                    PurchaseName=purchase_name,
-                    AuctionSubject=auction_subject, 
-                    PurchaseIdentificationCode=purchase_identification_code, 
-                    LotNumber=lot_number, 
-                    LotName=lot_name,
-                    InitialMaxContractPrice=initial_max_contract_price,
-                    Currency=Currency, 
-                    InitialMaxContractPriceInCurrency=InitialMaxContractPriceInCurrency, 
-                    ContractCurrency=ContractCurrency,
-                    OKDPClassification=OKDPClassification,
-                    OKPDClassification=OKPDClassification,
-                    OKPD2Classification=OKPD2Classification,
-                    PositionCode=PositionCode,
-                    CustomerName=CustomerName,
-                    ProcurementOrganization=ProcurementOrganization,
-                    PlacementDate=placementDate,
-                    UpdateDate=updateDate,
-                    ProcurementStage=ProcurementStage,
-                    ProcurementFeatures=ProcurementFeatures,
-                    ApplicationStartDate=applicationStartDate, 
-                    ApplicationEndDate=applicationEndDate,
-                    AuctionDate=AuctionDate
-                )
-                
-                changed_date = ChangedDate(
-                    RegistryNumber=registry_number,
-                    username=user,
-                    chenged_time=datetime.datetime.now(),
-                    PurchaseName=purchase_name,
-                    Role=role,
-                    Type='Добавлены новая запись'
-                )
-                changed_date.save()
-             
                 inserted_rows += 1
+                
+                Purchase.create(
+                PurchaseOrder=purchase_date, 
+                RegistryNumber=registry_number, 
+                ProcurementMethod=procurement_method, 
+                PurchaseName=purchase_name,
+                AuctionSubject=auction_subject, 
+                PurchaseIdentificationCode=purchase_identification_code, 
+                LotNumber=lot_number, 
+                LotName=lot_name,
+                InitialMaxContractPrice=initial_max_contract_price,
+                Currency=Currency, 
+                InitialMaxContractPriceInCurrency=InitialMaxContractPriceInCurrency, 
+                ContractCurrency=ContractCurrency,
+                OKDPClassification=OKDPClassification,
+                OKPDClassification=OKPDClassification,
+                OKPD2Classification=OKPD2Classification,
+                PositionCode=PositionCode,
+                CustomerName=CustomerName,
+                ProcurementOrganization=ProcurementOrganization,
+                PlacementDate=placementDate,
+                UpdateDate=updateDate,
+                ProcurementStage=ProcurementStage,
+                ProcurementFeatures=ProcurementFeatures,
+                ApplicationStartDate=applicationStartDate, 
+                ApplicationEndDate=applicationEndDate,
+                AuctionDate=AuctionDate
+            )
+            
+            changed_date = ChangedDate(
+                RegistryNumber=registry_number,
+                username=user,
+                chenged_time=datetime.datetime.now(),
+                PurchaseName=purchase_name,
+                Role=role,
+                Type='Добавлены новая запись'
+            )
+            changed_date.save()
+            
+            
         
         
         connection.commit()
@@ -150,7 +150,7 @@ def insert_in_table(csv_file_path, user,role):
         connection.close()
     return inserted_rows, errors
 
-
+insert_in_table('C:/Users/Sergey/Desktop/Работа/SmtuGui/smtuIdle/Книга1.csv',"user","role")
 
 
 
