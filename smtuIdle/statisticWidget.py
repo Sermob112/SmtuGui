@@ -17,7 +17,7 @@ class StatisticWidget(QWidget):
         
     def init_ui(self):
         # Создаем лейбл
-        self.label_text = "Статистический анализ методов, использованных для определения НМЦК и ЦКЕП"
+        self.label_text = "Статистический анализ методов, использованных для определения поставщика,подрядной организации (размещения закупки)"
         self.label = QLabel(self.label_text)
         self.label_filter_order = QLabel("Фильтры: ")
         self.label_filter_data = QLabel("Фильтры: ")
@@ -40,6 +40,7 @@ class StatisticWidget(QWidget):
         # Инициализация переменной для отслеживания текущего индекса данных
         self.current_data_index = 0
 
+
         # btn_analysis.clicked.connect(self.analisMAxPrice)
         # Создаем таблицу
         self.table = QTableWidget(self)
@@ -57,7 +58,7 @@ class StatisticWidget(QWidget):
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
           # Список для хранения всех данных, которые  отобразить в таблице
         self.label_texts = [
-            "Анализ методов, использованных для определения НМЦК и ЦКЕП",
+            "Анализ методов, использованных для определения поставщика, подрядной организации (размещения закупки)",
             "Анализ формулировок, применяемых государственными\n заказчиками, при объявлении закупки",
             "Анализ по классификации ОКПД2",           
             "Анализ количества заявок на участие в закупке",
@@ -67,6 +68,7 @@ class StatisticWidget(QWidget):
             "Анализ количества ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
             "Анализ уровеня цены контракта, заключенного\n по результатам конкурса",
              "Анализ диапазона значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
+            #  ",Анализ количество записей по годам"
         ]
 
         self.formular_texts = [
@@ -80,10 +82,12 @@ class StatisticWidget(QWidget):
             "Количество ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
             "Уровень цены контракта, заключенного\n по результатам конкурса",
              "Диапазон значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
+            #  ",Анализ количество записей по годам"
         ]
         self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                        #  self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
+                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
+                        #  ,self.analisYears()
                         ]
         
         
@@ -119,7 +123,7 @@ class StatisticWidget(QWidget):
         menu_layout = QVBoxLayout()
         self.Qword = QLabel("Анализ методов и формулировок в государственных закупках")
         menu_layout.addWidget(self.Qword)
-        for index, text in enumerate(self.label_texts[:3]):
+        for index, text in enumerate(self.label_texts[:3] + self.label_texts[6:]):
            
             button = QtWidgets.QPushButton()
             button.setText(text) 
@@ -127,9 +131,14 @@ class StatisticWidget(QWidget):
             size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
             button.setSizePolicy(size_policy)
             button.setStyleSheet("text-align: left;padding-left: 8px;")
-            button.clicked.connect(partial(self.show_specific_data, index, button))
-            menu_layout.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
-            self.buttons.append(button)
+            if index < 3:
+                button.clicked.connect(partial(self.show_specific_data, index, button))
+                menu_layout.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
+                self.buttons.append(button)
+            if index >= 3:
+                button.clicked.connect(partial(self.show_specific_data, index + 3, button))
+                menu_layout.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
+                self.buttons.append(button)
         # menu_layout.addWidget(line)
         self.menu_content.setLayout(menu_layout)
         self.menu_frame = QFrame()
@@ -299,7 +308,8 @@ class StatisticWidget(QWidget):
     def update_data(self):
         self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                        #  self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
+                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
+                        #  ,self.analisYears()
                          
                          ]
         self.show_current_data()
@@ -427,8 +437,37 @@ class StatisticWidget(QWidget):
   
       
       
+    def analisYears(self):
+    # Статистический анализ количества записей по дате размещения
+        purchases = self.query
+        # Создаем DataFrame с полями PlacementDate и PurchaseOrder
+        df = pd.DataFrame([(purchase.PlacementDate, purchase.PurchaseOrder) for purchase in purchases], columns=['PlacementDate', 'PurchaseOrder'])
+        
+        # Преобразуем PlacementDate в datetime, если это необходимо
+        df['PlacementDate'] = pd.to_datetime(df['PlacementDate'])
+        
+        # Группируем по PlacementDate и считаем количество записей для каждой даты
+        grouped_df = df.groupby(df['PlacementDate'].dt.year).size().reset_index(name='Количество записей')
+        
+        # Переименовываем колонки
+        grouped_df.columns = ['PlacementDate', 'Количество записей']
+        
+        # Создаем сводную таблицу с индексом PlacementDate
+        pivot_table = grouped_df.set_index('PlacementDate')
+        
+        # Считаем сумму по каждому столбцу
+        column_sums = pivot_table.sum()
+        
+        # # Добавляем строку с общим итогом
+        # total_row = pd.DataFrame({'Количество записей': column_sums['Количество записей']}, index=['Сумма'])
+        # final_df = pd.concat([pivot_table, total_row])
+        
+        # print(final_df)
+        # print(column_sums)
+        
+        return pivot_table, column_sums
     def analis(self):
-   
+    
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
         purchases = self.query
         df = pd.DataFrame([(purchase.ProcurementMethod, purchase.PurchaseOrder) for purchase in purchases], columns=['ProcurementMethod', f'{self.formular_texts[0]}'])
@@ -440,10 +479,9 @@ class StatisticWidget(QWidget):
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
         # print(column_sums)
-        pivot_table.index.name = 'Анализ методов, использованных для определения НМЦК и ЦКЕП'
+        pivot_table.index.name = 'Анализ методов, использованных для определения поставщика, подрядной организации (размещения закупки)'
         print(pivot_table)
         return pivot_table, column_sums 
-    
     
     def analisNMSK(self):
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
@@ -483,7 +521,7 @@ class StatisticWidget(QWidget):
       
 
     def analisMAxPrice(self):
-        purchases = self.query.where(Purchase.InitialMaxContractPrice.is_null(False))
+        purchases = self.query
         price_range_order = [
             'Цена контракта более 100 000 000 тыс.руб.',
             'Цена контракта 5 000 000 - 10 000 000 тыс.руб.',
@@ -508,11 +546,15 @@ class StatisticWidget(QWidget):
         column_means2 = pivot_table.mean()
         total_purchase_counts2 = column_sums2.sum()
         column_sums2['Суммы'] = total_purchase_counts2
-     
+        print(pivot_table)
+        print(column_sums2)
         # Определите порядок категорий
        
 
         return pivot_table, column_sums2 
+    
+
+        
     def analisCoeffVar(self):
         purchases = self.query.where(Purchase.CoefficientOfVariation.is_null(False))
         coeff_range_order = [
@@ -788,17 +830,18 @@ class StatisticWidget(QWidget):
             pass
         
     def determine_price_range(self,row):
-        if row[f'{self.formular_texts[8]}'] > 100000000:
+        term =  row[f'{self.formular_texts[8]}'] 
+        if term > 100000000:
             return 'Цена контракта более 100 000 000 тыс.руб.'
-        elif 5000000 <= row[f'{self.formular_texts[8]}'] <= 10000000:
+        elif 5000000 <= term <= 10000000:
             return 'Цена контракта 5 000 000 - 10 000 000 тыс.руб.'
-        elif 1000000 <= row[f'{self.formular_texts[8]}'] <= 5000000:
+        elif 1000000 <= term <= 5000000:
             return 'Цена контракта 1 000 000 - 5 000 000 тыс.руб.'
-        elif 500000 <= row[f'{self.formular_texts[8]}'] <= 1000000:
+        elif 500000 <= term <= 1000000:
             return 'Цена контракта 500 000-  1 000 000 тыс.руб.'
-        elif 200000 <= row[f'{self.formular_texts[8]}'] <= 500000:
+        elif 200000 <= term <= 500000:
             return 'Цена контракта 200 000 - 500 000 тыс.руб.'
-        elif 100000 <= row[f'{self.formular_texts[8]}'] <= 200000:
+        elif 100000 <= term <= 200000:
             return 'Цена контракта 100 000 - 200 000 тыс.руб.'
         # elif 100000 <= row['InitialMaxContractPrice']:
         #     return 'Менее 100 тыс.руб'
@@ -835,10 +878,13 @@ class StatisticWidget(QWidget):
         pivot_tables_purchase3, column_sums_purchase3 = self.analisQueryCount()
         pivot_tables_purchase4, column_sums_purchase4 = self.analisQueryCountAccept()
         pivot_tables_purchase5, column_sums_purchase5 = self.analisQueryCountDecline()
-        # pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
-        # pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
-        # pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
-        # pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
+
+
+        pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
+        pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
+        pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
+        pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
+
         pivot_tables_max_price5, column_sums_max_price5= self.analisOKPD2()
         sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2 = self.all_purchase.return_filters_variabels()
         filters = []
