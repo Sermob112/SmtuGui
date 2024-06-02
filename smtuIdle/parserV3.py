@@ -150,7 +150,7 @@ def insert_in_table(csv_file_path, user,role):
         connection.close()
     return inserted_rows, errors
 
-insert_in_table('C:/Users/Sergey/Desktop/Работа/SmtuGui/smtuIdle/Книга1.csv',"user","role")
+# insert_in_table('C:/Users/Sergey/Desktop/Работа/SmtuGui/smtuIdle/Книга1.csv',"user","role")
 
 
 

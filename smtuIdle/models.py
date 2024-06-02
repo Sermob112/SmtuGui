@@ -21,7 +21,7 @@ class Purchase(BaseModel):
     LotName = CharField(null=True, max_length=512,  default="Нет данных", verbose_name="Наименование лота")
     InitialMaxContractPrice = FloatField(null=True,  verbose_name="Начальная максимальная цена контракта")
     Currency = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Валюта")
-    InitialMaxContractPriceInCurrency = FloatField(null=True,  default="Нет данных", verbose_name="Начальная максимальная цена контракта в валюте")
+    InitialMaxContractPriceInCurrency = FloatField(null=True, verbose_name="Начальная максимальная цена контракта в валюте")
     ContractCurrency = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Валюта контракта")
     OKDPClassification = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Классификация ОКДП")
     OKPDClassification = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Классификация ОКПД")
