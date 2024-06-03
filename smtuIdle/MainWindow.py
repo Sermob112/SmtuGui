@@ -22,7 +22,7 @@ from datetime import datetime
 from parserV3 import export_to_excel_all
 from models import *
 from peewee import JOIN
-
+from ResultWindow import ResultWindow
 # from Module_start import AuthManager
 
 class Ui_MainWindow(QMainWindow):
@@ -213,6 +213,10 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.setObjectName("pushButton7")
         self.leftPanelLayout.addWidget(self.pushButton7)
         self.leftPanelLayout.addSpacing(20)
+        self.pushButtonResult = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonResult.setObjectName("pushButtonResult")
+        self.leftPanelLayout.addWidget(self.pushButtonResult)
+        self.leftPanelLayout.addSpacing(20)
         
 
 
@@ -232,6 +236,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.setFixedHeight(button_height)
         self.pushButton8.setFixedHeight(button_height)
         self.pushButton9.setFixedHeight(button_height)
+        self.pushButtonResult.setFixedHeight(button_height)
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
@@ -242,6 +247,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton3.setIcon(QIcon("Pics/1.png"))
         self.pushButton4.setIcon(QIcon("Pics/15.png"))
         self.pushButton5.setIcon(QIcon("Pics/13.png"))
+        self.pushButtonResult.setIcon(QIcon("Pics/13.png"))
         self.pushButton5_1.setIcon(QIcon("Pics/3.png"))
         self.pushButton6.setIcon(QIcon("Pics/7.png"))
         self.pushButton7.setIcon(QIcon("Pics/7.png"))
@@ -252,7 +258,7 @@ class Ui_MainWindow(QMainWindow):
         self.buttons = [
             self.pushButton0, self.pushButton1, self.pushButton2,
             self.pushButton3, self.pushButton4,self.pushButton5_1, self.pushButton6,
-            self.pushButton7,self.pushButton8,self.pushButton9,self.pushButton5
+            self.pushButton7,self.pushButton8,self.pushButton9,self.pushButtonResult,self.pushButton5
         ]
         self.update_button_style_all()
 
@@ -307,6 +313,11 @@ class Ui_MainWindow(QMainWindow):
         self.page9 = QtWidgets.QWidget()
         self.label9 = QtWidgets.QLabel(self.page9)
         self.stackedWidget.addWidget(self.page9)
+
+
+        self.page10 = QtWidgets.QWidget()
+        self.label10 = QtWidgets.QLabel(self.page10)
+        self.stackedWidget.addWidget(self.page10)
         #Загрузка виджета изминений бд
         self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
         self.ChangeWindow.setParent(self)
@@ -364,9 +375,12 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page7)
         layout.addWidget(self.helper)
 
-  
+        self.ResultWidget = ResultWindow(self,self.users_roles[0])
+        self.ResultWidget.setParent(self)
+        layout = QVBoxLayout(self.page10)
+        layout.addWidget(self.ResultWidget)
 
-        layout.addWidget(self.helper)
+
         self.purchaseViewerall.window = self
         self.horizontalLayout.addWidget(self.stackedWidget)
 
@@ -391,6 +405,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(7))
         self.pushButton8.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(8))
         self.pushButton9.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(9))
+        self.pushButtonResult.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(10))
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -419,6 +434,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton5_1.setText(_translate("MainWindow", "Панель изменений"))
         self.pushButton6.setText(_translate("MainWindow", "Администрирование"))
         self.pushButton7.setText(_translate("MainWindow", "Файлы Руководства"))
+        self.pushButtonResult.setText(_translate("MainWindow", "Результаты"))
         self.pushButton8.setText(_translate("MainWindow", "Просмотр Формуляра Контрактов"))
         self.pushButton9.setText(_translate("MainWindow", "Статистический анализ контрактов"))
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
