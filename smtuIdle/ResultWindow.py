@@ -240,8 +240,8 @@ class ResultWindow(QWidget):
         Contract.RejectedApplications,
         Contract.AdmittedApplications,
     )
-    .join(Purchase, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)))
-    # .where(Contract.ContractNumber != "Нет данных"))
+    .join(Purchase, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+    .where(Contract.ContractNumber != "Нет данных"))
         self.update()
         self.contracts_list = list(self.contracts.tuples())
         return  self.contracts_list

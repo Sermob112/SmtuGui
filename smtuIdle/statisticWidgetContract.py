@@ -17,20 +17,34 @@ class Canvas(FigureCanvas):
         self.axes = fig.add_subplot(111)
         super(Canvas, self).__init__(fig)
         self.setParent(parent)
-
+        self.label_texts = [
+            "График количества заключенных контрактов",
+            "Анализ по соотношению коэффициенту вариации",
+            "Количество заявок на участие в закупке",
+            "Количество допущенных заявок\n на участие в закупке",
+            "Количество отклоненных заявок\n на участие в закупке",
+            "Итог",
+        ]
+  
     def plot(self, data, x_column, y_column):
         try:
             self.axes.clear()
             # Построение графика
             data.plot(kind='bar', x=x_column, y=y_column, ax=self.axes)
+            self.axes.legend([y_column])  # Добавляем легенду
             self.draw()
         except Exception as e:
             print("Error plotting graph:", e)
 
         
-    def plot_pie(self, data, x_column, y_column):
+    def plot_pie(self, data, x_column, y_column, pos):
         self.axes.clear()
         self.axes.pie(data[y_column], labels=data[x_column], autopct='%1.1f%%', startangle=90)
+        wedges, texts, autotexts = self.axes.pie(
+            data[y_column], labels=data[x_column], autopct='%1.1f%%', startangle=90
+        )
+        self.axes.legend(wedges, data[x_column], title="Категории", loc='center left', bbox_to_anchor=(1, 0.5))
+        self.axes.set_title(self.label_texts[pos])
         self.draw()
 
 
@@ -380,7 +394,7 @@ class StatisticWidgetContract(QWidget):
         # pivot_table, column_sums = self.winner_analis()
         x = current_data[0].columns[0]
         y = current_data[0].columns[1]
-        self.canvas_pie.plot_pie(current_data[0],x,y)
+        self.canvas_pie.plot_pie(current_data[0],x,y,self.current_data_index)
     def toggle_stage_1(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame.setVisible(not self.menu_frame.isVisible())
