@@ -59,7 +59,7 @@ class Canvas(FigureCanvas):
         wedges, texts, autotexts = self.axes.pie(
             data[y_column], labels=data[x_column], autopct='%1.1f%%', startangle=90
         )
-        self.axes.legend(wedges, data[x_column], title="Categories")  # Добавляем легенду
+        self.axes.legend(wedges, data[x_column], title="Категории", loc='center left', bbox_to_anchor=(1, 0.5))
         self.axes.set_title(self.label_texts[pos])
         self.draw()
 
@@ -422,7 +422,7 @@ class ResultWindow(QWidget):
     def final_analis(self):
         # Создаем DataFrame с данными reject, good и violations
         data = {
-            'Category': ['Отклоненные', 'Без нарушений', 'С нарушениями'],
+            'Category': ['Отклонены', 'Без нарушений', 'С нарушениями'],
             'Count': [self.reject, self.good, self.violations]
         }
         
