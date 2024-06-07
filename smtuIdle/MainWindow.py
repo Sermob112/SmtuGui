@@ -23,7 +23,7 @@ from parserV3 import export_to_excel_all
 from models import *
 from peewee import JOIN
 from ResultWindow import ResultWindow
-from ui_mainwindow import MyWindow
+from Viewer import MyWindow
 # from Module_start import AuthManager
 
 class Ui_MainWindow(QMainWindow):
@@ -166,19 +166,22 @@ class Ui_MainWindow(QMainWindow):
 
         # Левая панель с кнопками
     
-        # self.leftPanelFrame = QtWidgets.QFrame(self.centralwidget)
+        # self.leftPanelFrame = QtWidgets.QFrame(self.centralwidget) 
+    
         self.leftPanelLayout = QtWidgets.QVBoxLayout(self.centralwidget)
+
+        self.pushButtonParser = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonParser.setObjectName("pushButtonParser")
+        self.leftPanelLayout.addWidget(self.pushButtonParser)
+        self.leftPanelLayout.addSpacing(20)
+        
         self.pushButton0 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton0.setObjectName("pushButton0")
         self.leftPanelLayout.addWidget(self.pushButton0)
-        
         self.leftPanelLayout.addSpacing(20)
         self.pushButton1 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton1.setObjectName("pushButton1")
         self.leftPanelLayout.addWidget(self.pushButton1)
-        self.pushButtonParser = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButtonParser.setObjectName("pushButtonParser")
-        self.leftPanelLayout.addWidget(self.pushButtonParser)
         self.leftPanelLayout.addSpacing(20)
         self.pushButton2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton2.setObjectName("pushButton2")
@@ -228,6 +231,7 @@ class Ui_MainWindow(QMainWindow):
         button_height = 30  # Задайте желаемую высоту
 
         self.leftPanelLayout.setAlignment(QtCore.Qt.AlignTop)
+        self.pushButtonParser.setFixedHeight(button_height)
         self.pushButton0.setFixedHeight(button_height)
         self.pushButton1.setFixedHeight(button_height)
         self.pushButton2.setFixedHeight(button_height)
@@ -243,7 +247,7 @@ class Ui_MainWindow(QMainWindow):
         # max_height = 300
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
-        
+        self.pushButtonParser.setIcon(QIcon("Pics/6.png"))
         self.pushButton0.setIcon(QIcon("Pics/6.png"))
         self.pushButton1.setIcon(QIcon("Pics/14.png"))
         self.pushButton2.setIcon(QIcon("Pics/4.png"))
@@ -261,7 +265,7 @@ class Ui_MainWindow(QMainWindow):
         self.buttons = [
             self.pushButton0, self.pushButton1, self.pushButton2,
             self.pushButton3, self.pushButton4,self.pushButton5_1, self.pushButton6,
-            self.pushButton7,self.pushButton8,self.pushButton9,self.pushButtonResult,self.pushButton5
+            self.pushButton7,self.pushButton8,self.pushButton9,self.pushButtonResult,self.pushButtonParser, self.pushButton5
         ]
         self.update_button_style_all()
 
