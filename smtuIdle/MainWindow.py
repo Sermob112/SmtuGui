@@ -23,6 +23,7 @@ from parserV3 import export_to_excel_all
 from models import *
 from peewee import JOIN
 from ResultWindow import ResultWindow
+from ui_mainwindow import MyWindow
 # from Module_start import AuthManager
 
 class Ui_MainWindow(QMainWindow):
