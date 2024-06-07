@@ -36,16 +36,11 @@ class Ui_MainWindow(object):
         self.Lab = QLabel(self.centralwidget)
         self.Lab.setObjectName(u"Lab")
         self.Lab.setGeometry(QRect(30, 440, 331, 51))
-        self.Lab.setStyleSheet(u"\n"
-"border-color: rgb(0, 0, 0);\n"
-"border-color: rgb(0, 255, 0);\n"
-"font: 14pt \"Times New Roman\";\n"
-"")
+        self.Lab.setStyleSheet(u"font: 12pt \"Impact\";")
         self.Insert_text = QTextEdit(self.centralwidget)
         self.Insert_text.setObjectName(u"Insert_text")
         self.Insert_text.setGeometry(QRect(30, 500, 331, 51))
-        self.Insert_text.setStyleSheet(u"\n"
-"font: 75 14pt \"Times New Roman\";")
+        self.Insert_text.setStyleSheet(u"font: 12pt \"Impact\";")
         self.textBrowser = QTextBrowser(self.centralwidget)
         self.textBrowser.setObjectName(u"textBrowser")
         self.textBrowser.setGeometry(QRect(440, 270, 291, 281))
