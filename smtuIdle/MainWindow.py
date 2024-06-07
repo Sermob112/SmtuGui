@@ -175,7 +175,9 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton1 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton1.setObjectName("pushButton1")
         self.leftPanelLayout.addWidget(self.pushButton1)
-        
+        self.pushButtonParser = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButtonParser.setObjectName("pushButtonParser")
+        self.leftPanelLayout.addWidget(self.pushButtonParser)
         self.leftPanelLayout.addSpacing(20)
         self.pushButton2 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton2.setObjectName("pushButton2")
@@ -318,6 +320,10 @@ class Ui_MainWindow(QMainWindow):
         self.page10 = QtWidgets.QWidget()
         self.label10 = QtWidgets.QLabel(self.page10)
         self.stackedWidget.addWidget(self.page10)
+
+        self.page11 = QtWidgets.QWidget()
+        self.label11 = QtWidgets.QLabel(self.page11)
+        self.stackedWidget.addWidget(self.page11)
         #Загрузка виджета изминений бд
         self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
         self.ChangeWindow.setParent(self)
@@ -367,7 +373,11 @@ class Ui_MainWindow(QMainWindow):
         self.loadCsvContract.setParent(self)
         layout = QVBoxLayout(self.page9)
         layout.addWidget(self.loadCsvContract)
-      
+
+        
+        self.parserWindow = MyWindow()
+        layout = QVBoxLayout(self.page11)
+        layout.addWidget(self.parserWindow)
         #Загрузка виджета помощи
         
         self.helper= HelpPanel()
@@ -393,6 +403,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton0.setStyleSheet("background-color: #4CAF50;font-size: 11pt;text-align: left;padding-left: 8px; ")
         self.stackedWidget.currentChanged.connect(self.update_button_style)
         # Подключение сигналов к слотам
+
         self.pushButton0.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
@@ -406,6 +417,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton8.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(8))
         self.pushButton9.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(9))
         self.pushButtonResult.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(10))
+        self.pushButtonParser.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(11))
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -425,6 +437,7 @@ class Ui_MainWindow(QMainWindow):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ОБОСНОВАНИЙ НАЧАЛЬНЫХ (МАКСИМАЛЬНЫХ) ЦЕН КОНТРАКТОВ И ЦЕН КОНТРАКТОВ, ЗАКЛЮЧАЕМЫХ С ЕДИНСТВЕННЫМ ПОСТАВЩИКОМ, А ТАКЖЕ ЦЕН ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
+        self.pushButtonParser.setText(_translate("MainWindow", "Парсер"))
         self.pushButton0.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton1.setText(_translate("MainWindow", "Ввод данных по закупкам"))
         self.pushButton2.setText(_translate("MainWindow", "Просмотр Формуляра Закупки"))
