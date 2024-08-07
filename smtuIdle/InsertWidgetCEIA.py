@@ -8,7 +8,7 @@ from PySide6.QtGui import *
 import sys, json
 import statistics
 import pandas as pd
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 
 class InsertWidgetCEIA(QWidget):
     def __init__(self, purchase_id,db_wind):

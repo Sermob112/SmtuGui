@@ -15,7 +15,7 @@ from peewee import DoesNotExist
 import datetime
 from InsertWidgetContract import InsertWidgetContract
 from InsertWidgetContract2 import InsertWidgetContract2
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 from PySide6.QtCore import Signal
 class InsertPanelContract(QWidget):
     closingSignal = Signal()

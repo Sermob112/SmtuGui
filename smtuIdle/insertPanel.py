@@ -19,7 +19,7 @@ from InsertWidgetNMCK_2 import InsertWidgetNMCK_2
 from InsertWidgetNMCK_3 import InsertWidgetNMCK_3
 from InsertWidgetNMCK_4 import InsertWidgetNMCK_4
 from InsertWidgetNMCK_5 import InsertWidgetNMCK_5
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 from PySide6.QtCore import Signal
 class InsertWidgetPanel(QWidget):
     closingSignal = Signal()

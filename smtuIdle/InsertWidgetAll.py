@@ -11,7 +11,7 @@ import pandas as pd
 import shutil
 import os
 from peewee import DoesNotExist
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 
 class InsertWidgetContract(QWidget):
     def __init__(self, purchase_id,db_wind):

@@ -12,7 +12,7 @@ import os
 import shutil
 from peewee import DoesNotExist
 import datetime
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 
 class InsertWidgetContract(QWidget):
     def __init__(self, purchase_id,db_wind,role,user,changer):

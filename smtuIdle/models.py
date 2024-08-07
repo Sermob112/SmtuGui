@@ -3,7 +3,7 @@ from datetime import date
 from random import randint, uniform
 import sqlite3
 import json
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 
 class BaseModel(Model):
     class Meta:

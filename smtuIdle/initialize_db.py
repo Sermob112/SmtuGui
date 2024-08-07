@@ -2,7 +2,7 @@ from peewee import SqliteDatabase
 from models import * # Замените models на имя вашего модуля или файла с определением моделей
 import os
 
-db = SqliteDatabase('test.db')  # Замените на имя вашей базы данных
+db = SqliteDatabase('database.db')  # Замените на имя вашей базы данных
 
 def initialize_database():
     # Проверяем, существует ли файл маркера

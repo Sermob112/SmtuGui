@@ -13,7 +13,7 @@ import shutil
 import os
 from PySide6.QtCore import Signal
 
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 
 class InsertWidgetNMCK(QWidget):
     closed = Signal()

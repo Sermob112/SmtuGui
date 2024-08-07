@@ -305,7 +305,7 @@ class StatisticWidgetContract(QWidget):
         self.tab_widget.addTab(self.gist(), 'Гистограмма')
         self.tab_widget.addTab(self.pie(), 'Круговая диаграмма')
         self.tab_widget.hide()
-       
+        self.buttonConvas.hide()
         self.buttonConvas.clicked.connect(self.show_convas)
         #  вертикальный слой для метки и таблицы
         self.vertical_layout = QVBoxLayout(self)
@@ -530,7 +530,7 @@ class StatisticWidgetContract(QWidget):
         # Создаем DataFrame для суммы
         column_sums_df = pd.DataFrame({'Единицы': [column_sums]})
         column_sums_df.index = ['Итого']
-        print(column_sums)
+        # print(column_sums)
         return pivot_table, column_sums_df
     
     def count_non_zero_contract_num(self):
@@ -551,7 +551,7 @@ class StatisticWidgetContract(QWidget):
         # Создаем DataFrame для суммы
         column_sums_df = pd.DataFrame({'Единицы': [column_sums]})
         column_sums_df.index = ['Итого']
-        print(column_sums)
+        # print(column_sums)
         return pivot_table, column_sums_df
     def analisNMSK(self):
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
