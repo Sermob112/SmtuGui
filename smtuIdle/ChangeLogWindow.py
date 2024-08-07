@@ -13,7 +13,7 @@ from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 # Создаем соединение с базой данных
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 cursor = db.cursor()
 class ChangeLogWindow(QWidget):
     def __init__(self, role):

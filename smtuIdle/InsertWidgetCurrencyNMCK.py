@@ -9,7 +9,7 @@ import sys, json
 import statistics
 import pandas as pd
 from datetime import datetime
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 
 class InsertWidgetCurrencyNMCK(QWidget):
     closed_signal = Signal()

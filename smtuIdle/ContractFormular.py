@@ -27,7 +27,7 @@ setlocale(LC_ALL, 'ru_RU.UTF-8')
 
 
 # Создаем соединение с базой данных
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 cursor = db.cursor()
 
 

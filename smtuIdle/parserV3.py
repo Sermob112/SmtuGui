@@ -14,12 +14,12 @@ from peewee import SqliteDatabase
 # port=5432
 # port = connection.settings_dict.get('PORT', '')
 # hostname = connection.settings_dict['HOST', '']
-db = SqliteDatabase('test.db')
+db = SqliteDatabase('database.db')
 
 
 
 def connector():
-    connection = sqlite3.connect('test.db')
+    connection = sqlite3.connect('database.db')
     return connection
 def insert_in_table(csv_file_path, user,role):
     errors = []

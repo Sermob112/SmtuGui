@@ -480,7 +480,7 @@ class StatisticWidget(QWidget):
         column_sums['Суммы'] = total_purchase_counts
         # print(column_sums)
         pivot_table.index.name = 'Анализ методов, использованных для определения поставщика, подрядной организации (размещения закупки)'
-        print(pivot_table)
+        # print(pivot_table)
         return pivot_table, column_sums 
     
     def analisNMSK(self):
@@ -546,8 +546,8 @@ class StatisticWidget(QWidget):
         column_means2 = pivot_table.mean()
         total_purchase_counts2 = column_sums2.sum()
         column_sums2['Суммы'] = total_purchase_counts2
-        print(pivot_table)
-        print(column_sums2)
+        # print(pivot_table)
+        # print(column_sums2)
         # Определите порядок категорий
        
 
