@@ -22,6 +22,7 @@ from datetime import datetime
 from parserV3 import export_to_excel_all
 from models import *
 from peewee import JOIN
+from PySide6.QtCore import QEvent
 # from ResultWindow import ResultWindow
 # from Viewer import MyWindow
 # from Module_start import AuthManager
@@ -69,9 +70,9 @@ class Ui_MainWindow(QMainWindow):
         if latest_record:
             # Получаем поле chenged_time из последней записи
             latest_changed_time = latest_record.chenged_time.strftime('%d.%m.%Y %H:%M') 
-               
+        
         else:
-            latest_changed_time = "Нет данных"
+            latest_changed_time = "17.05.2024"
         self.formatted_date = current_date.strftime("%d-%m-%Y")
         
         user = User.get(User.username == self.username)
@@ -597,7 +598,11 @@ class Ui_MainWindow(QMainWindow):
         self.Statistic.update_data()
         self.loadCsvContract.update_data()
         self.ChangeWindow.populate_table()
-
+    def closeEvent(self, event):
+        # Вызываем вашу функцию записи лога при закрытии окна
+        self.write_logout_log()
+        # Затем закрываем окно
+        event.accept()
     def write_logout_log(self):
         # Запись лога выхода пользователя при закрытии приложения
         try:

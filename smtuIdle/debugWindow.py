@@ -61,8 +61,8 @@ class DebugWidget(QWidget):
 
         # Таблица для данных пользователей
         self.users_table_widget = QTableWidget()
-        self.users_table_widget.setColumnCount(3)  # Количество столбцов
-        self.users_table_widget.setHorizontalHeaderLabels(['№','Пользователь', 'Роль'])  # Заголовки столбцов
+        self.users_table_widget.setColumnCount(4)  # Количество столбцов
+        self.users_table_widget.setHorizontalHeaderLabels(['№','Пользователь', 'Роль',"Пароль"])  # Заголовки столбцов
         self.layout_user.addWidget(self.users_table_widget)
         self.users_table_widget.horizontalHeader().setStretchLastSection(True)
         self.users_table_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
@@ -103,9 +103,26 @@ class DebugWidget(QWidget):
         btn_delete_data = QPushButton('Удалить все данные БД', self)
         btn_delete_data.setFixedWidth(300)  # Устанавливаем минимальную ширину кнопки
         buttonLAyout.addWidget(btn_delete_data, alignment=Qt.AlignTop)
+
+        btn_clear_users = QPushButton('Очистить журнал пользователей', self)
+        btn_clear_users.setFixedWidth(300)  # Устанавливаем минимальную ширину кнопки
+        buttonLAyout.addWidget(btn_clear_users, alignment=Qt.AlignTop)
+
+        btn_clear_changes = QPushButton('Очистить журнал изменений', self)
+        btn_clear_changes.setFixedWidth(300)  # Устанавливаем минимальную ширину кнопки
+        buttonLAyout.addWidget(btn_clear_changes, alignment=Qt.AlignTop)
+
+        btn_clear_users.clicked.connect(self.clear_user_logs)
+        btn_clear_changes.clicked.connect(self.clear_changed_dates)
         btn_delete_data.clicked.connect(self.delete_all_data)  # Устанавливаем выравнивание кнопки вверх
         layout.addLayout(buttonLAyout)
         return tab
+    def clear_user_logs(self):
+        clear_user_log()
+        self.table_widget.clearContents()
+
+    def clear_changed_dates(self):
+        clear_changed_date()
 
     def show_file_dialog(self):
         file_dialog = QFileDialog(self)
@@ -134,7 +151,8 @@ class DebugWidget(QWidget):
             self.users_table_widget.insertRow(row_position)
             self.users_table_widget.setItem(row_position, 0, QTableWidgetItem(str(user_role.user.id)))
             self.users_table_widget.setItem(row_position, 1, QTableWidgetItem(user_role.user.username))  # Предполагая, что у пользователя есть атрибут username
-            self.users_table_widget.setItem(row_position, 2, QTableWidgetItem(user_role.role.name))  # Предполагая, что у роли есть атрибут name
+            self.users_table_widget.setItem(row_position, 2, QTableWidgetItem(user_role.role.name))
+            self.users_table_widget.setItem(row_position, 3, QTableWidgetItem(user_role.user.password))  # Предполагая, что у роли есть атрибут name
     def load_logs(self):
         logs = UserLog.select()
         self.table_widget.setRowCount(len(logs))
