@@ -34,5 +34,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['C:\\Users\\Sergey\\Desktop\\Работа\\Иконки\\BD.ico'],
+    icon=['C:\\Users\\Sergey\\Desktop\\work\\Иконки\\BD.ico'],
 )

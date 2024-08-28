@@ -7,6 +7,9 @@ from MainWindow import Ui_MainWindow
 from PySide6.QtGui import QFont,QIcon,QPixmap
 from datetime import datetime
 from PySide6.QtCore import Qt,QRect,QCoreApplication
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# дата обновления базы данных будет появляться?
+# дата руководство 
 class AuthWindow(QWidget):
     def __init__(self):
         super(AuthWindow, self).__init__()
@@ -117,3 +120,10 @@ if __name__ == "__main__":
     auth_window = AuthWindow()
     auth_window.show()
     app.exec()
+    
+    # глядя в отчет в отчет которые совпадают нумераовать номерами рисунков
+    # с входом первоначальный 
+    # сделать копию файла отчета напишать апперель 2 мебиус. руководство поьзователя бд нмцк
+    # удалить оттуда все кроме раздела д.
+    # само приложение д оставить как глава и сами рисунки д оставить.
+    # сохранить все скриншоты исходники пронумерованные по д.

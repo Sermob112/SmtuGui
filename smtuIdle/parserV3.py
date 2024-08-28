@@ -1119,7 +1119,15 @@ def delete_records_by_id(record_ids, user,role):
 
     except Exception as e:
         print("Ошибка при удалении записей по Id:", e)
-        return False     
+        return False    
+
+def clear_user_log():
+    """Удаляет все записи из таблицы UserLog"""
+    UserLog.delete().execute()
+
+def clear_changed_date():
+    """Удаляет все записи из таблицы ChangedDate"""
+    ChangedDate.delete().execute() 
 # delete_records_by_id([3])
 # def delete_records_by_id(record_ids):
 #     try:
