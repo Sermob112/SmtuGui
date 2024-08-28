@@ -10,7 +10,7 @@ def initialize_database(db_name = 'еуые',user='postgres', password='sa', hos
     try:
         system_db.execute_sql("CREATE DATABASE boatbase")
         db = PostgresqlDatabase(db_name, user=user, password=password, host=host, port=port)
-        db.create_tables([Purchase,Contract,FinalDetermination,CurrencyRate,User,Role,UserRole,UserLog,ChangedDate,Boat,Test], safe=True)
+        db.create_tables([Purchase,Contract,FinalDetermination,CurrencyRate,User,Role,UserRole,UserLog,ChangedDate], safe=True)
         admin_user = User.create(username='Якупов', password='1')
         readactor = User.create(username='Померанец', password='2')
         regular_user = User.create(username='Маковий', password='3')

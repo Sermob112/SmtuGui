@@ -140,7 +140,7 @@ class AuthWindow(QWidget):
         style = QStyleFactory.create('Fusion')
         app = QApplication.instance()
         app.setStyle(style)
-        # initialize_database()
+        initialize_database()
 
         main_layout = QVBoxLayout()
         pics_layout = QHBoxLayout()

@@ -12,58 +12,58 @@ class BaseModel(Model):
         database = db
 
 
-class Test(Model):
-    id = AutoField(primary_key=True, verbose_name="Идентификатор")
-    PurchaseOrder = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Закон")
-    RegistryNumber = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Реестровый номер")
-    ProcurementMethod = CharField(null=True, max_length=512, default="Нет данных", verbose_name="Метод закупки")
-    PurchaseName = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Наименование закупки")
-    AuctionSubject = CharField(null=True, max_length=512, default="Нет данных", verbose_name="Предмет аукциона")
-    PurchaseIdentificationCode = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Код идентификации закупки")
-    LotNumber = IntegerField(null=True, default="Нет данных", verbose_name="Номер лота")
-    LotName = CharField(null=True, max_length=512,  default="Нет данных", verbose_name="Наименование лота")
-    InitialMaxContractPrice = FloatField(null=True,  default="Нет данных", verbose_name="Начальная максимальная цена контракта")
+# class Test(Model):
+#     id = AutoField(primary_key=True, verbose_name="Идентификатор")
+#     PurchaseOrder = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Закон")
+#     RegistryNumber = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Реестровый номер")
+#     ProcurementMethod = CharField(null=True, max_length=512, default="Нет данных", verbose_name="Метод закупки")
+#     PurchaseName = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Наименование закупки")
+#     AuctionSubject = CharField(null=True, max_length=512, default="Нет данных", verbose_name="Предмет аукциона")
+#     PurchaseIdentificationCode = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Код идентификации закупки")
+#     LotNumber = IntegerField(null=True, default="Нет данных", verbose_name="Номер лота")
+#     LotName = CharField(null=True, max_length=512,  default="Нет данных", verbose_name="Наименование лота")
+#     InitialMaxContractPrice = FloatField(null=True,  default="Нет данных", verbose_name="Начальная максимальная цена контракта")
     
-    InitialMaxContractPriceInCurrency = FloatField(null=True,  default="Нет данных", verbose_name="Начальная максимальная цена контракта в валюте")
-    ContractCurrency = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Валюта контракта")
-    ContractCurrency = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Валюта контракта")
-    OKDPClassification = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Классификация ОКДП")
-    OKPDClassification = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Классификация ОКПД")
-    OKPD2Classification = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Классификация ОКПД2")
-    PositionCode = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Код позиции")
-    CustomerName = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Наименование заказчика")
-    ProcurementOrganization = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Организация закупки")
-    PlacementDate = DateField(null=True,  default="Нет данных", verbose_name="Дата размещения")
-    UpdateDate = DateField(null=True,  default="Нет данных", verbose_name="Дата обновления")
-    ProcurementStage = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Этап закупки")
-    ProcurementFeatures = CharField(null=True, max_length=512, default="Нет данных", verbose_name="Особенности закупки")
-    ApplicationStartDate = DateField(null=True, default="Нет данных", verbose_name="Дата начала заявки")
-    ApplicationEndDate = DateField(null=True,  default="Нет данных", verbose_name="Дата окончания заявки")
-    AuctionDate = DateField(null=True,  default="Нет данных", verbose_name="Дата аукциона")
+#     InitialMaxContractPriceInCurrency = FloatField(null=True,  default="Нет данных", verbose_name="Начальная максимальная цена контракта в валюте")
+#     ContractCurrency = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Валюта контракта")
+#     ContractCurrency = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Валюта контракта")
+#     OKDPClassification = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Классификация ОКДП")
+#     OKPDClassification = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Классификация ОКПД")
+#     OKPD2Classification = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Классификация ОКПД2")
+#     PositionCode = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Код позиции")
+#     CustomerName = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Наименование заказчика")
+#     ProcurementOrganization = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Организация закупки")
+#     PlacementDate = DateField(null=True,  default="Нет данных", verbose_name="Дата размещения")
+#     UpdateDate = DateField(null=True,  default="Нет данных", verbose_name="Дата обновления")
+#     ProcurementStage = CharField(null=True,  max_length=512, default="Нет данных", verbose_name="Этап закупки")
+#     ProcurementFeatures = CharField(null=True, max_length=512, default="Нет данных", verbose_name="Особенности закупки")
+#     ApplicationStartDate = DateField(null=True, default="Нет данных", verbose_name="Дата начала заявки")
+#     ApplicationEndDate = DateField(null=True,  default="Нет данных", verbose_name="Дата окончания заявки")
+#     AuctionDate = DateField(null=True,  default="Нет данных", verbose_name="Дата аукциона")
 
     
-    notification_link = CharField(null=True,verbose_name="Извещение о закупке", max_length=512)
-    quantity_units = IntegerField(null=True,verbose_name="Количество единиц")
-    nmck_per_unit = FloatField(null=True,verbose_name="НМЦК за единицу")
-    nmck_file = CharField(null=True,verbose_name="Файл НМЦК", max_length=512)
-    protocol_file = CharField(null=True,verbose_name="Файл Протокола", max_length=512)
+#     notification_link = CharField(null=True,verbose_name="Извещение о закупке", max_length=512)
+#     quantity_units = IntegerField(null=True,verbose_name="Количество единиц")
+#     nmck_per_unit = FloatField(null=True,verbose_name="НМЦК за единицу")
+#     nmck_file = CharField(null=True,verbose_name="Файл НМЦК", max_length=512)
+#     protocol_file = CharField(null=True,verbose_name="Файл Протокола", max_length=512)
 
 
-    TKPData = CharField(null=True, max_length=500, default="[]", verbose_name="Данные по ТКП")
-    QueryCount = IntegerField(null=True,  default=0, verbose_name="Количество запросов")
-    ResponseCount = IntegerField(null=True,  default=0, verbose_name="Количество ответов") 
-    AveragePrice = FloatField(null=True,  default=0, verbose_name="Среднее значение цены")
-    MinPrice = FloatField(null=True,  default=0, verbose_name="Минимальная цена")
-    MaxPrice = FloatField(null=True,  default=0, verbose_name="Максимальная цена")
-    StandardDeviation = FloatField(null=True,  default=0, verbose_name="Среднее квадратичное отклонение")
-    CoefficientOfVariation = FloatField(null=True,  default=0, verbose_name="Коэффициент вариации")
-    NMCKMarket = FloatField(null=True,  default=0, verbose_name="НМЦК рыночная")
-    FinancingLimit = FloatField(null=True, default=0, verbose_name="Лимит финансирования")
-    PurchaseStatus = CharField(null=True, max_length=500, default="[]", verbose_name="Статус закупки")
-    InitialMaxContractPriceOld = FloatField(null=True,  default=0, verbose_name="Начальная максимальная цена контракта старая")
+#     TKPData = CharField(null=True, max_length=500, default="[]", verbose_name="Данные по ТКП")
+#     QueryCount = IntegerField(null=True,  default=0, verbose_name="Количество запросов")
+#     ResponseCount = IntegerField(null=True,  default=0, verbose_name="Количество ответов") 
+#     AveragePrice = FloatField(null=True,  default=0, verbose_name="Среднее значение цены")
+#     MinPrice = FloatField(null=True,  default=0, verbose_name="Минимальная цена")
+#     MaxPrice = FloatField(null=True,  default=0, verbose_name="Максимальная цена")
+#     StandardDeviation = FloatField(null=True,  default=0, verbose_name="Среднее квадратичное отклонение")
+#     CoefficientOfVariation = FloatField(null=True,  default=0, verbose_name="Коэффициент вариации")
+#     NMCKMarket = FloatField(null=True,  default=0, verbose_name="НМЦК рыночная")
+#     FinancingLimit = FloatField(null=True, default=0, verbose_name="Лимит финансирования")
+#     PurchaseStatus = CharField(null=True, max_length=500, default="[]", verbose_name="Статус закупки")
+#     InitialMaxContractPriceOld = FloatField(null=True,  default=0, verbose_name="Начальная максимальная цена контракта старая")
   
-    class Meta:
-        database = db  
+#     class Meta:
+#         database = db  
 
         
 class Purchase(Model):
@@ -285,7 +285,7 @@ class Boat(Model):
     total_engine_power_kw = FloatField(null=True)
     total_generators_kw = FloatField(null=True)
     total_auxiliary_engines_kw = FloatField(null=True)
-    purchase = ForeignKeyField(Purchase,on_delete='CASCADE',  backref='contract',  verbose_name="Закупка")
+    # purchase = ForeignKeyField(Purchase,on_delete='CASCADE',  backref='contract',  verbose_name="Закупка")
     class Meta:
         database = db
 
