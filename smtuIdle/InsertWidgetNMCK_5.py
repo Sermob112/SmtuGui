@@ -23,16 +23,16 @@ class InsertWidgetNMCK_5(QWidget):
         self.role = role
         self.user = user
         self.changer = changer
-        self.setWindowTitle("Добавление файлов Протокола, НМЦК, Извищения")
+        self.setWindowTitle("Добавление файлов Протокола, НМЦК, Извещение")
         self.setGeometry(100, 100, 600, 200)
         # Создаем лейблы
-        label1 = QLabel("Ввод данных - Протокол, НМЦК, Извищение")
+        label1 = QLabel("Ввод данных - Протокол, НМЦК, Извещение")
         label1.setAlignment(Qt.AlignCenter)
         # label2 = QLabel("НМЦК с учетом метода и способа расчета")
         # label2.setAlignment(Qt.AlignCenter)
         label3 = QLabel("Протокол")
         label4 = QLabel("НМЦК")
-        label5 = QLabel("Извищение")
+        label5 = QLabel("Извещение")
         # label6 = QLabel("НМЦК на основе затратного метода")
         # label7 = QLabel("Цена сравнимой продукции, приведенная в соответствие к условиям<br>закупки судна, НМЦК которого определяется")
         # label8 = QLabel("НМЦК, полученная с приминенем двух методов: метода<br>соспостовимых рыночных цен и затратного метода")

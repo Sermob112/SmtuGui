@@ -165,7 +165,8 @@ class CsvLoaderWidget(QWidget):
             for row, record in enumerate(self.result):
                 self.second_table.insertRow(row)
                 for col, value in enumerate(record):
-                    item = QTableWidgetItem(str(value))
+                    display_value = "Нет данных" if value is None else str(value)
+                    item = QTableWidgetItem(str(display_value))
                     self.second_table.setItem(row, col, item)
 
     def update_table(self):

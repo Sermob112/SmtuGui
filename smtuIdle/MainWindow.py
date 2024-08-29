@@ -58,6 +58,7 @@ class Ui_MainWindow(QMainWindow):
         self.updateButton.setFixedWidth(150)
         self.updateButton.clicked.connect(self.GlobalUpdate)
         self.layoutBut.addWidget(self.updateButton)
+        self.updateButton.hide()
         self.logoutButton = QPushButton("Выйти")
         self.logoutButton.setFixedWidth(150)
         self.logoutButton.clicked.connect(self.exit)
@@ -446,15 +447,15 @@ class Ui_MainWindow(QMainWindow):
         # self.pushButtonParser.setText(_translate("MainWindow", "Парсер"))
         self.pushButton0.setText(_translate("MainWindow", "Просмотр БД"))
         self.pushButton1.setText(_translate("MainWindow", "Ввод данных по закупкам"))
-        self.pushButton2.setText(_translate("MainWindow", "Просмотр Формуляра Закупки"))
+        self.pushButton2.setText(_translate("MainWindow", "Просмотр формуляра закупки"))
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ закупок"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
         self.pushButton5.setText(_translate("MainWindow", "Экспорт БД НМЦК в Excel"))
         self.pushButton5_1.setText(_translate("MainWindow", "Панель изменений"))
         self.pushButton6.setText(_translate("MainWindow", "Администрирование"))
-        self.pushButton7.setText(_translate("MainWindow", "Файлы Руководства"))
+        self.pushButton7.setText(_translate("MainWindow", "Файлы руководства"))
         # self.pushButtonResult.setText(_translate("MainWindow", "Результаты"))
-        self.pushButton8.setText(_translate("MainWindow", "Просмотр Формуляра Контрактов"))
+        self.pushButton8.setText(_translate("MainWindow", "Просмотр формуляра контрактов"))
         self.pushButton9.setText(_translate("MainWindow", "Статистический анализ контрактов"))
         # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
@@ -496,13 +497,15 @@ class Ui_MainWindow(QMainWindow):
             # self.auth_window.show()
     def updatePurchaseLabel(self):
         self.user = f"Пользователь: <b>{self.username}</b>"
-        self.date = f"Дата сеанса: <b>{self.formatted_date}</b>"
+        # self.date = f"Дата сеанса: <b>{self.formatted_date}</b>"
+        self.date = f"Дата сеанса: 17.05.2024"
         self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
         self.purchaseLabel3.setText(self.totalRecords)
         self.purchaseLabel.setText(self.date)
     def return_variabels(self):
         self.user = f"Пользователь {self.username}"
-        self.date = f"Дата сеанса{self.formatted_date}"
+        # self.date = f"Дата сеанса{self.formatted_date}"
+        self.date = f"Дата сеанса: 17.05.2024"
         self.totalRecords = f"Закупок в БД {count_total_records()}"
         return self.totalRecords,self.date, self.user
     

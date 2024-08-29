@@ -76,16 +76,16 @@ class PurchasesWidgetAll(QWidget):
          
          # Создаем выпадающее меню
         self.sort_options = QComboBox()
-        self.sort_options.addItems(["Сортировать по Цене (Возростание)", "Сортировать по Цены (Убывание)",
+        self.sort_options.addItems(["Сортировать по цене (Возрастание)", "Сортировать по цене (Убывание)",
                                     
-                                    "Сортировать по Дате (Возростание)","Сортировать по Дате (Убывание)"])
+                                    "Сортировать по дате (Возрастание)","Сортировать по дате (Убывание)"])
          # Устанавливаем обработчик событий для выпадающего меню
        
         self.sort_options.setFixedWidth(250)
         self.sort_options.currentIndexChanged.connect(self.highlight_current_item)
         unique_purchase_orders = Purchase.select(Purchase.PurchaseOrder).distinct()
         self.sort_by_putch_order = QComboBox()
-        self.sort_by_putch_order.addItem("Фильтрация по Закону")
+        self.sort_by_putch_order.addItem("Фильтрация по закону")
         self.sort_by_putch_order.setFixedWidth(250)
         self.sort_by_putch_order.currentIndexChanged.connect(self.highlight_current_item)
         for order in unique_purchase_orders:
@@ -102,7 +102,7 @@ class PurchasesWidgetAll(QWidget):
 
         unique_purchase_CustomerName = Purchase.select(Purchase.CustomerName).distinct().order_by(fn.Lower(Purchase.CustomerName))
         self.sort_by_putch_CustomerName = QComboBox()
-        self.sort_by_putch_CustomerName.addItem("Фильтрация по Заказчикам")
+        self.sort_by_putch_CustomerName.addItem("Фильтрация по заказчикам")
         self.sort_by_putch_CustomerName.setFixedWidth(250)
         for order in unique_purchase_CustomerName:
             self.sort_by_putch_CustomerName.addItem(str(order.CustomerName))
@@ -111,7 +111,7 @@ class PurchasesWidgetAll(QWidget):
 
         unique_purchase_ProcurementMethod = Purchase.select(Purchase.ProcurementMethod).distinct().order_by(fn.Lower(Purchase.ProcurementMethod))
         self.sort_by_putch_ProcurementMethod = QComboBox()
-        self.sort_by_putch_ProcurementMethod.addItem("Фильтрация по Методу закупки")
+        self.sort_by_putch_ProcurementMethod.addItem("Фильтрация по методу закупки")
         self.sort_by_putch_ProcurementMethod.setFixedWidth(250)
         for order in unique_purchase_ProcurementMethod:
             self.sort_by_putch_ProcurementMethod.addItem(str(order.ProcurementMethod))
@@ -278,7 +278,7 @@ class PurchasesWidgetAll(QWidget):
         #меню по  фильтрам дата
         self.menu_content_data = QWidget()
         menu_layout_data = QHBoxLayout()
-        DataLabel = QLabel("Фильтрация по Дате Размещения")
+        DataLabel = QLabel("Фильтрация по дате размещения")
         menu_layout_dataV = QVBoxLayout()
         menu_layout_dataV.addWidget(DataLabel)
         menu_layout_dataV.addWidget(line3)
@@ -457,16 +457,16 @@ class PurchasesWidgetAll(QWidget):
          
          # Создаем выпадающее меню
         self.sort_options_contract = QComboBox()
-        self.sort_options_contract.addItems(["Сортировать по Цене (Возростание)", "Сортировать по Цены (Убывание)",
+        self.sort_options_contract.addItems(["Сортировать по цене (Возрастание)", "Сортировать по цене (Убывание)",
                                     
-                                    "Сортировать по Дате (Возростание)","Сортировать по Дате (Убывание)"])
+                                    "Сортировать по дате (Возрастание)","Сортировать по дате (Убывание)"])
          # Устанавливаем обработчик событий для выпадающего меню
        
         self.sort_options_contract.setFixedWidth(250)
         self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item_contract)
         unique_contract_winnter = Contract.select(Contract.WinnerExecutor).distinct().order_by(fn.Lower(Contract.WinnerExecutor))
         self.sort_by_putch_winner = QComboBox()
-        self.sort_by_putch_winner.addItem("Фильтрация по Победителю-исполнителю контракта")
+        self.sort_by_putch_winner.addItem("Фильтрация по победителю-исполнителю контракта")
         self.sort_by_putch_winner.setFixedWidth(250)
         self.sort_by_putch_winner.currentIndexChanged.connect(self.highlight_current_item_contract)
         for order in unique_contract_winnter:
@@ -475,7 +475,7 @@ class PurchasesWidgetAll(QWidget):
 
       
         self.search_input_contract = QLineEdit()
-        self.search_input_contract.setPlaceholderText("Поиск по Победителю - исполнителю контракта, заказчику, наименованию объекта или организации")
+        self.search_input_contract.setPlaceholderText("Поиск по победителю - исполнителю контракта, заказчику, наименованию объекта или организации")
         self.unique_values_query_contract = self.findUnicContract()
         self.search_input_contract.setFixedWidth(500)
         completer = QCompleter(self.unique_values_query_contract )
@@ -565,7 +565,7 @@ class PurchasesWidgetAll(QWidget):
         #меню по ключевому фильтрам
         self.menu_content_filters_contract  = QWidget()
         menu_layout_filters = QHBoxLayout()
-        self.FilterLable_contract  = QLabel("Расшириная фильтрация по справочникам контрактов")
+        self.FilterLable_contract  = QLabel("Расширенная фильтрация по справочникам контрактов")
         menu_layout_filtersH = QVBoxLayout()
         menu_layout_filtersH.addWidget(line1)
         menu_layout_filtersH.addWidget(self.FilterLable_contract )
@@ -586,7 +586,7 @@ class PurchasesWidgetAll(QWidget):
         self.menu_content_price_contrac = QWidget()
         menu_layout_price_contrac = QHBoxLayout()
         menu_layout_priceV_contrac = QVBoxLayout()
-        self.PriceLabel_contrac = QLabel("Фильтрация по Цене контрактов")
+        self.PriceLabel_contrac = QLabel("Фильтрация по цене контрактов")
         menu_layout_priceV_contrac.addWidget( self.PriceLabel_contrac)
         menu_layout_priceV_contrac.addWidget(line2)
         menu_layout_price_contrac.addWidget(self.min_price_label_contrac)
@@ -605,7 +605,7 @@ class PurchasesWidgetAll(QWidget):
         #меню по  фильтрам дата
         self.menu_content_data_contrac = QWidget()
         menu_layout_data_contrac = QHBoxLayout()
-        DataLabel_contrac = QLabel("Фильтрация по Дате Размещения контракта")
+        DataLabel_contrac = QLabel("Фильтрация по дате размещения контракта")
         menu_layout_dataV_contrac = QVBoxLayout()
         menu_layout_dataV_contrac.addWidget(DataLabel_contrac)
         menu_layout_dataV_contrac.addWidget(line3)
@@ -912,13 +912,13 @@ class PurchasesWidgetAll(QWidget):
         self.current_position = 0
         self.selected_option = self.sort_options.currentText()
 
-        if  self.selected_option == "Сортировать по Цене (Возростание)":
+        if  self.selected_option == "Сортировать по цене (Возрастание)":
             order_by = Purchase.InitialMaxContractPrice
-        elif  self.selected_option == "Сортировать по Цены (Убывание)":
+        elif  self.selected_option == "Сортировать по цене (Убывание)":
             order_by = Purchase.InitialMaxContractPrice.desc()
-        elif  self.selected_option == "Сортировать по Дате (Убывание)":
+        elif  self.selected_option == "Сортировать по дате (Убывание)":
             order_by = Purchase.PlacementDate.desc()
-        elif  self.selected_option == "Сортировать по Дате (Возростание)":
+        elif  self.selected_option == "Сортировать по дате (Возрастание)":
             order_by = Purchase.PlacementDate
   
 
@@ -952,7 +952,7 @@ class PurchasesWidgetAll(QWidget):
         # Фильтр по законам
        
         self.selected_order = self.sort_by_putch_order.currentText()
-        if  self.selected_order != "Фильтрация по Закону":
+        if  self.selected_order != "Фильтрация по закону":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.PurchaseOrder ==  self.selected_order
             )
@@ -964,13 +964,13 @@ class PurchasesWidgetAll(QWidget):
             )
         # Фильтр по Методу закупки
         self.selected_ProcurementMethod = self.sort_by_putch_ProcurementMethod.currentText()
-        if  self.selected_ProcurementMethod != "Фильтрация по Методу закупки":
+        if  self.selected_ProcurementMethod != "Фильтрация по методу закупки":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.ProcurementMethod ==  self.selected_ProcurementMethod
             )
         # Фильтр по Заказчикам
         self.CustomerName = self.sort_by_putch_CustomerName.currentText()
-        if  self.CustomerName != "Фильтрация по Заказчикам":
+        if  self.CustomerName != "Фильтрация по заказчикам":
             purchases_query_combined = purchases_query_combined.where(
                 Purchase.CustomerName ==  self.CustomerName
             )
@@ -997,13 +997,13 @@ class PurchasesWidgetAll(QWidget):
         self.current_position = 0
         self.selected_option_contract = self.sort_options_contract.currentText()
         
-        if  self.selected_option_contract == "Сортировать по Цене (Возростание)":
+        if  self.selected_option_contract == "Сортировать по цене (Возрастание)":
             order_by = Contract.ContractPrice
-        elif  self.selected_option_contract == "Сортировать по Цены (Убывание)":
+        elif  self.selected_option_contract == "Сортировать по цене (Убывание)":
             order_by = Contract.ContractPrice.desc()
-        elif  self.selected_option_contract == "Сортировать по Дате (Убывание)":
+        elif  self.selected_option_contract == "Сортировать по дате (Убывание)":
             order_by = Contract.StartDate.desc()
-        elif  self.selected_option_contract == "Сортировать по Дате (Возростание)":
+        elif  self.selected_option_contract == "Сортировать по дате (Возрастание)":
             order_by = Contract.StartDate
 
         min_price = float(self.min_price_input_contrac.text()) if self.min_price_input_contrac.text() else float('-inf')
@@ -1032,7 +1032,7 @@ class PurchasesWidgetAll(QWidget):
         )
 
         self.selected_contr = self.sort_by_putch_winner.currentText()
-        if  self.selected_contr != "Фильтрация по Победителю-исполнителю контракта":
+        if  self.selected_contr != "Фильтрация по победителю-исполнителю контракта":
             self.contracts = self.contracts.where(
                 Contract.WinnerExecutor == self.selected_contr )
             
@@ -1434,7 +1434,7 @@ class PurchasesWidgetAll(QWidget):
     def return_filters_variabels(self):
     
         # search_input = self.selected_text if self.selected_text is not None else ""
-        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order.currentText() != "Фильтровать по Закону"  else "-"
+        sort_by_putch_order =  self.sort_by_putch_order.currentText() if self.sort_by_putch_order.currentText() != "Фильтровать по закону"  else "-"
         min_date = self.min_data_input.date().toPython() if self.min_data_input.date().toPython() is not None  else "-"
         max_date = self.max_data_input.date().toPython() if self.max_data_input.date().toPython() is not None  else "-"
         min_price = self.min_price_input.text() if self.min_price_input.text() is not None  else "Фильтр не применен"

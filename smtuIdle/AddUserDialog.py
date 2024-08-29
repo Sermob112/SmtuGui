@@ -7,7 +7,7 @@ class AddUserDialog(QDialog):
         self.setWindowTitle('Добавление пользователя')
         
         layout = QVBoxLayout(self)
-        label1 = QLabel(f"Выбирите роль")
+        label1 = QLabel(f"Выберите  роль")
         self.role_combo = QComboBox()
         self.populate_roles()
         layout.addWidget(label1)
@@ -16,7 +16,7 @@ class AddUserDialog(QDialog):
         self.username_edit = QLineEdit()
         layout.addWidget(label2)
         layout.addWidget(self.username_edit)
-        label3 = QLabel(f"Введите пароль ")
+        label3 = QLabel(f"Введите пароль")
         self.upassword_edit = QLineEdit()
         layout.addWidget(label3)
         layout.addWidget( self.upassword_edit)
