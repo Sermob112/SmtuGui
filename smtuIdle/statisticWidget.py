@@ -479,7 +479,7 @@ class StatisticWidget(QWidget):
         total_purchase_counts = column_sums.sum()
         column_sums['Суммы'] = total_purchase_counts
         # print(column_sums)
-        pivot_table.index.name = 'Анализ методов, использованных для определения поставщика, подрядной организации (размещения закупки)'
+        pivot_table.index.name = 'Анализ методов, использованных для определения поставщика,\nподрядной организации (размещения закупки)'
         # print(pivot_table)
         return pivot_table, column_sums 
     

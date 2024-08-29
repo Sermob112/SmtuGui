@@ -54,10 +54,11 @@ class EditUserDialog(QDialog):
         selected_role_id = self.role_combo.currentData()
         selected_role = Role.get(Role.id == selected_role_id)
         username = self.username_edit.text()
-
+        password = self.username_password.text()
         if username:
             user = User.get(User.id == self.user_id)
             user.username = username
+            user.password = password
             user.save()
 
             # Обновите роль пользователя

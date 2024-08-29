@@ -497,15 +497,15 @@ class Ui_MainWindow(QMainWindow):
             # self.auth_window.show()
     def updatePurchaseLabel(self):
         self.user = f"Пользователь: <b>{self.username}</b>"
-        # self.date = f"Дата сеанса: <b>{self.formatted_date}</b>"
-        self.date = f"Дата сеанса: 17.05.2024"
+        self.date = f"Дата сеанса: <b>{self.formatted_date}</b>"
+        # self.date = f"Дата сеанса: 17.05.2024"
         self.totalRecords = f"Закупок в БД:<b> {count_total_records()}</b>"
         self.purchaseLabel3.setText(self.totalRecords)
         self.purchaseLabel.setText(self.date)
     def return_variabels(self):
         self.user = f"Пользователь {self.username}"
-        # self.date = f"Дата сеанса{self.formatted_date}"
-        self.date = f"Дата сеанса: 17.05.2024"
+        self.date = f"Дата сеанса{self.formatted_date}"
+        # self.date = f"Дата сеанса: 17.05.2024"
         self.totalRecords = f"Закупок в БД {count_total_records()}"
         return self.totalRecords,self.date, self.user
     
@@ -573,21 +573,21 @@ class Ui_MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
 
-    # def closeEvent(self, event):
-    #     # Обработка события закрытия главного окна
-    #     reply = QMessageBox()
-    #     reply.setWindowTitle("Предупреждение о выходе") 
-    #     reply.setText("Вы уверены, что хотите закрыть приложение?")
-    #     reply.addButton("Нет", QMessageBox.NoRole)
-    #     reply.addButton("Да", QMessageBox.YesRole)
-    #     result = reply.exec()
+    def closeEvent(self, event):
+        # Обработка события закрытия главного окна
+        reply = QMessageBox()
+        reply.setWindowTitle("Предупреждение о выходе") 
+        reply.setText("Вы уверены, что хотите закрыть приложение?")
+        reply.addButton("Нет", QMessageBox.NoRole)
+        reply.addButton("Да", QMessageBox.YesRole)
+        result = reply.exec()
        
 
-    #     if result == 1:
-    #         self.write_logout_log()
-    #         event.accept()
-    #     else:
-    #         event.ignore()
+        if result == 1:
+            self.write_logout_log()
+            event.accept()
+        else:
+            event.ignore()
     def GlobalUpdate(self):
         self.ChangeWindow.populate_table()
         self.purchaseViewerall.reload_data()
