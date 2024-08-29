@@ -55,7 +55,7 @@ class ChangeLogWindow(QWidget):
             item = QTableWidgetItem("Нет данных")
             item.setTextAlignment(0x0004 | 0x0080)  # Выравнивание по центру
             self.table.setItem(0, 0, item)
-            self.table.setSpan(0, 0, 1, 6)
+            self.table.setSpan(0, 0, 1, 7)
         else:
             for change in changes:
                 id_value = change.id or "Нет данных"

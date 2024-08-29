@@ -256,7 +256,7 @@ class PurchasesWidget(QWidget):
             self.add_row_to_table("Коэффициент вариации %", format_string("%.0f",current_purchase.CoefficientOfVariation * 100,grouping=True) + ' %' if current_purchase.CoefficientOfVariation is not None else "Нет данных")
             self.add_row_to_table("НМЦК рыночная", format_string("%.0f",current_purchase.NMCKMarket,grouping=True) + self.symbol if current_purchase.NMCKMarket is not None else "Нет данных")
             self.add_row_to_table("Лимит финансирования", format_string("%.0f",current_purchase.FinancingLimit,grouping=True) + self.symbol if current_purchase.FinancingLimit is not None  else "Нет данных")
-            self.add_section_to_table("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
+            self.add_section_to_table("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информации")
             nmc_1_proposal_dict = {}
             if current_purchase.NMCK_1:
                 nmc_1_proposal_dict = json.loads(current_purchase.NMCK_1)
@@ -532,7 +532,7 @@ class PurchasesWidget(QWidget):
                 item_text.startswith("Определение победителя") or \
                 item_text.startswith("Заключение контракта") or \
                 item_text.startswith("1.Определение НМЦК методом сопоставимых рыночных цен") or \
-                item_text.startswith("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании") or \
+                item_text.startswith("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информации") or \
                 item_text.startswith("3.Определение НМЦК затратным методом") or \
                 item_text.startswith("4.Итоговое определение НМЦК с использованием нескольких методов"):
                     ws.append([item_text])  # Добавляем заголовок раздела
