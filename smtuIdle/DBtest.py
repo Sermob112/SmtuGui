@@ -51,6 +51,7 @@ class PurchasesWidget(QWidget):
         self.table.horizontalHeader().setStretchLastSection(True) # Растягиваем вторую колонку на оставшееся пространство
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table.setColumnWidth(0, 500)
+        
         self.table.setWordWrap(True) # Разрешаем перенос текста в ячейках
         self.table.setShowGrid(True)
         self.table.verticalHeader().setVisible(False)
@@ -402,6 +403,9 @@ class PurchasesWidget(QWidget):
 
         # # Adjust row height
         self.table.resizeRowsToContents()
+        max_height = 100
+        for row in range(self.table.rowCount()):
+            self.table.setRowHeight(row, min(max_height, self.table.rowHeight(row)))
         # max_height = 40  # Установите желаемую максимальную высоту здесь
         # self.table.setRowHeight(row_position, min(max_height, self.table.rowHeight(row_position)))
 

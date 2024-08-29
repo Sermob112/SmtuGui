@@ -123,10 +123,10 @@ class StatisticWidgetContract(QWidget):
             "Анализ количества победителей",
             "Анализ количества заключённых контрактов",
             "Анализ количества указанных № контрактов",
-            "Анализ соотношения НМЦК и ЦКЕП и цены\n контракта, заключенного по результатам конкурса",
-            "Анализ количества ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
-            "Анализ уровеня цены контракта, заключенного\n по результатам конкурса",
-            "Анализ диапазона значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
+            "Анализ соотношения НМЦК и ЦКЕП и цены\nконтракта, заключенного по результатам конкурса",
+            "Анализ количества ценовых предложений\nпоставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
+            "Анализ уровеня цены контракта, заключенного\nпо результатам конкурса",
+            "Анализ диапазона значений коэффициента\nвариации при определении НМЦК и ЦКЕП"
      
         ]
         self.buttons = []
@@ -368,19 +368,19 @@ class StatisticWidgetContract(QWidget):
         self.plot_pie()
         return tab
     def show_convas(self):
-        current_policy = self.table.sizeAdjustPolicy()
-
-    # Проверяем текущую политику и переключаем её
-        if current_policy == QtWidgets.QAbstractScrollArea.AdjustToContents:
-            # Если текущая политика - AdjustToContents, устанавливаем AdjustIgnored
-            self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
-            self.buttonConvas.setText('Скрыть график')
-            self.tab_widget.show()
-        else:
-            # Иначе (т.е. если текущая политика - AdjustIgnored), устанавливаем AdjustToContents
-            self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-            self.buttonConvas.setText('Показать график')
-            self.tab_widget.hide()
+        # current_policy = self.table.sizeAdjustPolicy()
+        return
+    # # Проверяем текущую политику и переключаем её
+    #     if current_policy == QtWidgets.QAbstractScrollArea.AdjustToContents:
+    #         # Если текущая политика - AdjustToContents, устанавливаем AdjustIgnored
+    #         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustIgnored)
+    #         self.buttonConvas.setText('Скрыть график')
+    #         self.tab_widget.show()
+    #     else:
+    #         # Иначе (т.е. если текущая политика - AdjustIgnored), устанавливаем AdjustToContents
+    #         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
+    #         self.buttonConvas.setText('Показать график')
+    #         self.tab_widget.hide()
     def plot_graph(self):
         # self.table.hide()
         current_data = self.all_data[self.current_data_index]
@@ -449,6 +449,7 @@ class StatisticWidgetContract(QWidget):
             'Пять',
             'Более пяти'
         ]
+        
         query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.PriceProposal.is_null(False))
         data = list(query)
         df_data = []
@@ -466,12 +467,12 @@ class StatisticWidgetContract(QWidget):
 
             df_data.append(row_data)
 
-        df_columns = ['PurchaseOrder'] + coeff_range_order
+        df_columns = [f'{self.formular_texts[7]}'] + coeff_range_order
         df = pd.DataFrame(df_data, columns=df_columns)
         df.rename(columns=dict(zip(coeff_range_order, new_column_names)), inplace=True)
-
+    
         # Создание сводной таблицы
-        pivot_table = df.pivot_table(index='PurchaseOrder', aggfunc='sum', fill_value=0)
+        pivot_table = df.pivot_table(index=f'{self.formular_texts[7]}', aggfunc='sum', fill_value=0)
         # Суммы по строкам и столбцам
         transposed_table = pivot_table.T
         row_totals = transposed_table.sum(axis=1)
@@ -480,7 +481,8 @@ class StatisticWidgetContract(QWidget):
         total_counts = column_sums.sum()
         column_sums['Суммы'] = total_counts
         transposed_table = transposed_table.reindex(new_column_names, axis=0)
-
+        # print(transposed_table)
+        # print(column_sums)
         return transposed_table,column_sums
     def count_non_empty_values(self, dictionary):
         count = 0
@@ -842,8 +844,9 @@ class StatisticWidgetContract(QWidget):
         for col_index, value in enumerate(sums.iloc[0]):
             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))  # Сдвигаем индекс столбца на 1
 
-        self.table.resizeColumnsToContents()
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # self.table.resizeColumnsToContents()
+        # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+            
         # self.table.horizontalHeader().setStretchLastSection(True)
         # self.table_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
@@ -912,8 +915,8 @@ class StatisticWidgetContract(QWidget):
     def show_current_data(self):
         # Очистка таблицы перед обновлением
         self.clear_table()
-        self.plot_graph()
-        self.plot_pie()
+        # self.plot_graph()
+        # self.plot_pie()
         # Получение текущих данных
         current_data = self.all_data[self.current_data_index]
         # Отображение данных в таблице

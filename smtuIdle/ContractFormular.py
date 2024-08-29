@@ -294,6 +294,9 @@ class ContractFormularWidget(QWidget):
 
         # # Adjust row height
         self.table.resizeRowsToContents()
+        max_height = 100
+        for row in range(self.table.rowCount()):
+            self.table.setRowHeight(row, min(max_height, self.table.rowHeight(row)))
         # max_height = 40  # Установите желаемую максимальную высоту здесь
         # self.table.setRowHeight(row_position, min(max_height, self.table.rowHeight(row_position)))
 

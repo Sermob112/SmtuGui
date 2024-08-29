@@ -966,9 +966,6 @@ def export_to_excel_all(data, output_excel_path):
         "nmck_per_unit":"НМЦК за единицу",
 
     }
-
-       
-
         data_df.rename(columns=column_translation, inplace=True)
         with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
             data_df.to_excel(writer, startrow=0, header=True, index=False)
