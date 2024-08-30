@@ -748,7 +748,7 @@ class StatisticWidget(QWidget):
     def populate_table(self, data, sums):
     # Очищаем таблицу перед обновлением
         self.clear_table()
-
+        self.table.setColumnWidth(0, 500)
         # Получаем список всех уникальных законов
         all_purchase_orders = set(data.columns.tolist())
         all_purchase_orders.remove('Общий итог')

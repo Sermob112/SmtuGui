@@ -449,7 +449,7 @@ class StatisticWidgetContract(QWidget):
             'Пять',
             'Более пяти'
         ]
-        
+
         query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.PriceProposal.is_null(False))
         data = list(query)
         df_data = []
@@ -470,9 +470,14 @@ class StatisticWidgetContract(QWidget):
         df_columns = [f'{self.formular_texts[7]}'] + coeff_range_order
         df = pd.DataFrame(df_data, columns=df_columns)
         df.rename(columns=dict(zip(coeff_range_order, new_column_names)), inplace=True)
-    
+        
+        # Устанавливаем имя индекса до создания сводной таблицы
+        df.set_index(f'{self.formular_texts[7]}', inplace=True)
+        
         # Создание сводной таблицы
-        pivot_table = df.pivot_table(index=f'{self.formular_texts[7]}', aggfunc='sum', fill_value=0)
+        pivot_table = df.pivot_table(index=df.index.name, aggfunc='sum', fill_value=0)
+        pivot_table.index.name = df.index.name  # Устанавливаем имя индекса после создания сводной таблицы
+        
         # Суммы по строкам и столбцам
         transposed_table = pivot_table.T
         row_totals = transposed_table.sum(axis=1)
@@ -481,9 +486,13 @@ class StatisticWidgetContract(QWidget):
         total_counts = column_sums.sum()
         column_sums['Суммы'] = total_counts
         transposed_table = transposed_table.reindex(new_column_names, axis=0)
+
         # print(transposed_table)
         # print(column_sums)
-        return transposed_table,column_sums
+        
+        return transposed_table, column_sums
+    
+
     def count_non_empty_values(self, dictionary):
         count = 0
         for key, value in dictionary.items():
@@ -777,11 +786,13 @@ class StatisticWidgetContract(QWidget):
     def populate_table_2(self, data, sums):
     # Очищаем таблицу перед обновлением
         self.clear_table()
-
+        self.table.setColumnWidth(0, 500)
         # Получаем список всех уникальных законов
         all_purchase_orders = set(data.columns.tolist())
         all_purchase_orders.remove('Общий итог')
         first_column_name = data.index.name
+        if (self.current_data_index == 4):
+            first_column_name = 'Количество ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка'
         # Устанавливаем количество столбцов в таблице
         num_columns = len(all_purchase_orders) + 2  # Плюс два для "Метод" и "Общий итог"
         self.table.setColumnCount(num_columns)
@@ -809,10 +820,12 @@ class StatisticWidgetContract(QWidget):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
         self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
-
+        first_column_name = data.index.name
+        # print("First column name:", first_column_name)
         for col_index, key in enumerate(sums.keys()):
             value = sums[key]
             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
+
     def populate_table(self, data, sums):
 
         # Получаем список всех уникальных законов
