@@ -41,10 +41,10 @@ class InsertWidgetPanel(QWidget):
         label1.setAlignment(Qt.AlignCenter)
  
      
-        button_NMCK_method_1= QPushButton("1.Добавить определение НМЦК методом сопоставимых рыночных цен")
-        button_NMCK_method_2= QPushButton("2.Добавить определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информации")
-        button_NMCK_method_3= QPushButton("3.Добавить определение НМЦК затратным методом")
-        button_NMCK_method_4= QPushButton("4.Итоговое определение НМЦК с использованием нескольких методов")
+        button_NMCK_method_1= QPushButton("1. Добавить определение НМЦК методом сопоставимых рыночных цен")
+        button_NMCK_method_2= QPushButton("2. Добавить определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информации")
+        button_NMCK_method_3= QPushButton("3. Добавить определение НМЦК затратным методом")
+        button_NMCK_method_4= QPushButton("4. Итоговое определение НМЦК с использованием нескольких методов")
         button_NMCK_method_5= QPushButton("Добавить файлы НМЦК")
         # browse_button_NMCK= QPushButton("Добавить файл НМЦК")
         # browse_button_izvesh= QPushButton("Добавить файл Извещения")

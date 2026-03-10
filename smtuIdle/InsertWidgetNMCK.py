@@ -191,7 +191,7 @@ class InsertWidgetNMCK(QWidget):
             chenged_time=datetime.datetime.now(),
             PurchaseName=purchase.PurchaseName,
             Role=self.role,
-            Type=f'Добавлены данные - Метод сопоставимых рыночных цен'
+            Type=f'Добавлены данные - "Метод сопоставимых рыночных цен"'
         )
         changed_date.save()
     def show_message(self, title, message):

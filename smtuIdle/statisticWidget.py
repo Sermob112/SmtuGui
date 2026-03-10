@@ -58,35 +58,36 @@ class StatisticWidget(QWidget):
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
           # Список для хранения всех данных, которые  отобразить в таблице
         self.label_texts = [
-            "Анализ методов, использованных для определения поставщика,\n подрядной организации (размещения закупки)",
-            "Анализ формулировок, применяемых государственными\n заказчиками, при объявлении закупки",
-            "Анализ по классификации ОКПД2",           
+            "Анализ методов, использованных для определения поставщика,\n  подрядной организации (размещения закупки)",
+            "Анализ формулировок, применяемых государственными\n  заказчиками при объявлении закупки",
+            "Анализ по классификации ОКПД2",
             "Анализ количества заявок на участие в закупке",
-            "Анализ количества допущенных заявок\n на участие в закупке",
-            "Анализ количества отклоненных заявок\n на участие в закупке",
-            "Анализ соотношения НМЦК и ЦКЕП и цены\n контракта, заключенного по результатам конкурса",
-            "Анализ количества ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
-            "Анализ уровеня цены контракта, заключенного\n по результатам конкурса",
-             "Анализ диапазона значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
-            #  ",Анализ количество записей по годам"
+            "Анализ количества допущенных заявок на участие в закупке",
+            "Анализ количества отклонённых заявок на участие в закупке",
+            # "Анализ соотношения НМЦК и ЦКЕП и цены контракта, заключённого по результатам конкурса",
+            # "Анализ количества ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
+            # "Анализ уровня цены контракта, заключённого по результатам конкурса",
+            # "Анализ диапазона значений коэффициента вариации при определении НМЦК и ЦКЕП"
+            # "Анализ количества записей по годам"
         ]
 
         self.formular_texts = [
-            "Методы, использованных для определения НМЦК и ЦКЕП",
-            "Формулировки, применяемых государственными\n заказчиками, при объявлении закупки",
-            "Классификации ОКПД2",           
+            "Методы, использованные для определения НМЦК и ЦКЕП",
+            "Формулировки, применяемые государственными\n  заказчиками при объявлении закупки",
+            "Классификация ОКПД2",
             "Количество заявок на участие в закупке",
-            "Количество допущенных заявок\n на участие в закупке",
-            "Количество отклоненных заявок\n на участие в закупке",
-            "Соотношения НМЦК и ЦКЕП и цены\n контракта, заключенного по результатам конкурса",
-            "Количество ценовых предложений\n поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
-            "Уровень цены контракта, заключенного\n по результатам конкурса",
-             "Диапазон значений коэффициента\n вариации при определении НМЦК и ЦКЕП"
-            #  ",Анализ количество записей по годам"
+            "Количество допущенных заявок на участие в закупке",
+            "Количество отклонённых заявок на участие в закупке",
+            # "Соотношение НМЦК и ЦКЕП и цены контракта, заключённого по результатам конкурса",
+            # "Количество ценовых предложений поставщиков при обосновании НМЦК и ЦКЕП методом анализа рынка",
+            # "Уровень цены контракта, заключённого по результатам конкурса",
+            # "Диапазон значений коэффициента вариации при определении НМЦК и ЦКЕП"
+            # "Анализ количества записей по годам"
         ]
         self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
+
+                        #  self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
                         #  ,self.analisYears()
                         ]
         
@@ -147,7 +148,7 @@ class StatisticWidget(QWidget):
         self.menu_frame.setVisible(False)
 
          # Добавляем кнопку выпадающего меню по цене
-        self.SecondStage = QPushButton("Анализ Заявок")
+        self.SecondStage = QPushButton("Анализ заявок")
         self.SecondStage.setIcon(QIcon("Pics/right-arrow.png"))
         self.SecondStage.setMaximumWidth(400)
         self.SecondStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
@@ -308,7 +309,7 @@ class StatisticWidget(QWidget):
     def update_data(self):
         self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                         self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
+                        #  self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
                         #  ,self.analisYears()
                          
                          ]
@@ -559,13 +560,13 @@ class StatisticWidget(QWidget):
         purchases = self.query.where(Purchase.CoefficientOfVariation.is_null(False))
         coeff_range_order = [
         'Значение коэффициента вариации 0%',
-        'значение коэффициента вариации 0-1%',
-        'значение коэффициента вариации 1-2%',
-        'значение коэффициента вариации 2-5%',
-        'значение коэффициента вариации 5-10%',
-        'значение коэффициента вариации 10-20%',
-        'значение коэффициента вариации 20-33%',
-        'более 33%'
+        'Значение коэффициента вариации 0-1%',
+        'Значение коэффициента вариации 1-2%',
+        'Значение коэффициента вариации 2-5%',
+        'Значение коэффициента вариации 5-10%',
+        'Значение коэффициента вариации 10-20%',
+        'Значение коэффициента вариации 20-33%',
+        'Значение коэффициента вариации более 33%'
     ]
         # Создаем DataFrame
         df = pd.DataFrame([(purchase.PurchaseOrder, purchase.CoefficientOfVariation) for purchase in purchases],
@@ -813,19 +814,19 @@ class StatisticWidget(QWidget):
             if term * 100 == 0:
                 return 'Значение коэффициента вариации 0%'
             elif 0 <= term * 100 <= 1:
-                return 'значение коэффициента вариации 0-1%'
+                return 'Значение коэффициента вариации 0-1%'
             elif 1 <= term * 100 <= 2:
-                return 'значение коэффициента вариации 1-2%'
+                return 'Значение коэффициента вариации 1-2%'
             elif 2 <= term * 100<= 5:
-                return 'значение коэффициента вариации 2-5%'
+                return 'Значение коэффициента вариации 2-5%'
             elif 5 <= term * 100<= 10:
-                return 'значение коэффициента вариации 5-10%'
+                return 'Значение коэффициента вариации 5-10%'
             elif 10 <= term * 100 <= 20:
-                return 'значение коэффициента вариации 10-20%'
+                return 'Значение коэффициента вариации 10-20%'
             elif 20 <= term * 100 <= 33:
-                return 'значение коэффициента вариации 10-20%'
+                return 'Значение коэффициента вариации 10-20%'
             else:
-                return 'более 33%'
+                return 'Более 33%'
         except:
             pass
         
@@ -873,17 +874,17 @@ class StatisticWidget(QWidget):
             self.label.setText(self.label_texts[self.current_data_index])
 
     def export_to_excel_clicked(self ):
-        pivot_tables_purchase1, column_sums_purchase1 = self.analisQueryCountDecline()
+        pivot_tables_purchase1, column_sums_purchase1 = self.analis()
         pivot_tables_purchase2, column_sums_purchase2 = self.analisNMSK()
         pivot_tables_purchase3, column_sums_purchase3 = self.analisQueryCount()
         pivot_tables_purchase4, column_sums_purchase4 = self.analisQueryCountAccept()
         pivot_tables_purchase5, column_sums_purchase5 = self.analisQueryCountDecline()
 
 
-        pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
-        pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
-        pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
-        pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
+        # pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
+        # pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
+        # pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
+        # pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
 
         pivot_tables_max_price5, column_sums_max_price5= self.analisOKPD2()
         sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2 = self.all_purchase.return_filters_variabels()

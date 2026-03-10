@@ -37,11 +37,11 @@ class InsertWidgetContract2(QWidget):
         label10 = QLabel("Дата начала/подписания:")
         label11 = QLabel("Дата окончания/исполнения:")
         label12 = QLabel("Цена договора, руб.:")
-        label13 = QLabel("Размер авансирования, руб./(%)")
+        label13 = QLabel("Размер авансирования, руб./%")
         label14 = QLabel("Снижение НМЦК, руб.:")
         label15 = QLabel("Снижение НМЦК, %:")
         label16 = QLabel("Протоколы определения поставщика (выписка):")
-        label17 = QLabel("Файл Контрактов:")
+        label17 = QLabel("Файл контракта:")
 
         # Создаем поля ввода
        
@@ -201,7 +201,7 @@ class InsertWidgetContract2(QWidget):
             self.form_layout.addWidget(edit3)
         
         print(self.form_layout.count())
-        self.add_tkp_button = QPushButton("Добавить Данные")
+        self.add_tkp_button = QPushButton("Добавить данные")
         self.form_layout.addWidget(self.add_tkp_button)
 
         self.add_tkp_button.clicked.connect(self.save_tkp_data)

@@ -23,10 +23,10 @@ class InsertWidgetNMCK_2(QWidget):
         self.role = role
         self.user = user
         self.changer = changer
-        self.setWindowTitle("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информании")
+        self.setWindowTitle("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информации")
         self.setGeometry(100, 100, 600, 200)
         # Создаем лейблы
-        label1 = QLabel("2. Ввод данных - Метод сопоставимых рыночных цен (анализ рынка) при использовании общедоступной информании")
+        label1 = QLabel("2. Ввод данных - Метод сопоставимых рыночных цен (анализ рынка) при использовании общедоступной информации")
         label1.setAlignment(Qt.AlignCenter)
         label2 = QLabel("Количество контрактов :")
         
@@ -95,12 +95,12 @@ class InsertWidgetNMCK_2(QWidget):
             edit.setValidator(QIntValidator())
             self.form_layout.addWidget(label)
             self.form_layout.addWidget(edit)
-            label2 = QLabel(f"Цена судна приведенная к уровню цен первого года периода строительства судна №{i + 1}:")
+            label2 = QLabel(f"Цена судна, приведенная к уровню цен первого года периода строительства судна №{i + 1}:")
             edit2 = QLineEdit(self)
             self.form_layout.addWidget(label2)
             self.form_layout.addWidget(edit2)
 
-            label3 = QLabel(f"Цена судна приведенная к уровню цен текущих лет на периода строительства судна №{i + 1}:")
+            label3 = QLabel(f"Цена судна, приведенная к уровню цен текущих лет периода строительства судна №{i + 1}:")
             edit3 = QLineEdit(self)
             self.form_layout.addWidget(label3)
             self.form_layout.addWidget(edit3)
@@ -124,17 +124,17 @@ class InsertWidgetNMCK_2(QWidget):
             price_proposal_edit = self.form_layout.itemAt(i + 1).widget()
 
             if price_proposal_edit:
-                key_price = f"Цена судна приведенная к уровню цен года его поставки №{j}"
+                key_price = f"Цена судна, приведенная к уровню цен года его поставки №{j}"
                 self.price_proposal[key_price] = int(price_proposal_edit.text()) if price_proposal_edit.text() else "[]"
 
             applicant_edit = self.form_layout.itemAt(i + 3).widget()
             if applicant_edit:
-                key_applicant = f"Цена судна приведенная к уровню цен первого года периода строительства судна №{j}"
+                key_applicant = f"Цена судна, приведенная к уровню цен первого года периода строительства судна №{j}"
                 self.applicant[key_applicant] = applicant_edit.text() if applicant_edit.text() else "[]"
 
             status_edit = self.form_layout.itemAt(i + 5).widget()
             if status_edit:
-                key_status = f"Цена судна приведенная к уровню цен текущих лет на периода строительства судна №{j}"
+                key_status = f"Цена судна, приведенная к уровню цен текущих лет периода строительства судна №{j}"
                 self.status[key_status] = status_edit.text() if status_edit.text() else "[]"
 
             j += 1
@@ -207,7 +207,7 @@ class InsertWidgetNMCK_2(QWidget):
             chenged_time=datetime.datetime.now(),
             PurchaseName=purchase.PurchaseName,
             Role=self.role,
-            Type=f'Добавлены данные по Определение НМЦК методом сопоставимых рыночных цен (анализа рынка)'
+            Type=f'Добавлены данные по определению НМЦК методом сопоставимых рыночных цен (анализа рынка).'
         )
         changed_date.save()
 
