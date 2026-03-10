@@ -11,8 +11,8 @@ from peewee import JOIN
 from insertPanel import InsertWidgetPanel
 from insertPanelContract import InsertPanelContract
 
-from InsertWidgetNMCK import InsertWidgetNMCK
-from InsertWidgetCEIA import InsertWidgetCEIA
+# from InsertWidgetNMCK import InsertWidgetNMCK
+# from InsertWidgetCEIA import InsertWidgetCEIA
 from InsertWidgetCurrency import InsertWidgetCurrency
 from parserV3 import delete_records_by_id, export_to_excel
 from datetime import datetime
@@ -176,7 +176,7 @@ class PurchasesWidget(QWidget):
                 success = delete_records_by_id([self.current_purchase.Id],user=self.user, role= self.role)
                 if success:
                     self.main_win.updatePurchaseLabel()
-                    
+                    self.changer.populate_table()
                     QMessageBox.information(self, "Успех", "Вы успешно удалили запись!")
                     self.reload_data()
                 else:
@@ -247,7 +247,7 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("ТКП", "нет данных")
             else:
                 for key, value in tkp_proposal_dict.items():
-                        self.add_row_to_table(key , format_string("%.0f" ,value,grouping=True) + self.symbol)
+                        self.add_row_to_table(key , format_string("%.0f" ,float(value),grouping=True) + self.symbol)
             self.add_row_to_table("Количество запросов", str(current_purchase.QueryCount) if current_purchase.QueryCount is not None else "Нет данных")
             self.add_row_to_table("Количество ответов", str(current_purchase.ResponseCount) if current_purchase.ResponseCount is not None else "Нет данных")
             self.add_row_to_table("Среднее значение цены", format_string("%.0f",current_purchase.AveragePrice,grouping=True) + self.symbol if current_purchase.AveragePrice is not None else "Нет данных")
@@ -262,19 +262,19 @@ class PurchasesWidget(QWidget):
             if current_purchase.NMCK_1:
                 nmc_1_proposal_dict = json.loads(current_purchase.NMCK_1)
             if not nmc_1_proposal_dict:
-                self.add_row_to_table("Цена судна приведенная к уровню цен года его поставки", "нет данных")
+                self.add_row_to_table("Цена судна приведенная к уровню цен года его поставки", "Нет данных")
             else:
                 for key, value in nmc_1_proposal_dict.items():
-                    self.add_row_to_table(key, format_string("%.0f" ,value,grouping=True) + self.symbol)
+                    self.add_row_to_table(key, format_string("%.0f" ,float(value),grouping=True) + self.symbol)
                     
             nmc_2_proposal_dict = {}
             if current_purchase.NMCK_2:
                 nmc_2_proposal_dict = json.loads(current_purchase.NMCK_2)
             if not nmc_2_proposal_dict:
-                self.add_row_to_table("Цена судна приведенная к уровню цен первого года периода строительства судна", "нет данных")
+                self.add_row_to_table("Цена судна приведенная к уровню цен первого года периода строительства судна", "Нет данных")
             else:
                 for key, value in nmc_2_proposal_dict.items():
-                    self.add_row_to_table(key, format_string("%.0f" ,value,grouping=True) + self.symbol)
+                    self.add_row_to_table(key, format_string("%.0f" ,float(value),grouping=True) + self.symbol)
                 
             nmc_3_proposal_dict = {}
             if current_purchase.NMCK_3:
@@ -283,18 +283,18 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("Цена судна приведенная к уровню цен текущих лет на периода строительства судна", "Нет данных")
             else:
                 for key, value in nmc_3_proposal_dict.items():
-                    self.add_row_to_table(key, format_string("%.0f" ,value,grouping=True) + self.symbol)
+                    self.add_row_to_table(key, format_string("%.0f" ,float(value),grouping=True) + self.symbol)
             self.add_section_to_table("3.Определение НМЦК затратным методом")
             self.add_row_to_table("Наименование организации", str(current_purchase.organization_name) if current_purchase.organization_name else "Нет данных")
             self.add_row_to_table("Дата расчета", str(current_purchase.organization_name_date) if current_purchase.organization_name_date else "Нет данных")
-            self.add_row_to_table("Цена", format_string("%.0f",current_purchase.organization_price,grouping=True) + self.symbol if current_purchase.organization_price else "Нет данных")
+            self.add_row_to_table("Цена", format_string("%.0f",float(current_purchase.organization_price),grouping=True) + self.symbol if current_purchase.organization_price else "Нет данных")
             self.add_row_to_table("Файл расчета", str(current_purchase.organization_name_file) if current_purchase.organization_name_file else "Нет данных")
             self.add_section_to_table("4.Итоговое определение НМЦК с использованием нескольких методов")
             self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации потенциальным исполнителям", 
                       str(current_purchase.method_direction_requests) if current_purchase.method_direction_requests else "Нет данных")
             self.add_row_to_table("Способ использования общедоступной информации при осуществлении поиска ценовой информации в реестре государственных контрактов", 
                       str(current_purchase.method_usage_information) if current_purchase.method_usage_information else "Нет данных")
-            self.add_row_to_table("НМЦК, полученный различными способами в рамках метода сопостовимых рыночных цен", 
+            self.add_row_to_table("НМЦК, полученный различными способами в рамках метода сопоставимых рыночных цен", 
                       str(current_purchase.nmc_various_methods) if current_purchase.nmc_various_methods else "Нет данных")
             self.add_row_to_table("НМЦК на основе затратного метода", 
                       str(current_purchase.nmc_cost_method) if current_purchase.nmc_cost_method else "Нет данных")
@@ -336,10 +336,10 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("№ договора", contract.ContractNumber)
                 self.add_row_to_table("Дата начала/подписания", str(contract.StartDate))
                 self.add_row_to_table("Дата окончания/исполнения", str(contract.EndDate))
-                self.add_row_to_table("Цена договора, руб.", format_string("%.0f",contract.ContractPrice,grouping=True) + self.symbol)
-                self.add_row_to_table("Размер авансирования, руб",format_string("%.0f",contract.AdvancePayment,grouping=True) + self.symbol)
-                self.add_row_to_table("Снижение НМЦК, руб.",  format_string("%.0f",contract.ReductionNMC ,grouping=True) + self.symbol)
-                self.add_row_to_table("Снижение НМЦК, %", format_string("%.0f",contract.ReductionNMCPercent) + " %")
+                self.add_row_to_table("Цена договора, руб.", format_string("%.0f", float(contract.ContractPrice), grouping=True) + self.symbol)
+                self.add_row_to_table("Размер авансирования, руб", format_string("%.0f", float(contract.AdvancePayment), grouping=True) + self.symbol)
+                self.add_row_to_table("Снижение НМЦК, руб.", format_string("%.0f", float(contract.ReductionNMC), grouping=True) + self.symbol)
+                self.add_row_to_table("Снижение НМЦК, %", format_string("%.0f",float(contract.ReductionNMCPercent)) + " %")
                 self.add_row_to_table("Протоколы определения поставщика (выписка)", contract.SupplierProtocol)
                 self.add_row_to_table("Договор", contract.ContractFile)
 
@@ -475,19 +475,19 @@ class PurchasesWidget(QWidget):
             #    self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
 
 
-    def add_button_tkp_clicked(self):
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-            self.tkp_shower = InsertWidgetNMCK(purchase_id,self)
-            self.tkp_shower.show()
+    # def add_button_tkp_clicked(self):
+    #     if len(self.purchases_list) != 0:
+    #         self.current_purchase = self.purchases_list[self.current_position]
+    #         purchase_id = self.current_purchase.Id
+    #         self.tkp_shower = InsertWidgetNMCK(purchase_id,self)
+    #         self.tkp_shower.show()
     
-    def add_button_cia_clicked(self):
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-            self.cia_shower = InsertWidgetCEIA(purchase_id,self)
-            self.cia_shower.show()
+    # def add_button_cia_clicked(self):
+    #     if len(self.purchases_list) != 0:
+    #         self.current_purchase = self.purchases_list[self.current_position]
+    #         purchase_id = self.current_purchase.Id
+    #         self.cia_shower = InsertWidgetCEIA(purchase_id,self)
+    #         self.cia_shower.show()
     def go_back(self):
         if self.window:
             self.main_win.stackedWidget.setCurrentIndex(0)

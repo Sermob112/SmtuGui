@@ -146,9 +146,9 @@ class InsertWidgetNMCK_5(QWidget):
         purchase = Purchase.update(
                             
                             
-                            protocol_file = self.edit1.text() if self.edit1.text() else "нет данных",
-                            nmck_file = self.edit2.text() if self.edit2.text() else "нет данных",
-                            notification_link = self.edit3.text() if self.edit3.text() else "нет данных",
+                            protocol_file = self.edit1.text() if self.edit1.text() else "Нет данных",
+                            nmck_file = self.edit2.text() if self.edit2.text() else "Нет данных",
+                            notification_link = self.edit3.text() if self.edit3.text() else "Нет данных",
                             ).where(Purchase.Id == self.purchase_id)
         try:
             # Попытка сохранения данных
@@ -184,7 +184,7 @@ class InsertWidgetNMCK_5(QWidget):
             chenged_time=datetime.datetime.now(),
             PurchaseName=purchase.PurchaseName,
             Role=self.role,
-            Type=f'Добавлены данные - Итоговое определение НМЦК с использованием нескольких методов'
+            Type=f'Добавлены данные — Итоговое определение НМЦК с использованием нескольких методов'
         )
         changed_date.save()    
     def show_message(self, title, message):

@@ -194,7 +194,7 @@ class InsertWidgetNMCK_3(QWidget):
             chenged_time=datetime.datetime.now(),
             PurchaseName=purchase.PurchaseName,
             Role=self.role,
-            Type=f'Добавлены данные по Определение НМЦК затратным методом'
+            Type=f'Добавлены данные по определению НМЦК затратным методом'
         )
         changed_date.save()
 # if __name__ == "__main__":

@@ -76,9 +76,9 @@ class PurchasesWidgetAll(QWidget):
          
          # Создаем выпадающее меню
         self.sort_options = QComboBox()
-        self.sort_options.addItems(["Сортировать по цене (Возрастание)", "Сортировать по цене (Убывание)",
+        self.sort_options.addItems(["Сортировать по цене (возрастание)", "Сортировать по цене (убывание)",
                                     
-                                    "Сортировать по дате (Возрастание)","Сортировать по дате (Убывание)"])
+                                    "Сортировать по дате (возрастание)","Сортировать по дате (убывание)"])
          # Устанавливаем обработчик событий для выпадающего меню
        
         self.sort_options.setFixedWidth(250)
@@ -457,9 +457,9 @@ class PurchasesWidgetAll(QWidget):
          
          # Создаем выпадающее меню
         self.sort_options_contract = QComboBox()
-        self.sort_options_contract.addItems(["Сортировать по цене (Возрастание)", "Сортировать по цене (Убывание)",
+        self.sort_options_contract.addItems(["Сортировать по цене (возрастание)", "Сортировать по цене (убывание)",
                                     
-                                    "Сортировать по дате (Возрастание)","Сортировать по дате (Убывание)"])
+                                    "Сортировать по дате (возрастание)","Сортировать по дате (убывание)"])
          # Устанавливаем обработчик событий для выпадающего меню
        
         self.sort_options_contract.setFixedWidth(250)
@@ -912,13 +912,13 @@ class PurchasesWidgetAll(QWidget):
         self.current_position = 0
         self.selected_option = self.sort_options.currentText()
 
-        if  self.selected_option == "Сортировать по цене (Возрастание)":
+        if  self.selected_option == "Сортировать по цене (возрастание)":
             order_by = Purchase.InitialMaxContractPrice
-        elif  self.selected_option == "Сортировать по цене (Убывание)":
+        elif  self.selected_option == "Сортировать по цене (убывание)":
             order_by = Purchase.InitialMaxContractPrice.desc()
-        elif  self.selected_option == "Сортировать по дате (Убывание)":
+        elif  self.selected_option == "Сортировать по дате (убывание)":
             order_by = Purchase.PlacementDate.desc()
-        elif  self.selected_option == "Сортировать по дате (Возрастание)":
+        elif  self.selected_option == "Сортировать по дате (возрастание)":
             order_by = Purchase.PlacementDate
   
 
@@ -997,13 +997,13 @@ class PurchasesWidgetAll(QWidget):
         self.current_position = 0
         self.selected_option_contract = self.sort_options_contract.currentText()
         
-        if  self.selected_option_contract == "Сортировать по цене (Возрастание)":
+        if  self.selected_option_contract == "Сортировать по цене (возрастание)":
             order_by = Contract.ContractPrice
-        elif  self.selected_option_contract == "Сортировать по цене (Убывание)":
+        elif  self.selected_option_contract == "Сортировать по цене (убывание)":
             order_by = Contract.ContractPrice.desc()
-        elif  self.selected_option_contract == "Сортировать по дате (Убывание)":
+        elif  self.selected_option_contract == "Сортировать по дате (убывание)":
             order_by = Contract.StartDate.desc()
-        elif  self.selected_option_contract == "Сортировать по дате (Возрастание)":
+        elif  self.selected_option_contract == "Сортировать по дате (возрастание)":
             order_by = Contract.StartDate
 
         min_price = float(self.min_price_input_contrac.text()) if self.min_price_input_contrac.text() else float('-inf')

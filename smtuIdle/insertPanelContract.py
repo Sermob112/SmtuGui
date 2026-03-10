@@ -35,8 +35,8 @@ class InsertPanelContract(QWidget):
         label1.setAlignment(Qt.AlignCenter)
  
      
-        button_NMCK_method_1= QPushButton("1.Добавить результаты закупки")
-        button_NMCK_method_2= QPushButton("2.Добавить данные победителя закупки")
+        button_NMCK_method_1= QPushButton("1. Добавить результаты закупки")
+        button_NMCK_method_2= QPushButton("2. Добавить данные победителя закупки")
         # Создаем поля ввода
         # self.ContractFile = QLineEdit(self)
         

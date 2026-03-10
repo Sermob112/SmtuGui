@@ -133,7 +133,7 @@ class InsertWidgetContract(QWidget):
             self.form_layout.addWidget(edit3)
         
         # print(self.form_layout.count())
-        self.add_tkp_button = QPushButton("Добавить Данные")
+        self.add_tkp_button = QPushButton("Добавить данные")
         self.form_layout.addWidget(self.add_tkp_button)
 
         self.add_tkp_button.clicked.connect(self.save_tkp_data)

@@ -1125,26 +1125,3 @@ def clear_user_log():
 def clear_changed_date():
     """Удаляет все записи из таблицы ChangedDate"""
     ChangedDate.delete().execute() 
-# delete_records_by_id([3])
-# def delete_records_by_id(record_ids):
-#     try:
-#         connection = connector()
-#         cursor = connection.cursor()
-
-#         # SQL-запрос для удаления записей по Id
-#         sql = """
-#             DELETE FROM public."SBDsmtu_purchase"
-#             WHERE "Id" IN %s
-#         """
-
-#         cursor.execute(sql, (tuple(record_ids),))
-
-#         # Закрытие соединения и сохранение изменений
-#         connection.commit()
-#         connection.close()
-
-#         return True
-
-#     except Exception as e:
-#         print("Ошибка при удалении записей по Id:", e)
-#         return False

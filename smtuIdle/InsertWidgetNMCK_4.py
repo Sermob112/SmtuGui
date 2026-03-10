@@ -26,17 +26,17 @@ class InsertWidgetNMCK_4(QWidget):
         self.setWindowTitle("4.Итоговое определение НМЦК с использованием нескольких методов")
         self.setGeometry(100, 100, 600, 200)
         # Создаем лейблы
-        label1 = QLabel("4. Ввод данных - Итоговое определение НМЦК с использованием нескольких методов")
+        label1 = QLabel("4. Ввод данных — Итоговое определение НМЦК с использованием нескольких методов")
         label1.setAlignment(Qt.AlignCenter)
         label2 = QLabel("НМЦК с учетом метода и способа расчета")
         label2.setAlignment(Qt.AlignCenter)
-        label3 = QLabel("Способ направление запросов о предоставлении ценовой информации<br>потенциальным исполнителям")
+        label3 = QLabel("Способ направления запросов о предоставлении ценовой информации<br>потенциальным исполнителям")
         label4 = QLabel("Способ использования общедоступной информации при осуществлении<br>поиска ценовой информации в реестре государственных контрактов")
-        label5 = QLabel("НМЦК, полученный различными способами в рамках<br>метода сопостовимых рыночных цен")
+        label5 = QLabel("НМЦК, полученный различными способами в рамках<br>метода сопоставимых рыночных цен")
         label6 = QLabel("НМЦК на основе затратного метода")
         label7 = QLabel("Цена сравнимой продукции, приведенная в соответствие к условиям<br>закупки судна, НМЦК которого определяется")
-        label8 = QLabel("НМЦК, полученная с приминенем двух методов: метода<br>соспостовимых рыночных цен и затратного метода")
-        labelNMCK5 = QLabel("Выбирите файл")
+        label8 = QLabel("НМЦК, полученная с применением двух методов: метода<br>сопоставимых рыночных цен и затратного метода")
+        labelNMCK5 = QLabel("Выберите файл")
         #файл диалог
         self.notification_link_edit = QLineEdit(self)
         # browse_button = QPushButton("Обзор", self)
@@ -161,13 +161,13 @@ class InsertWidgetNMCK_4(QWidget):
         purchase = Purchase.update(
                             
                             
-                            method_direction_requests = self.edit1.text() if self.edit1.text() else "нет данных",
-                            method_usage_information = self.edit2.text() if self.edit2.text() else "нет данных",
-                            file_4 = self.notification_link_edit.text() if self.notification_link_edit.text() else "нет данных",
-                            nmc_various_methods = self.edit3.text() if self.edit3.text() else "нет данных",
-                            nmc_cost_method = self.edit4.text() if self.edit4.text() else "нет данных",
-                            comparable_product_price = self.edit5.text() if self.edit5.text() else "нет данных",
-                            nmc_two_methods = self.edit6.text() if self.edit6.text() else "нет данных"
+                            method_direction_requests = self.edit1.text() if self.edit1.text() else "Нет данных",
+                            method_usage_information = self.edit2.text() if self.edit2.text() else "Нет данных",
+                            file_4 = self.notification_link_edit.text() if self.notification_link_edit.text() else "Нет данных",
+                            nmc_various_methods = self.edit3.text() if self.edit3.text() else "Нет данных",
+                            nmc_cost_method = self.edit4.text() if self.edit4.text() else "Нет данных",
+                            comparable_product_price = self.edit5.text() if self.edit5.text() else "Нет данных",
+                            nmc_two_methods = self.edit6.text() if self.edit6.text() else "Нет данных"
                             # ResponseCount=int(self.edit2.text()) if self.edit2.text() else 0,
                             # FinancingLimit=int(self.edit3.text()) if self.edit3.text() else 0,
                             # AveragePrice = avg_tkp if avg_tkp else 0,
@@ -212,7 +212,7 @@ class InsertWidgetNMCK_4(QWidget):
             chenged_time=datetime.datetime.now(),
             PurchaseName=purchase.PurchaseName,
             Role=self.role,
-            Type=f'Добавлены данные - Итоговое определение НМЦК с использованием нескольких методов'
+            Type=f'Добавлены данные — Итоговое определение НМЦК с использованием нескольких методов'
         )
         changed_date.save()    
     def show_message(self, title, message):

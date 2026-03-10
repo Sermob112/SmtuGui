@@ -573,21 +573,21 @@ class Ui_MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
 
-    def closeEvent(self, event):
-        # Обработка события закрытия главного окна
-        reply = QMessageBox()
-        reply.setWindowTitle("Предупреждение о выходе") 
-        reply.setText("Вы уверены, что хотите закрыть приложение?")
-        reply.addButton("Нет", QMessageBox.NoRole)
-        reply.addButton("Да", QMessageBox.YesRole)
-        result = reply.exec()
+    # def closeEvent(self, event):
+    #     # Обработка события закрытия главного окна
+    #     reply = QMessageBox()
+    #     reply.setWindowTitle("Предупреждение о выходе") 
+    #     reply.setText("Вы уверены, что хотите закрыть приложение?")
+    #     reply.addButton("Нет", QMessageBox.NoRole)
+    #     reply.addButton("Да", QMessageBox.YesRole)
+    #     result = reply.exec()
        
 
-        if result == 1:
-            self.write_logout_log()
-            event.accept()
-        else:
-            event.ignore()
+    #     if result == 1:
+    #         self.write_logout_log()
+    #         event.accept()
+    #     else:
+    #         event.ignore()
     def GlobalUpdate(self):
         self.ChangeWindow.populate_table()
         self.purchaseViewerall.reload_data()
@@ -601,11 +601,11 @@ class Ui_MainWindow(QMainWindow):
         self.Statistic.update_data()
         self.loadCsvContract.update_data()
         self.ChangeWindow.populate_table()
-    def closeEvent(self, event):
-        # Вызываем вашу функцию записи лога при закрытии окна
-        self.write_logout_log()
-        # Затем закрываем окно
-        event.accept()
+    # def closeEvent(self, event):
+    #     # Вызываем вашу функцию записи лога при закрытии окна
+    #     self.write_logout_log()
+    #     # Затем закрываем окно
+    #     event.accept()
     def write_logout_log(self):
         # Запись лога выхода пользователя при закрытии приложения
         try:
