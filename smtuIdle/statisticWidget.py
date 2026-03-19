@@ -1,10 +1,10 @@
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtWidgets
 from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt, QStringListModel,Signal
+from PySide6.QtCore import Qt
 from PySide6.QtGui import *
 from peewee import *
 import pandas as pd
-from models import Purchase, Contract
+from smtuIdle.BD.models import Purchase, Contract
 import json
 from functools import partial
 

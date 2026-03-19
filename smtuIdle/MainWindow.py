@@ -1,17 +1,13 @@
-from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtCore import *
-from peewee import Model, SqliteDatabase, AutoField, CharField, IntegerField, FloatField, DateField
-from playhouse.shortcuts import model_to_dict
+
 from PySide6.QtWidgets import *
 from PySide6.QtGui import QIcon
 from PySide6 import QtCore
 from PySide6 import QtWidgets
 from DBtest import PurchasesWidget
 from LoadCsv import CsvLoaderWidget
-from InsertWidgetNMCK import InsertWidgetNMCK
 from statisticWidget import StatisticWidget
 from CurrencyWindow import CurrencyWidget
-from debugWindow import DebugWidget
+from UI.AdminPanel import DebugWidget
 from HelpPanel import HelpPanel
 from ContractFormular import ContractFormularWidget
 from AllDbScroller import PurchasesWidgetAll
@@ -20,9 +16,10 @@ from statisticWidgetContract import StatisticWidgetContract
 from parserV3 import count_total_records
 from datetime import datetime
 from parserV3 import export_to_excel_all
-from models import *
+from smtuIdle.BD.models import *
 from peewee import JOIN
-from PySide6.QtCore import QEvent
+
+
 # from ResultWindow import ResultWindow
 # from Viewer import MyWindow
 # from Module_start import AuthManager

@@ -1,13 +1,11 @@
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
-from datetime import date
-from models import Contract,Purchase
-from PySide6.QtCore import Qt, QStringListModel
+from smtuIdle.BD.models import Contract,Purchase
+from PySide6.QtCore import Qt
 from PySide6.QtGui import *
-import sys, json
+import json
 import statistics
-import pandas as pd
 import shutil
 import os
 from peewee import DoesNotExist

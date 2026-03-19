@@ -1,18 +1,8 @@
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 
-from datetime import date
-from models import Contract
-from PySide6.QtCore import Qt, QStringListModel
+from PySide6.QtCore import Qt
 from PySide6.QtGui import *
-import sys, json
-import statistics
-import pandas as pd
-from models import Purchase, Contract,ChangedDate
-import os
-import shutil
-from peewee import DoesNotExist
-import datetime
 from InsertWidgetContract import InsertWidgetContract
 from InsertWidgetContract2 import InsertWidgetContract2
 db = SqliteDatabase('database.db')

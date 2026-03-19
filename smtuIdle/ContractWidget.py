@@ -1,9 +1,6 @@
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtWidgets
 from PySide6.QtWidgets import *
-import statistics
-from peewee import *
-import pandas as pd
-from models import Contract
+from smtuIdle.BD.models import Contract
 import sys
 class ContractWidget(QtWidgets.QWidget):
     def __init__(self):

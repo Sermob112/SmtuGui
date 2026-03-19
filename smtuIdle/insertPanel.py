@@ -1,20 +1,13 @@
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 
-from datetime import date
-from models import Contract
-from PySide6.QtCore import Qt, QStringListModel
+from PySide6.QtCore import Qt
 from PySide6.QtGui import *
-import sys, json
-import statistics
-import pandas as pd
-from models import Purchase, Contract,ChangedDate
+from smtuIdle.BD.models import Purchase, Contract,ChangedDate
 import os
 import shutil
-from peewee import DoesNotExist
 import datetime
 from InsertWidgetNMCK import InsertWidgetNMCK
-from InsertWidgetCEIA import InsertWidgetCEIA
 from InsertWidgetNMCK_2 import InsertWidgetNMCK_2
 from InsertWidgetNMCK_3 import InsertWidgetNMCK_3
 from InsertWidgetNMCK_4 import InsertWidgetNMCK_4

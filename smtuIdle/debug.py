@@ -1,13 +1,6 @@
-from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt, QStringListModel,Signal
-from PySide6.QtGui import *
-from peewee import *
 import pandas as pd
-from models import *
-import json
-import locale
-from functools import partial
+from smtuIdle.BD.models import *
+
 # def count_non_empty_values(dictionary):
 #         count = 0
 #         for key, value in dictionary.items():

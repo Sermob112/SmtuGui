@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import *
-from models import UserRole, Role,User
+from smtuIdle.BD.models import UserRole, Role,User
 
 class EditUserDialog(QDialog):
     def __init__(self, user_id, parent=None):

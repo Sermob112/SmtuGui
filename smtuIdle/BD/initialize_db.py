@@ -1,16 +1,15 @@
-from peewee import SqliteDatabase
-from models import * # Замените models на имя вашего модуля или файла с определением моделей
+from smtuIdle.BD.models import * # Замените models на имя вашего модуля или файла с определением моделей
 import os
 
 db = SqliteDatabase('database.db')  # Замените на имя вашей базы данных
 
 def initialize_database():
     # Проверяем, существует ли файл маркера
-    if not os.path.exists('database_initialized.marker'):
+    if not os.path.exists('../database_initialized.marker'):
         db.connect()
         db_folder = "файлы бд"
         os.makedirs(db_folder, exist_ok=True)
-        db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate,UserLog,ChangedDate ])
+        db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate,UserLog,ChangedDate,Customer,Supplier ])
         admin_user = User.create(username='Администратор', password='1')
         # readactor =User.create(username='Редактор', password='2')
         # regular_user = User.create(username='Пользователь', password='3')
@@ -26,5 +25,5 @@ def initialize_database():
         db.close()
 
         # Создаем файл маркера, чтобы показать, что инициализация была завершена
-        with open('database_initialized.marker', 'w'):
+        with open('../database_initialized.marker', 'w'):
             pass

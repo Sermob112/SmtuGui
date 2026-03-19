@@ -1,13 +1,8 @@
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
-from datetime import date
-from models import FinalDetermination
-from PySide6.QtCore import Qt, QStringListModel
-from PySide6.QtGui import *
-import sys, json
-import statistics
-import pandas as pd
+from smtuIdle.BD.models import FinalDetermination
+
 db = SqliteDatabase('database.db')
 
 class InsertWidgetCEIA(QWidget):

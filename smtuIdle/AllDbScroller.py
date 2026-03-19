@@ -1,19 +1,18 @@
+import sys
+
 from PySide6.QtWidgets import *
-from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
-from playhouse.shortcuts import model_to_dict
-from datetime import date
-from models import Purchase, Contract, FinalDetermination,CurrencyRate
-from PySide6.QtCore import Qt, QStringListModel,Signal
-from PySide6.QtGui import QColor,QIcon,QFont
+from peewee import SqliteDatabase
+
+from smtuIdle.BD.models import Purchase, Contract, FinalDetermination,CurrencyRate
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon,QFont
 from PySide6.QtCore import QDate
-import sys, json
 from peewee import JOIN
 from InsertWidgetCurrency import InsertWidgetCurrency
 from parserV3 import delete_records_by_id, export_to_excel,export_to_excel_contract
-from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
 from peewee import fn
-from locale import currency,format_string
+from locale import format_string
 import locale
 locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
@@ -1099,41 +1098,34 @@ class PurchasesWidgetAll(QWidget):
                 ])
             unique_values_list = [value for value in unique_values_list if value is not None]
             return unique_values_list
-    
+
     def findUnicContract(self):
-            unique_values_list = []
-            unique_values_query = (Purchase.select(
-            Purchase.PurchaseName, 
-            Contract.WinnerExecutor,  # Исправлено на Contract
-            Contract.ContractingAuthority,  # Исправлено на Contract
-            Purchase.CustomerName,
+        unique_values_query = (
+            Purchase
+            .select(
+                Purchase.PurchaseName,
+                Purchase.CustomerName,
+                Contract.WinnerExecutor,
+                Contract.ContractingAuthority,
             )
             .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
             .where(Contract.ContractNumber != "Нет данных")
-            .distinct())
-            # Получаем все значения из результата запроса
-            unique_values = [
-                (
-                    purchase.PurchaseName,
-                    purchase.contract.WinnerExecutor,
-                    purchase.contract.ContractingAuthority,
-                    purchase.CustomerName
-                ) 
-                for purchase in unique_values_query
-            ]
+            .distinct()
+            .dicts()  # ← результат сразу как список словарей, никаких проблем с атрибутами
+        )
 
-            # Преобразуем все значения в список строк
-           
+        unique_values_list = []
+        for row in unique_values_query:
+            purchase_name = row.get("PurchaseName")
+            winner_executor = row.get("WinnerExecutor")
+            contracting_authority = row.get("ContractingAuthority")
+            customer_name = row.get("CustomerName")
 
-            for purchase_name, procurement_organization, registry_number, customer_name in unique_values:
-                unique_values_list.extend([
-                    str(purchase_name) if purchase_name is not None else None,
-                    str(procurement_organization) if procurement_organization is not None else None,
-                    str(registry_number) if registry_number is not None else None,
-                    str(customer_name) if customer_name is not None else None
-                ])
-            unique_values_list = [value for value in unique_values_list if value is not None]
-            return unique_values_list
+            for value in [purchase_name, winner_executor, contracting_authority, customer_name]:
+                if value is not None:
+                    unique_values_list.append(str(value))
+
+        return unique_values_list
     def handleActivated(self, text):
         # Обработка выбора элемента из автозаполнения
         self.selected_text = text
@@ -1444,9 +1436,9 @@ class PurchasesWidgetAll(QWidget):
 
         
         
-
+#
 # if __name__ == '__main__':
 #     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidgetAll()
+#     csv_loader_widget = PurchasesWidgetAll(None,None)
 #     csv_loader_widget.show()
 #     sys.exit(app.exec())

@@ -1,12 +1,13 @@
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QFormLayout, QVBoxLayout, QLabel, QLineEdit, QPushButton, QMessageBox
 from auth import *
-from models import UserLog
+from smtuIdle.BD.models import UserLog
 from PySide6.QtWidgets import *
-from initialize_db import initialize_database
+from smtuIdle.BD.initialize_db import initialize_database
 from MainWindow import Ui_MainWindow
 from PySide6.QtGui import QFont,QIcon,QPixmap
 from datetime import datetime
-from PySide6.QtCore import Qt,QRect,QCoreApplication
+from PySide6.QtCore import Qt
+
+
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # дата обновления базы данных будет появляться?
 # дата руководство 

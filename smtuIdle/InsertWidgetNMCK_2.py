@@ -1,16 +1,12 @@
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
-from datetime import date
-from models import Purchase, ChangedDate
-from PySide6.QtCore import Qt, QStringListModel
+from smtuIdle.BD.models import Purchase, ChangedDate
+from PySide6.QtCore import Qt
 from PySide6.QtGui import *
-import sys, json
-import statistics
-import pandas as pd
-import shutil
+import json
 import datetime
-import os
+
 db = SqliteDatabase('database.db')
 
 class InsertWidgetNMCK_2(QWidget):

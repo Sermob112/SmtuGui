@@ -1,10 +1,9 @@
 
-import csv, json
-import datetime
-import pandas as pd
-import os
+import csv
 import sqlite3
-from models import *
+from datetime import datetime, date
+import pandas as pd
+from smtuIdle.BD.models import *
 from peewee import SqliteDatabase
 # hostname = "localhost"
 # # hostname = "db"
@@ -68,31 +67,31 @@ def insert_in_table(csv_file_path, user,role):
                 ProcurementOrganization = row[17][:max_length] if row[17] else 'Нет данных'
                 PlacementDate = row[18]
                 try:
-                    placementDate = datetime.datetime.strptime(PlacementDate, '%d.%m.%Y').date()
+                    placementDate = datetime.strptime(PlacementDate, '%d.%m.%Y').date()
                 except ValueError:
                     placementDate = None
                 UpdateDate = row[19]
                 try:
-                    updateDate = datetime.datetime.strptime(UpdateDate, '%d.%m.%Y').date()
+                    updateDate = datetime.strptime(UpdateDate, '%d.%m.%Y').date()
                 except ValueError:
                     updateDate =None
                 ProcurementStage = row[20][:max_length] if row[20] else 'Нет данных'
                 ProcurementFeatures = row[21][:max_length] if row[21] else 'Нет данных'
                 ApplicationStartDate = row[22]
                 try:
-                    applicationStartDate = datetime.datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
+                    applicationStartDate = datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
                 except ValueError:
                     applicationStartDate = None
 
                 ApplicationEndDate = row[23]
                 try:
-                    applicationEndDate = datetime.datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
+                    applicationEndDate = datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
                 except ValueError:
                     applicationEndDate = None
 
                 auctionDate = row[24]
                 try:
-                    AuctionDate = datetime.datetime.strptime(auctionDate, '%d.%m.%Y').date()
+                    AuctionDate = datetime.strptime(auctionDate, '%d.%m.%Y').date()
                 except ValueError:
                     AuctionDate = None
                 # Вставка данных в таблицу
@@ -129,7 +128,7 @@ def insert_in_table(csv_file_path, user,role):
             changed_date = ChangedDate(
                 RegistryNumber=registry_number,
                 username=user,
-                chenged_time=datetime.datetime.now(),
+                chenged_time=datetime.now(),
                 PurchaseName=purchase_name,
                 Role=role,
                 Type='Добавлены новая запись'
@@ -149,11 +148,6 @@ def insert_in_table(csv_file_path, user,role):
     finally:
         connection.close()
     return inserted_rows, errors
-
-# insert_in_table('C:/Users/Sergey/Desktop/Работа/SmtuGui/smtuIdle/Книга1.csv',"user","role")
-
-
-
 
 def insert_in_table_full(csv_file_path):
     errors = []
@@ -202,31 +196,31 @@ def insert_in_table_full(csv_file_path):
                 ProcurementOrganization = 'Нет данных'
                 PlacementDate = row[1]
                 try:
-                    placementDate = datetime.datetime.strptime(PlacementDate, '%d.%m.%Y').date()
+                    placementDate = datetime.strptime(PlacementDate, '%d.%m.%Y').date()
                 except ValueError:
                     placementDate = 'Нет данных'
                 UpdateDate = row[1]
                 try:
-                    updateDate = datetime.datetime.strptime(UpdateDate, '%d.%m.%Y').date()
+                    updateDate = datetime.strptime(UpdateDate, '%d.%m.%Y').date()
                 except ValueError:
                     updateDate ='Нет данных'
                 ProcurementStage = 'Нет данных'
                 ProcurementFeatures = 'Нет данных'
                 ApplicationStartDate = row[10] 
                 try:
-                    applicationStartDate = datetime.datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
+                    applicationStartDate = datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
                 except ValueError:
                     applicationStartDate =  'Нет данных'
 
                 ApplicationEndDate = row[1]
                 try:
-                    applicationEndDate = datetime.datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
+                    applicationEndDate = datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
                 except ValueError:
                     applicationEndDate = 'Нет данных'
 
                 auctionDate = row[1]
                 try:
-                    AuctionDate = datetime.datetime.strptime(auctionDate, '%d.%m.%Y').date()
+                    AuctionDate = datetime.strptime(auctionDate, '%d.%m.%Y').date()
                 except ValueError:
                     AuctionDate = 'Нет данных'
 
@@ -337,13 +331,13 @@ def insert_in_table_full(csv_file_path):
 
                 StartDate = row[59]
                 try:
-                    startDate = datetime.datetime.strptime(StartDate, '%d.%m.%Y').date()
+                    startDate = datetime.strptime(StartDate, '%d.%m.%Y').date()
                 except ValueError:
                     startDate = 'Нет данных'
 
                 EndDate = row[60]
                 try:
-                    endDate = datetime.datetime.strptime(EndDate, '%d.%m.%Y').date()
+                    endDate = datetime.strptime(EndDate, '%d.%m.%Y').date()
                 except ValueError:
                     endDate = 'Нет данных'
                 try:
@@ -362,37 +356,7 @@ def insert_in_table_full(csv_file_path):
                     ReductionNMC = 0
                 ContractFile = 'Нет данных'
                 SupplierProtocol = 'Нет данных'
-              # Вставка данных в таблицу purchase
-            #     sql = """
-     
-                   
-            #         INSERT INTO purchase (
-            #                 PurchaseOrder, RegistryNumber, ProcurementMethod, PurchaseName,
-            #                 AuctionSubject, PurchaseIdentificationCode, LotNumber, LotName,
-            #                 InitialMaxContractPrice, Currency, InitialMaxContractPriceInCurrency, 
-            #                 ContractCurrency,OKDPClassification,OKPDClassification,
-            #                 OKPD2Classification,PositionCode,CustomerName,ProcurementOrganization,PlacementDate,
-            #                 UpdateDate,ProcurementStage,ProcurementFeatures,ApplicationStartDate,ApplicationEndDate,
-            #                 AuctionDate,TKPData,
-            #                 QueryCount,ResponseCount, AveragePrice,MinPrice,
-            #                 MaxPrice ,StandardDeviation, CoefficientOfVariation, NMCKMarket ,FinancingLimit,
-            #                 PurchaseStatus,quantity_units,nmck_per_unit,notification_link
-            #         )
-            #         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?, ?, ?, ?, ?, ?, ?, ?,? ,?, ?,?)
-            # """
-               
-            #     data = (
-            #         purchase_date, registry_number, procurement_method, purchase_name,
-            #         auction_subject, purchase_identification_code, lot_number, lot_name,
-            #         initial_max_contract_price,Currency,InitialMaxContractPriceInCurrency,ContractCurrency,
-            #         OKDPClassification,OKPDClassification,
-            #         OKPD2Classification,PositionCode,CustomerName,ProcurementOrganization,placementDate,
-            #         updateDate,ProcurementStage,ProcurementFeatures,applicationStartDate, applicationEndDate,
-            #         datetime.datetime.strftime(AuctionDate, '%Y-%m-%d') if AuctionDate else None, tkp_data_json,
-            #         QueryCount,ResponseCount ,AveragePrice ,MinPrice ,MaxPrice, StandardDeviation, CoefficientOfVariation,
-            #         NMCKMarket ,FinancingLimit,PurchaseStatus,quantity_units,nmck_per_unit,notification_link
 
-            #          )
                 
                     
                 Purchase.create(
@@ -437,25 +401,7 @@ def insert_in_table_full(csv_file_path):
                 notification_link=notification_link
             )
 
-            #     sqlContract = """
-     
-                   
-            #         INSERT INTO contract (
-            #                TotalApplications,AdmittedApplications,RejectedApplications,PriceProposal,Applicant,
-            #                Applicant_satatus,purchase_id,ContractingAuthority,WinnerExecutor,
-            #                ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,StartDate,
-            #                 EndDate,AdvancePayment,ReductionNMCPercent,ReductionNMC,ContractFile,SupplierProtocol
-            #         )
-            #         VALUES (?, ?, ?, ?, ?, ?,? , ?, ?, ?, ?, ?, ?,?, ?, ?, ? ,?, ? ,?)
-            # """
-                
-            #     dataContracts = (
-            #         TotalApplications,AdmittedApplications,RejectedApplications,price_proposal_json,applicant_json,
-            #                applicant_status_json,purchase_id,ContractingAuthority,WinnerExecutor,
-            #                ContractIdentifier,RegistryNumber,ContractNumber,ContractPrice,startDate,
-            #                 endDate,AdvancePayment,ReductionNMCPercent,ReductionNMC,ContractFile,SupplierProtocol
 
-            #          )
                 
                 Contract.create(
                 TotalApplications=TotalApplications,
@@ -479,23 +425,9 @@ def insert_in_table_full(csv_file_path):
                 ContractFile=ContractFile,
                 SupplierProtocol=SupplierProtocol
             )
-                # cursor.execute(sql, data)
-                # cursor.execute(sqlContract, dataContracts)
+
                 inserted_rows += cursor.rowcount
 
-    #     with db.atomic():
-    # # Iterate through all records and update fields with None values
-    #         for purchase in Purchase.select():
-    #             for field_name, field in Purchase._meta.fields.items():
-    #                 if getattr(purchase, field_name) is None:
-    #                     setattr(purchase, field_name, field.default if field.default is not None else "Нет данных")
-    #             purchase.save()
-
-    #         for contact in Contract.select():
-    #             for field_name, field in Purchase._meta.fields.items():
-    #                 if getattr(contact, field_name) is None:
-    #                     setattr(contact, field_name, field.default if field.default is not None else "Нет данных")
-    #             contact.save()
         connection.commit()
     
     
@@ -506,19 +438,6 @@ def insert_in_table_full(csv_file_path):
     finally:
         connection.close()
     return inserted_rows, errors
-# insert_in_table('C:/Users/Sergey/Desktop/Работа/SmtuGui/smtuIdle/OrderSearch(1-500)_20.11.2023.csv')
-
-
-# Пример использования
-# csv_file_path = 'C:/Users/Sergey/Desktop/Работа/SmtuGui/smtuIdle/OrderSearch(1-500)_20.11.2023.csv'
-# inserted_rows_count, insert_errors = insert_in_table(csv_file_path)
-
-# if not insert_errors:
-#     print(f"Данные успешно вставлены в базу данных. Количество добавленных записей: {inserted_rows_count}")
-# else:
-#     print("Произошли ошибки при вставке данных:")
-#     for error in insert_errors:
-#         print(error)
 
 
 def insert_in_table_for_users(csv_file_path):
@@ -568,31 +487,31 @@ def insert_in_table_for_users(csv_file_path):
                 ProcurementOrganization = row[17][:max_length] if row[17] else 'Нет данных'
                 PlacementDate = row[18]
                 try:
-                    placementDate = datetime.datetime.strptime(PlacementDate, '%d.%m.%Y').date()
+                    placementDate = datetime.strptime(PlacementDate, '%d.%m.%Y').date()
                 except ValueError:
                     placementDate = None
                 UpdateDate = row[19]
                 try:
-                    updateDate = datetime.datetime.strptime(UpdateDate, '%d.%m.%Y').date()
+                    updateDate = datetime.strptime(UpdateDate, '%d.%m.%Y').date()
                 except ValueError:
                     updateDate =None
                 ProcurementStage = row[20][:max_length] if row[20] else 'Нет данных'
                 ProcurementFeatures = row[21][:max_length] if row[21] else 'Нет данных'
                 ApplicationStartDate = row[22]
                 try:
-                    applicationStartDate = datetime.datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
+                    applicationStartDate = datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
                 except ValueError:
                     applicationStartDate = None
 
                 ApplicationEndDate = row[23]
                 try:
-                    applicationEndDate = datetime.datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
+                    applicationEndDate = datetime.strptime(ApplicationEndDate, '%d.%m.%Y').date()
                 except ValueError:
                     applicationEndDate = None
 
                 auctionDate = row[23]
                 try:
-                    AuctionDate = datetime.datetime.strptime(auctionDate, '%d.%m.%Y').date()
+                    AuctionDate = datetime.strptime(auctionDate, '%d.%m.%Y').date()
                 except ValueError:
                     AuctionDate = None
                 # Вставка данных в таблицу
@@ -858,10 +777,7 @@ def export_to_excel_contract(data, output_excel_path, filters):
 def export_to_excel_all(data, output_excel_path):
     try:
         # Создайте DataFrame из данных
-     
-    # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
-        
-        # selected_data = [tuple[:69] for tuple in data]
+
        
         selected_columns = ["Id",
              "PurchaseOrder", "RegistryNumber", "ProcurementMethod", "PurchaseName",
@@ -972,30 +888,11 @@ def export_to_excel_all(data, output_excel_path):
         return True
     except Exception as e:
         print("Ошибка при экспорте данных в Excel:", e)
-# import numpy as np
-# import statistics
-# tkp_values_all = [4650000000,4001165000,5500000000]
-# standard_deviation = statistics.stdev(tkp_values_all)
-# print(standard_deviation)
+
 
 def find_records_with_differences():
     try:
-    #     connection = connector()
-    #     cursor = connection.cursor()
 
-    #     # SQL-запрос для поиска записей с одинаковым "RegistryNumber", но различными значениями в полях "AuctionDate", "ApplicationStartDate", "ApplicationEndDate", "UpdateDate" и "PlacementDate"
-    #     sql = """
-    #     SELECT Id, RegistryNumber, AuctionDate, ApplicationStartDate, ApplicationEndDate, UpdateDate, PlacementDate,LotNumber
-    #     FROM purchase
-    #     WHERE RegistryNumber IN (
-    #         SELECT RegistryNumber
-    #         FROM purchase
-    #         GROUP BY RegistryNumber
-    #         HAVING COUNT(*) > 1
-    #     )
-    # """
-    #     cursor.execute(sql)
-    #     records_with_differences = cursor.fetchall()
         query = (Purchase
          .select(Purchase.Id, Purchase.RegistryNumber, Purchase.AuctionDate, 
                  Purchase.ApplicationEndDate, Purchase.ApplicationEndDate, 
@@ -1011,20 +908,6 @@ def find_records_with_differences():
         purchase.ApplicationEndDate, purchase.UpdateDate, purchase.PlacementDate, purchase.LotNumber
             ) for purchase in query]
 
-
-        # SQL-запрос для подсчета числа записей с повторами
-        # count_sql = """
-        # SELECT COUNT(*)
-        # FROM (
-        #     SELECT RegistryNumber
-        #     FROM purchase
-        #     GROUP BY RegistryNumber
-        #     HAVING COUNT(*) > 1
-        # ) AS DuplicateRegistryNumbers
-        # """
-
-        # cursor.execute(count_sql)
-        # count_of_duplicates = cursor.fetchone()[0]
         query = (Purchase
         .select(fn.COUNT(Purchase.RegistryNumber))
         .group_by(Purchase.RegistryNumber)
@@ -1041,41 +924,13 @@ def find_records_with_differences():
     except Exception as e:
         print("Ошибка при поиске записей с различиями:", e)
         return [], 0
-# result, count = find_records_with_differences()
-# print("Записи с различиями:", result)
-# print("Количество записей с повторами:", count)
-# Вызов функции для поиска записей с различиями
-# records_with_differences = find_records_with_differences()
-
-# if records_with_differences:
-#     for record in records_with_differences:
-#         record_id = record[0]
-#         registry_number = record[1]
-#         auction_date = record[2]
-#         application_start_date = record[3]
-#         application_end_date = record[4]
-#         update_date = record[5]
-#         placement_date = record[6]
-
-#         print(f"Id: {record_id}, RegistryNumber: {registry_number}, AuctionDate: {auction_date}, ApplicationStartDate: {application_start_date}, ApplicationEndDate: {application_end_date}, UpdateDate: {update_date}, PlacementDate: {placement_date}")
-# else:
-#     print("Записей с различиями не найдено.")
 
 def count_total_records():
     try:
         connection = connector()
         cursor = connection.cursor()
 
-        # Выполнение запроса на подсчет общего количества записей
-        # cursor.execute("SELECT COUNT(*) FROM purchase")
-        # result = cursor.fetchone()
         count_of_records = Purchase.select().count()
-        # Если запрос вернул результат, выведите общее количество записей
-        # if result:
-        #     total_records = result[0]
-            # print(f"Общее количество записей в таблице: {total_records}")
-        # else:
-        #     print("Не удалось получить общее количество записей.")
 
     except sqlite3.Error as e:
         print("Ошибка при подсчете общего количества записей:", e)
@@ -1100,7 +955,7 @@ def delete_records_by_id(record_ids, user,role):
             changed_date = ChangedDate(
                     RegistryNumber=purchase.RegistryNumber,
                     username=user,
-                    chenged_time=datetime.datetime.now(),
+                    chenged_time=datetime.now(),
                     PurchaseName=purchase.PurchaseName,
                     Role=role,
                     Type='Удалена запись'

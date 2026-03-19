@@ -1,15 +1,9 @@
-from PySide6.QtWidgets import QApplication,QFileDialog, QMessageBox, QCompleter,QMainWindow,QLabel,QLineEdit,QComboBox, QTableWidget,QHBoxLayout, QTableWidgetItem, QVBoxLayout, QWidget,QPushButton,QHeaderView
-from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
+from PySide6.QtWidgets import QApplication, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QHeaderView
+from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
-from datetime import date
-from models import ChangedDate
-from PySide6.QtCore import Qt, QStringListModel,Signal
-from PySide6.QtGui import QColor
-import sys, json
-from peewee import JOIN
+from smtuIdle.BD.models import ChangedDate
+from PySide6.QtCore import Qt
 from InsertWidgetCurrency import InsertWidgetCurrency
-from parserV3 import delete_records_by_id, export_to_excel
-from datetime import datetime
 from PySide6.QtWidgets import QSizePolicy
 # Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 # Создаем соединение с базой данных

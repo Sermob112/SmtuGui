@@ -1,18 +1,9 @@
 from PySide6.QtWidgets import *
-from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
 from playhouse.shortcuts import model_to_dict
-from datetime import date
-from models import Purchase, Contract, FinalDetermination,CurrencyRate
-from PySide6.QtCore import Qt, QStringListModel,Signal
-from PySide6.QtGui import QColor,QIcon,QFont
-from PySide6.QtCore import QDate
-from peewee import JOIN
-from InsertWidgetCurrency import InsertWidgetCurrency
-from parserV3 import delete_records_by_id, export_to_excel
-from datetime import datetime
-from PySide6.QtWidgets import QSizePolicy
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 import os, sys
-import subprocess
+
 
 class HelpPanel(QWidget):
     def __init__(self):

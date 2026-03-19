@@ -1,12 +1,8 @@
-import sys
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt
-from DBtest import PurchasesWidget
-from statisticWidget import StatisticWidget
 from parserV3 import *
-from PySide6.QtWidgets import QStyleFactory
 from CurrencyWindow import CurrencyWidget
-from models import *
+from smtuIdle.BD.models import *
 class CsvLoaderWidget(QWidget):
     def __init__(self, main_window, curr_win , purchaseViewerallparent,role,user,changer, parent=None):
         super(CsvLoaderWidget, self).__init__(parent)
@@ -110,7 +106,7 @@ class CsvLoaderWidget(QWidget):
                 QMessageBox.information(self, "Успех", "Данные успешно загружены")
                 self.update_table()
 
-               
+
                 
                     # reply = QMessageBox.question(self, "Внимание", "Найдены записи с валютами не в рублях. Изменить валюту?", 
                     #                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)

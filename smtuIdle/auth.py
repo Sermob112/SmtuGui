@@ -1,4 +1,5 @@
-from models import User, Role, UserRole
+from smtuIdle.BD.models import User
+
 
 class AuthManager:
    

@@ -1,21 +1,17 @@
 from PySide6.QtWidgets import *
-from peewee import SqliteDatabase, Model, AutoField, CharField, IntegerField, FloatField, DateField
+from peewee import SqliteDatabase
 from playhouse.shortcuts import model_to_dict
-from datetime import date
-from models import Purchase, Contract, FinalDetermination,CurrencyRate
+from smtuIdle.BD.models import Purchase, Contract, FinalDetermination
 from PySide6.QtCore import *
 from PySide6.QtGui import QColor
-import sys, json
+import json
 from PySide6.QtGui import QFont,QDesktopServices
-from peewee import JOIN
 from insertPanel import InsertWidgetPanel
 from insertPanelContract import InsertPanelContract
 
 from InsertWidgetNMCK import InsertWidgetNMCK
 from InsertWidgetCEIA import InsertWidgetCEIA
-from InsertWidgetCurrency import InsertWidgetCurrency
-from parserV3 import delete_records_by_id, export_to_excel
-from datetime import datetime
+from parserV3 import delete_records_by_id
 from PySide6.QtWidgets import QSizePolicy
 import os
 import subprocess
