@@ -306,7 +306,108 @@ class Supplier(BaseModel):
 
     class Meta:
         table_name = 'supplier'
+# ─────────────────────────────────────────────
+#  Vessel  —  Характеристики судна
+# ─────────────────────────────────────────────
+class Vessel(BaseModel):
+    id = AutoField(primary_key=True, verbose_name="Идентификатор")
 
+    # ── Идентификация ─────────────────────────
+    imo_number        = CharField(null=True, max_length=50,  verbose_name="Номер ИМО")
+    ship_project      = CharField(null=True, max_length=255, verbose_name="Проект судна")
+
+    # ── Классификация РМРС / РКО ──────────────
+    ship_type_rmrs    = CharField(null=True, max_length=255, verbose_name="Тип судна (РМРС)")
+    ship_type_rko     = CharField(null=True, max_length=255, verbose_name="Тип и назначение (РКО)")
+    ship_class        = CharField(null=True, max_length=255, verbose_name="Класс")
+    subclass          = CharField(null=True, max_length=255, verbose_name="Подкласс")
+    ship_type         = CharField(null=True, max_length=255, verbose_name="Тип")
+    subtype           = CharField(null=True, max_length=255, verbose_name="Подтип")
+    group             = CharField(null=True, max_length=255, verbose_name="Группа")
+    subgroup          = CharField(null=True, max_length=255, verbose_name="Подгруппа")
+
+    # ── Даты постройки ────────────────────────
+    year_built        = IntegerField(null=True, verbose_name="Год постройки")
+    date_keel_laid    = DateField(null=True,    verbose_name="Дата закладки киля")
+    date_launched     = DateField(null=True,    verbose_name="Дата спуска на воду")
+    date_built        = DateField(null=True,    verbose_name="Дата постройки")
+    country_built     = CharField(null=True, max_length=255, verbose_name="Страна постройки")
+
+    # ── Размерения и вместимость ──────────────
+    gross_tonnage     = FloatField(null=True, verbose_name="Валовая вместимость")
+    net_tonnage       = FloatField(null=True, verbose_name="Чистая вместимость")
+    deadweight        = FloatField(null=True, verbose_name="Дедвейт")
+    displacement_max  = FloatField(null=True, verbose_name="Водоизмещение наибольшее")
+    length_max        = FloatField(null=True, verbose_name="Длина наибольшая")
+    width_max         = FloatField(null=True, verbose_name="Ширина наибольшая")
+    height_max        = FloatField(null=True, verbose_name="Высота борта наибольшая")
+    draft_max         = FloatField(null=True, verbose_name="Осадка наибольшая")
+    cubic_module      = FloatField(null=True, verbose_name="Кубический модуль")
+    length_width_ratio = FloatField(null=True, verbose_name="Отношение Длина/Ширина")
+    speed_max         = FloatField(null=True, verbose_name="Скорость наибольшая")
+
+    # ── Силовая установка ─────────────────────
+    power_plant_type       = CharField(null=True, max_length=255, verbose_name="Тип силовой установки в целом")
+    main_engines_count     = IntegerField(null=True, verbose_name="Главные двигатели (количество)")
+    main_engine_type       = CharField(null=True, max_length=255, verbose_name="Главный двигатель, тип")
+    main_engine_brand      = CharField(null=True, max_length=255, verbose_name="Главный двигатель, фирма")
+    main_engine_model      = CharField(null=True, max_length=255, verbose_name="Главный двигатель, марка")
+    main_engine_year       = IntegerField(null=True, verbose_name="Главный двигатель, год")
+    main_engine_kw         = FloatField(null=True,   verbose_name="Главный двигатель, кВт")
+    main_engine_rpm        = FloatField(null=True,   verbose_name="Главный двигатель, об/мин")
+    battery_capacity       = FloatField(null=True,   verbose_name="Ёмкость АКБ")
+
+    # ── Движители ─────────────────────────────
+    propellers_count  = IntegerField(null=True, verbose_name="Количество движителей")
+    propeller_type    = CharField(null=True, max_length=255, verbose_name="Движитель, тип")
+    propeller_blades  = IntegerField(null=True, verbose_name="Количество лопастей")
+
+    # ── Грузовые характеристики ───────────────
+    cargo_holds_count    = IntegerField(null=True, verbose_name="Количество грузовых трюмов")
+    liquid_tanks_count   = IntegerField(null=True, verbose_name="Наливные танки (количество)")
+    teu_count            = IntegerField(null=True, verbose_name="Количество контейнеров TEU")
+    decks_count          = IntegerField(null=True, verbose_name="Количество палуб")
+    bulkheads_count      = IntegerField(null=True, verbose_name="Количество переборок")
+
+    # ── Пассажиры ─────────────────────────────
+    passengers_berth     = IntegerField(null=True, verbose_name="Число пассажиров коечных")
+    passengers_no_berth  = IntegerField(null=True, verbose_name="Число пассажиров бескоечных")
+
+    # ── Грузовое оборудование ─────────────────
+    hatches_count     = IntegerField(null=True, verbose_name="Грузовые люки (количество)")
+    booms_count       = IntegerField(null=True, verbose_name="Стрелы (количество)")
+    cranes_count      = IntegerField(null=True, verbose_name="Краны (количество)")
+
+    # ── Материалы и конструкция ───────────────
+    hull_material          = CharField(null=True, max_length=255, verbose_name="Материал корпуса")
+    superstructure_material = CharField(null=True, max_length=255, verbose_name="Материал надстройки")
+    has_hydrofoil          = BooleanField(null=True, verbose_name="Наличие подводных крыльев")
+
+    # ── Закупка / Контракт ────────────────────
+    purchase_law           = CharField(null=True, max_length=100, verbose_name="Закон закупки")
+    purchase_registry_number = CharField(null=True, max_length=255, verbose_name="Реестровый номер закупки")
+    nmck                   = FloatField(null=True, verbose_name="НМЦК")
+    contract_registry_number = CharField(null=True, max_length=255, verbose_name="Реестровый номер контракта")
+    contract_number        = CharField(null=True, max_length=255, verbose_name="Номер контракта")
+    contract_sum           = FloatField(null=True, verbose_name="Сумма контракта")
+    contract_date          = DateField(null=True,  verbose_name="Дата контракта")
+    okpd2_code             = CharField(null=True, max_length=255, verbose_name="Код ОКПД2")
+
+    # ── Верфь постройки ───────────────────────
+    city_built             = CharField(null=True, max_length=255, verbose_name="Город постройки судна")
+    region_built           = CharField(null=True, max_length=255, verbose_name="Регион РФ")
+    federal_district       = CharField(null=True, max_length=255, verbose_name="Федеральный округ")
+    shipyard_name          = CharField(null=True, max_length=512, verbose_name="Верфь постройки судна")
+    shipyard_inn           = CharField(null=True, max_length=50,  verbose_name="ИНН верфи")
+    shipyard_kpp           = CharField(null=True, max_length=50,  verbose_name="КПП верфи")
+    shipyard_ogrn          = CharField(null=True, max_length=50,  verbose_name="ОГРН верфи")
+
+    # ── Связь с закупкой (FK, опционально) ────
+    purchase  = ForeignKeyField(Purchase,  null=True, on_delete='SET NULL', backref='vessels', verbose_name="Закупка")
+    contract  = ForeignKeyField(Contract,  null=True, on_delete='SET NULL', backref='vessels', verbose_name="Контракт")
+
+    class Meta:
+        table_name = 'vessel'
 # ─────────────────────────────────────────────
 #  Инициализация БД
 # ─────────────────────────────────────────────
@@ -322,6 +423,7 @@ ALL_MODELS = [
     ChangedDate,
     Customer,
     Supplier,
+Vessel,
 ]
 
 
