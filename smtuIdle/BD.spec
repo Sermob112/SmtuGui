@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['C:\\Users\\Sergey\\Desktop\\Работа\\Иконки\\BD.ico', 'start.py'],
+    ['C:\\Users\\Sergey\\Desktop\\Work\\Иконки\\BD.ico', 'start.py'],
     pathex=[],
     binaries=[],
     datas=[],

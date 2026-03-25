@@ -2,7 +2,7 @@ from PySide6.QtWidgets import *
 from PySide6.QtCore import *
 from PySide6.QtGui import QColor
 
-from smtuIdle.CRUD_Operators.JsonToDB  import insert_in_table as insert_jsonl, insert_contracts,insert_customers,insert_suppliers
+from smtuIdle.CRUD_Operators.JsonToDB  import insert_in_table as insert_jsonl, insert_contracts,insert_customers,insert_suppliers,insert_contract_versions
 from smtuIdle.AddUserDialog import AddUserDialog
 from smtuIdle.EditUserDialog import EditUserDialog
 import sys
@@ -151,6 +151,12 @@ class DebugWidget(QWidget):
         btn_load_suppliers.setFixedHeight(36)
         grid_load.addWidget(btn_load_suppliers, 2, 0, 1, 3)  # третья строка
         btn_load_suppliers.clicked.connect(self.show_suppliers_dialog)
+
+        btn_load_cv = QPushButton("Загрузить версии контрактов")
+        btn_load_cv.setFixedHeight(36)
+        grid_load.addWidget(btn_load_cv, 3, 0, 1, 3)
+        btn_load_cv.clicked.connect(self.show_contract_versions_dialog)
+
         # ── Сборка ────────────────────────────────
         main_layout.addWidget(group_load)
         main_layout.addWidget(group_clear)
@@ -432,6 +438,47 @@ class DebugWidget(QWidget):
             QMessageBox.information(self, "Успех",
                                     f"Заказчики успешно загружены!\nДобавлено/обновлено: {inserted}")
 
+    def show_contract_versions_dialog(self):
+        file_dialog = QFileDialog(self)
+        file_dialog.setNameFilter("JSONL files (*.jsonl);;All files (*.*)")
+        file_dialog.setWindowTitle("Выберите файл версий контрактов (.jsonl)")
+
+        if not file_dialog.exec_():
+            return
+
+        selected_file = file_dialog.selectedFiles()[0]
+        if not selected_file.endswith(".jsonl"):
+            QMessageBox.warning(self, "Неверный формат", "Выберите файл .jsonl")
+            return
+
+        progress = QDialog(self)
+        progress.setWindowTitle("Загрузка...")
+        progress.setFixedSize(400, 80)
+        progress.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowTitleHint)
+        QVBoxLayout(progress).addWidget(
+            QLabel("Идёт загрузка версий контрактов...\nЭто может занять несколько минут.", progress)
+        )
+        progress.show()
+        QApplication.processEvents()
+
+        inserted, errors = 0, []
+        try:
+            inserted, errors = insert_contract_versions(selected_file, self.user, self.role)
+        except Exception as e:
+            errors.append(str(e))
+        finally:
+            progress.hide()
+            progress.deleteLater()
+            QApplication.processEvents()
+
+        if errors:
+            error_preview = "\n".join(errors[:10])
+            suffix = f"\n...и ещё {len(errors) - 10} ошибок" if len(errors) > 10 else ""
+            QMessageBox.warning(self, "Загружено с ошибками",
+                                f"Загружено: {inserted}\n\nОшибки:\n{error_preview}{suffix}")
+        else:
+            QMessageBox.information(self, "Успех",
+                                    f"Версии контрактов загружены!\nДобавлено/обновлено: {inserted}")
     def show_suppliers_dialog(self):
         file_dialog = QFileDialog(self)
         file_dialog.setNameFilter("JSONL files (*.jsonl);;All files (*.*)")
@@ -471,6 +518,9 @@ class DebugWidget(QWidget):
         else:
             QMessageBox.information(self, "Успех",
                                     f"Поставщики успешно загружены!\nДобавлено/обновлено: {inserted}")
+
+
+
 # if __name__ == '__main__':
 #     app = QApplication(sys.argv)
 #     csv_loader_widget = DebugWidget()

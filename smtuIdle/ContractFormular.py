@@ -1,6 +1,5 @@
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
-from playhouse.shortcuts import model_to_dict
 from smtuIdle.BD.models import Purchase, Contract, FinalDetermination
 from PySide6.QtCore import *
 from PySide6.QtGui import QColor
@@ -173,91 +172,188 @@ class ContractFormularWidget(QWidget):
                   
         else:
             pass
+
+    def _render_json_section(self, data, prefix: str = ""):
+        """
+        Рекурсивно рендерит dict/list из JSON-поля в строки таблицы.
+        Останавливается на глубине 3 уровня чтобы не перегружать таблицу.
+        """
+        if isinstance(data, dict):
+            for key, value in data.items():
+                label = f"{prefix}{key}" if not prefix else f"  {prefix}{key}"
+                if isinstance(value, (dict, list)):
+                    self.add_section_to_table(label)
+                    self._render_json_section(value)
+                else:
+                    self.add_row_to_table(label, str(value) if value is not None else "—")
+        elif isinstance(data, list):
+            for idx, item in enumerate(data):
+                if isinstance(item, dict):
+                    self._render_json_section(item, prefix=f"{prefix}")
+                else:
+                    self.add_row_to_table(f"{prefix}[{idx}]", str(item) if item is not None else "—")
     def show_current_purchase(self):
-     
-        if len(self.purchases_list) != 0:
-            current_purchase = self.purchases_list[self.current_position]
-            # Отображаем информацию о текущей записи в лейбле
-            # self.label.setText(f"Запись {self.current_position + 1} из {len(self.purchases_list)}")
-            # Дополнительный код для отображения записи в таблице (замените на свой код)
-            # self.table.setItem(row, column, QTableWidgetItem(str(current_purchase.some_property)))
-        else:
-            self.label.setText("Нет записей")
-        # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)
-        if len(self.purchases_list) != 0:
-            
-            self.current_purchase = self.purchases_list[self.current_position]
-            self.add_section_to_table("Описание закупки")
-            self.add_row_to_table("№ПП", str(current_purchase.Id))
-            self.add_row_to_table("Реестровый номер", current_purchase.RegistryNumber if current_purchase.RegistryNumber else "Нет данных")
-            self.add_row_to_table("Наименование закупки", current_purchase.PurchaseName if current_purchase.PurchaseName else "Нет данных")
-       
-            # Получаем связанные записи из модели Contract
-            self.contracts = Contract.select().where(Contract.purchase == current_purchase)
-            for contract in self.contracts:
-                
-                self.add_section_to_table("Определение победителя")
-                self.add_row_to_table("Общее количество заявок", str(contract.TotalApplications))
-                self.add_row_to_table("Общее количество допущенных заявок", str(contract.AdmittedApplications))
-                self.add_row_to_table("Общее количество отклоненных заявок", str(contract.RejectedApplications))
-                price_proposal_dict = json.loads(contract.PriceProposal)
-                for key, value in price_proposal_dict.items():
+
+        if not self.purchases_list:
+            self.label.setText("Нет записей")
+            return
+
+        current_purchase = self.purchases_list[self.current_position]
+        self.current_purchase = current_purchase
+
+        # ── Описание закупки ──────────────────────────────────
+        self.add_section_to_table("Описание закупки")
+        self.add_row_to_table("№ПП", str(current_purchase.Id))
+        self.add_row_to_table("Реестровый номер", current_purchase.RegistryNumber or "Нет данных")
+        self.add_row_to_table("Наименование закупки", current_purchase.PurchaseName or "Нет данных")
+
+        self.contracts = Contract.select().where(Contract.purchase == current_purchase)
+
+        for contract in self.contracts:
+
+            # ── Определение победителя ────────────────────────
+            self.add_section_to_table("Определение победителя")
+            self.add_row_to_table("Общее количество заявок", str(contract.TotalApplications or "—"))
+            self.add_row_to_table("Допущено заявок", str(contract.AdmittedApplications or "—"))
+            self.add_row_to_table("Отклонено заявок", str(contract.RejectedApplications or "—"))
+
+            # PriceProposal
+            price_proposal = self._parse_json_field(contract.PriceProposal)
+            if isinstance(price_proposal, dict):
+                for key, value in price_proposal.items():
                     try:
-                        numeric_value = float(value)  # Пробуем преобразовать в число
-                        # Если преобразование удалось, добавляем число в таблицу
-                        self.add_row_to_table(key, format_string("%.0f", numeric_value, grouping=True) + self.symbol)
-                    except ValueError:
-                        # Если возникла ошибка при преобразовании, добавляем значение как строку
+                        self.add_row_to_table(key, format_string("%.0f", float(value), grouping=True) + self.symbol)
+                    except (ValueError, TypeError):
                         self.add_row_to_table(key, str(value))
-                Applicant_dict = json.loads( contract.Applicant)
-                for key, value in Applicant_dict.items():
-                    self.add_row_to_table(key, str(value))
-                Applicant_satatus = json.loads(contract.Applicant_satatus)
-                for key, value in Applicant_satatus.items():
-                    self.add_row_to_table(key, str(value))
-                self.add_section_to_table("Заключение контракта")
-                self.add_row_to_table("Победитель-исполнитель контракта", contract.WinnerExecutor)
-                self.add_row_to_table("Заказчик по контракту", contract.ContractingAuthority)
-                self.add_row_to_table("Идентификатор договора", contract.ContractIdentifier)
-                self.add_row_to_table("Реестровый номер договора", contract.RegistryNumber)
-                self.add_row_to_table("№ договора", contract.ContractNumber)
-                self.add_row_to_table("Дата начала/подписания", str(contract.StartDate))
-                self.add_row_to_table("Дата окончания/исполнения", str(contract.EndDate))
-                self.add_row_to_table("Цена договора, руб.", format_string("%.0f",contract.ContractPrice,grouping=True) + self.symbol)
-                self.add_row_to_table("Размер авансирования, руб.",format_string("%.0f",contract.AdvancePayment,grouping=True) + self.symbol)
-                self.add_row_to_table("Снижение НМЦК, руб.",  format_string("%.0f",contract.ReductionNMC ,grouping=True) + self.symbol)
-                self.add_row_to_table("Снижение НМЦК, %", format_string("%.0f",contract.ReductionNMCPercent) + " %")
-                self.add_row_to_table("Протоколы определения поставщика (выписка)", contract.SupplierProtocol)
-                self.add_row_to_table("Договор", contract.ContractFile)
+            elif isinstance(price_proposal, list):
+                for idx, item in enumerate(price_proposal):
+                    if isinstance(item, dict):
+                        for key, value in item.items():
+                            try:
+                                self.add_row_to_table(key,
+                                                      format_string("%.0f", float(value), grouping=True) + self.symbol)
+                            except (ValueError, TypeError):
+                                self.add_row_to_table(key, str(value))
+                    else:
+                        self.add_row_to_table(f"Ценовое предложение {idx + 1}", str(item))
 
-            self.finalDetermination = FinalDetermination.select().where(FinalDetermination.purchase == current_purchase)
-            for det in self.finalDetermination:
-        
-                self.add_section_to_table("Итоговое определение НМЦК с использованием нескольких методов.")
-                self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации", str(det.RequestMethod))
-                self.add_row_to_table("Способ использования общедоступной информации", str(det.PublicInformationMethod))
-                self.add_row_to_table("НМЦК, полученная различными способами", str(det.NMCObtainedMethods))
-                self.add_section_to_table("НМЦК, полученная различными способами в рамках метода сопоставимых рыночных цен (анализа рынка)")
-                self.add_row_to_table("НМЦК на основе затратного метода, руб. (в случае его применения)", str(det.CostMethodNMC))
-                self.add_row_to_table("Цена сравнимой продукции, приведенная в соответствие к условиям закупки судна", str(det.ComparablePrice))
-                self.add_row_to_table("НМЦК, полученная с применением двух методов", str(det.NMCMethodsTwo))
-                self.add_section_to_table("Итоговое определение ЦКЕИ с использованием нескольких методов ЦКЕИ ")
-                self.add_row_to_table("ЦКЕИ на основе метода сопоставимых рыночных цен )", str(det.CEICostMethod))
-                self.add_row_to_table("ЦКЕИ, полученная с применением двух методов", str(det.CEIMethodsTwo))
-          
-            # if current_purchase.isChanged == True:
-            #     self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
-            #     for curr in self.currency:
-            #         self.add_section_to_table("Изминения валюты")
-            #         self.add_row_to_table("Значение валюты", str(curr.CurrencyValue))
-            #         self.add_row_to_table("Текущая валюта", str(curr.CurrentCurrency))
-            #         self.add_row_to_table("Дата изменения значения валюты", str(curr.DateValueChanged))
-            #         self.add_row_to_table("Дата курса валюты", str(curr.CurrencyRateDate))
-            #         self.add_row_to_table("Предыдущая валюта", str(curr.PreviousCurrency))
-        else:
-            self.label.setText("Нет записи")
+            # Applicant
+            applicant = self._parse_json_field(contract.Applicant)
+            if isinstance(applicant, dict):
+                for key, value in applicant.items():
+                    self.add_row_to_table(key, str(value))
+            elif isinstance(applicant, list):
+                for idx, item in enumerate(applicant):
+                    if isinstance(item, dict):
+                        for key, value in item.items():
+                            self.add_row_to_table(key, str(value))
+                    else:
+                        self.add_row_to_table(f"Заявитель {idx + 1}", str(item))
 
+            # Applicant_satatus
+            applicant_status = self._parse_json_field(contract.Applicant_satatus)
+            if isinstance(applicant_status, dict):
+                for key, value in applicant_status.items():
+                    self.add_row_to_table(key, str(value))
+            elif isinstance(applicant_status, list):
+                for idx, item in enumerate(applicant_status):
+                    if isinstance(item, dict):
+                        for key, value in item.items():
+                            self.add_row_to_table(key, str(value))
+                    else:
+                        self.add_row_to_table(f"Статус заявителя {idx + 1}", str(item))
+
+            # ── Заключение контракта ──────────────────────────
+            self.add_section_to_table("Заключение контракта")
+            self.add_row_to_table("Победитель-исполнитель", contract.WinnerExecutor or "—")
+            self.add_row_to_table("Заказчик по контракту", contract.ContractingAuthority or "—")
+            self.add_row_to_table("Идентификатор договора", contract.ContractIdentifier or "—")
+            self.add_row_to_table("Реестровый номер договора", contract.RegistryNumber or "—")
+            self.add_row_to_table("№ договора", contract.ContractNumber or "—")
+            self.add_row_to_table("Дата начала/подписания", str(contract.StartDate) if contract.StartDate else "—")
+            self.add_row_to_table("Дата окончания/исполнения", str(contract.EndDate) if contract.EndDate else "—")
+            self.add_row_to_table("Цена договора, руб.",
+                                  format_string("%.0f", contract.ContractPrice,
+                                                grouping=True) + self.symbol if contract.ContractPrice else "—")
+            self.add_row_to_table("Размер авансирования, руб.",
+                                  format_string("%.0f", contract.AdvancePayment,
+                                                grouping=True) + self.symbol if contract.AdvancePayment else "—")
+            self.add_row_to_table("Снижение НМЦК, руб.",
+                                  format_string("%.0f", contract.ReductionNMC,
+                                                grouping=True) + self.symbol if contract.ReductionNMC else "—")
+            self.add_row_to_table("Снижение НМЦК, %",
+                                  format_string("%.2f",
+                                                contract.ReductionNMCPercent) + " %" if contract.ReductionNMCPercent else "—")
+            self.add_row_to_table("Протоколы поставщика (выписка)", contract.SupplierProtocol or "—")
+            self.add_row_to_table("Договор", contract.ContractFile or "—")
+
+            # ── Общая информация (JSON) ───────────────────────
+            common_info = self._parse_json_field(contract.common_info_json)
+            if common_info:
+                self.add_section_to_table("Общая информация")
+                self._render_json_section(common_info)
+
+            # ── Платежи и объекты закупки (JSON) ─────────────
+            payment = self._parse_json_field(contract.payment_targets_json)
+            if payment:
+                self.add_section_to_table("Платежи и объекты закупки")
+                self._render_json_section(payment)
+
+            # ── Исполнение контракта (JSON) ───────────────────
+            process = self._parse_json_field(contract.process_info_json)
+            if process:
+                self.add_section_to_table("Исполнение (расторжение) контракта")
+                self._render_json_section(process)
+
+            # ── Вложения (JSON) ───────────────────────────────
+            documents = self._parse_json_field(contract.documents_json)
+            if documents:
+                self.add_section_to_table("Вложения")
+                self._render_json_section(documents)
+
+            # ── Журнал версий (JSON) ──────────────────────────
+            journal = self._parse_json_field(contract.journal_versions_json)
+            if journal:
+                self.add_section_to_table("Журнал версий")
+                self._render_json_section(journal)
+
+            # ── Журнал событий (JSON) ─────────────────────────
+            event_log = self._parse_json_field(contract.event_log_json)
+            if event_log:
+                self.add_section_to_table("Журнал событий")
+                self._render_json_section(event_log)
+
+        # ── Итоговое определение НМЦК ─────────────────────────
+        self.finalDetermination = FinalDetermination.select().where(
+            FinalDetermination.purchase == current_purchase
+        )
+        for det in self.finalDetermination:
+            self.add_section_to_table("Итоговое определение НМЦК с использованием нескольких методов")
+            self.add_row_to_table("Способ направления запросов", str(det.RequestMethod or "—"))
+            self.add_row_to_table("Способ использования общедоступной информации",
+                                  str(det.PublicInformationMethod or "—"))
+            self.add_row_to_table("НМЦК, полученная различными способами", str(det.NMCObtainedMethods or "—"))
+            self.add_row_to_table("НМЦК на основе затратного метода, руб.", str(det.CostMethodNMC or "—"))
+            self.add_row_to_table("Цена сравнимой продукции", str(det.ComparablePrice or "—"))
+            self.add_row_to_table("НМЦК с применением двух методов", str(det.NMCMethodsTwo or "—"))
+            self.add_section_to_table("Итоговое определение ЦКЕИ")
+            self.add_row_to_table("ЦКЕИ на основе метода сопоставимых рыночных цен",
+                                  str(det.CEIComparablePrices or "—"))
+            self.add_row_to_table("ЦКЕИ на основе затратного метода", str(det.CEICostMethod or "—"))
+            self.add_row_to_table("ЦКЕИ с применением двух методов", str(det.CEIMethodsTwo or "—"))
+
+    def _parse_json_field(self, raw, fallback=None):
+        """
+        Безопасный парсинг JSON-поля.
+        Возвращает dict, list или fallback если поле пустое/None/невалидное.
+        """
+        if not raw or raw in ("[]", "{}", "Нет данных", "None"):
+            return fallback if fallback is not None else {}
+        try:
+            return json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            return fallback if fallback is not None else {}
     def add_row_to_table(self, label_text, value_text):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)

@@ -3,7 +3,7 @@ import sys
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 
-from smtuIdle.BD.models import Purchase, Contract, FinalDetermination,CurrencyRate
+from smtuIdle.BD.models import Purchase, Contract, FinalDetermination, CurrencyRate, Supplier, Customer, Vessel
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon,QFont
 from PySide6.QtCore import QDate
@@ -32,11 +32,17 @@ class PurchasesWidgetAll(QWidget):
         self.selected_text_contract = None
         self.main_window = main
         self.role = role
-        
+        self.purchases_list = []
+        self.contracts_list = []
+        self.contracts = Contract.select()  # ← добавить эту строку
          # Создаем компонент вкладок
         tab_widget = QTabWidget()
+
         tab_widget.addTab(self.create_purch_tab(), 'Закупки')
         tab_widget.addTab(self.create_cont_tab(), 'Контракты')
+        tab_widget.addTab(self.create_supplier_tab(), 'Поставщики')
+        tab_widget.addTab(self.create_customer_tab(), 'Заказчики')
+        tab_widget.addTab(self.create_vessel_tab(), 'Суда')
         layout = QVBoxLayout(self)
         layout.addWidget(tab_widget)
         self.setLayout(layout)
@@ -315,41 +321,7 @@ class PurchasesWidgetAll(QWidget):
         layout.addWidget(self.menu_frame_filters)
         layout.addWidget(self.menu_frame_price)
         layout.addWidget(self.menu_frame_data)
-        # toplayoutH = QHBoxLayout(self)
-        # Добавляем выпадающее меню
-        # toplayoutH.addWidget(self.sort_options)
-        # toplayoutH.addWidget(self.sort_by_putch_order)
-        # toplayoutH.addWidget(self.sort_by_putch_okpd2)
-        # toplayoutH.addWidget(self.sort_by_putch_ProcurementMethod)
-        # toplayoutH.addWidget(self.sort_by_putch_CustomerName)
-        # layout.addLayout(toplayoutH)
-        # Создаем горизонтальный макет для минимальной и максимальной цены
-        # price_layout = QGridLayout()
-        # # Добавляем их в сетку
-        # price_layout.addWidget(self.min_price_label, 0, 0)
-        # price_layout.addWidget(self.min_price_input, 0, 1)
-        # price_layout.addWidget(self.max_price_label, 1, 0)
-        # price_layout.addWidget(self.max_price_input, 1, 1)
-        # # layout.addLayout(price_layout)
 
-        # # Создаем горизонтальный макет для начальной и конечной даты
-        # date_layout = QGridLayout()
-        # date_layout.addWidget(self.min_data_label, 0, 0)
-        # date_layout.addWidget(self.min_data_input, 0, 1)
-        # date_layout.addWidget(self.max_data_label, 1, 0)
-        # date_layout.addWidget(self.max_data_input, 1, 1)
-        # combined_layout = QHBoxLayout()
-        # combined_layout.addLayout(price_layout)
-        # combined_layout.addLayout(date_layout)
-        # combined_layout.addSpacing(200) 
-        # frame = QFrame()
-        # frame.setLayout(combined_layout)
-
-        # Ограничиваем максимальную ширину frame
-        # frame.setMaximumWidth(850)
-        # layout.addWidget(frame)
-        # price_layout.setColumnStretch(2, 1)  # Растягиваем последний столбец
-        # date_layout.setColumnStretch(2, 1)
 
         # Добавляем кнопку "Применить фильтр"
         button_layout_filters = QHBoxLayout()
@@ -369,22 +341,7 @@ class PurchasesWidgetAll(QWidget):
         self.max_data_input.dateChanged.connect(self.highlight_input)
         self.search_input.textChanged.connect(self.highlight_input)
         self.apply_filter_button.clicked.connect(self.highlight_apply_filter_button)
-       
-        # self.purchases = Purchase.select()
-        # self.purchases = (Purchase
-        #         .select()
-        #         .join(Contract, JOIN.LEFT_OUTER)
-        #           # Уточните условия, если нужно
-        #         )
-        # combined_list = (Purchase
-        #         .select()
-        #         .join(Contract, JOIN.LEFT_OUTER)
-        #           # Уточните условия, если нужно
-        #         .execute())
-   
-        # self.purchases_list = list(self.purchases)
-        # self.purchases_list = list(self.purchases)
-        # self.show_current_purchase()
+
 
         if self.role == "Гость":
             self.toExcel.hide()
@@ -395,282 +352,484 @@ class PurchasesWidgetAll(QWidget):
     def create_cont_tab(self):
         tab = QWidget()
         layout = QVBoxLayout(tab)
-        # Создаем таблицу для отображения данных
-        self.table_cont = QTableWidget(self)
-        self.table_cont.setColumnCount(11)
 
-        # Устанавливаем заголовки колонок
-        column_headers = ["№ПП", "Реестровый номер договора", "Реестровый номер закупки",
-                          "Номер контракта", "Дата начала/подписания", "Цена контракта",'НМЦК','Разница НМЦК и Цены контракта',
-                           "Заказчик по контракту","Победитель", 
-                           "Наименование закупки"]
-        self.table_cont.resizeColumnsToContents()
-        self.table_cont.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        self.table_cont = QTableWidget(self)
+        self.table_cont.setColumnCount(13)
+        column_headers = [
+            "№ПП",
+            "Рееестр. № договора",
+            "Рееестр. № закупки",
+            "Номер контракта",
+            "Дата начала",
+            "Дата окончания",
+            "Цена контракта",
+            "НМЦК",
+            "Разница",
+            "Снижение %",
+            "Заказчик по контракту",
+            "Победитель",
+            "Наименование закупки",
+        ]
         self.table_cont.setHorizontalHeaderLabels(column_headers)
-        self.table_cont.setColumnWidth(8, 600)
-        self.table_cont.setColumnWidth(9, 600)
-        self.table_cont.setColumnWidth(10, 600)
         self.table_cont.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        # Затем устанавливаем режим изменения размера колонки "Наименование закупки" на фиксированный размер
-        self.table_cont.horizontalHeader().setSectionResizeMode(8, QHeaderView.Fixed)
-        self.table_cont.horizontalHeader().setSectionResizeMode(9, QHeaderView.Fixed)
-        self.table_cont.horizontalHeader().setSectionResizeMode(10, QHeaderView.Fixed)
-        self.table_cont.setTextElideMode(Qt.ElideRight)
+        for col in (10, 11, 12):
+            self.table_cont.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
+            self.table_cont.setColumnWidth(col, 400)
         self.table_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.table_cont.setShowGrid(True)
         self.table_cont.verticalHeader().setVisible(False)
-        self.table_cont.horizontalHeader().setVisible(True)
         self.table_cont.setWordWrap(True)
-        # Создаем метки и поля для ввода минимальной и максимальной цены
-        
-        self.min_price_label_contrac = QLabel("Минимальная цена ")
-        self.min_price_input_contrac = QLineEdit()
-        self.min_price_input_contrac.setFixedWidth(100)
-        self.max_price_label_contrac = QLabel("Максимальная цена (в рублях)")
-        self.max_price_input_contrac = QLineEdit()
-        self.max_price_input_contrac.setFixedWidth(100)
-        self.toExcel_contract = QPushButton("Экспорт в Excel", self)
-        self.toExcel_contract.clicked.connect(self.export_to_excel_clicked_contract)
-        self.toExcel_contract.setFixedWidth(400)
-        button_layout3 = QHBoxLayout()
-        button_layout3.addWidget(self.toExcel_contract)
-        button_layout3.setAlignment(Qt.AlignHCenter)
-        self.min_data_label_contrac = QLabel("Начальная дата")
-        self.min_data_input_contrac = QDateEdit()
-        self.min_data_input_contrac.setCalendarPopup(False)
-        self.min_data_input_contrac.setStyleSheet(self.transparent_style)
-        # self.min_data_input.setDate(self.min_data_input.date().currentDate())
-
-        self.min_data_input_contrac.clear()
-        self.min_data_input_contrac.setFixedWidth(150)
-        self.min_data_input_contrac.setCalendarPopup(True)
-        self.max_data_label_contrac = QLabel("Конечная дата")
-        self.max_data_input_contrac = QDateEdit()
-        self.max_data_input_contrac.setCalendarPopup(True)
-        self.max_data_input_contrac.setDate(self.max_data_input.date().currentDate())
-        self.max_data_input_contrac.setStyleSheet(self.transparent_style) 
-     
-        self.current_position = 0   
-        self.label_cont = QLabel("Всего записей", self)
+        self.table_cont.setTextElideMode(Qt.ElideRight)
         self.table_cont.cellClicked.connect(self.handle_cell_click_contract)
-         
-         # Создаем выпадающее меню
-        self.sort_options_contract = QComboBox()
-        self.sort_options_contract.addItems(["Сортировать по цене (возрастание)", "Сортировать по цене (убывание)",
-                                    
-                                    "Сортировать по дате (возрастание)","Сортировать по дате (убывание)"])
-         # Устанавливаем обработчик событий для выпадающего меню
-       
-        self.sort_options_contract.setFixedWidth(250)
-        self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item_contract)
-        unique_contract_winnter = Contract.select(Contract.WinnerExecutor).distinct().order_by(fn.Lower(Contract.WinnerExecutor))
-        self.sort_by_putch_winner = QComboBox()
-        self.sort_by_putch_winner.addItem("Фильтрация по победителю-исполнителю контракта")
-        self.sort_by_putch_winner.setFixedWidth(250)
-        self.sort_by_putch_winner.currentIndexChanged.connect(self.highlight_current_item_contract)
-        for order in unique_contract_winnter:
-            self.sort_by_putch_winner.addItem(str(order.WinnerExecutor))
 
+        self.label_cont = QLabel("Всего записей", self)
+        self.label_cont.setAlignment(Qt.AlignHCenter)
+        self.transparent_style = "QDateEdit { color: transparent; }"
 
-      
+        # ── Поиск ────────────────────────────────────────────
         self.search_input_contract = QLineEdit()
-        self.search_input_contract.setPlaceholderText("Поиск по победителю - исполнителю контракта, заказчику, наименованию объекта или организации")
-        self.unique_values_query_contract = self.findUnicContract()
+        self.search_input_contract.setPlaceholderText(
+            "Поиск по победителю, заказчику, реестровому номеру"
+        )
         self.search_input_contract.setFixedWidth(500)
-        completer = QCompleter(self.unique_values_query_contract )
-        # self.search_input.textChanged.connect(completer.filter)
+        self.search_input_contract.textChanged.connect(self.highlight_input_contract)
+        completer = QCompleter(self.findUnicContract())
         completer.setFilterMode(Qt.MatchContains)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
-
         completer.activated.connect(self.handleActivatedContract)
         self.search_input_contract.setCompleter(completer)
-         #  кнопка "Сбросить фильтры" 
-        self.reset_filters_button_contract = QPushButton("Сбросить фильтры контрактов", self)
-        self.reset_filters_button_contract.setFixedWidth(250)
-        self.reset_filters_button_contract.clicked.connect(self.resetFiltersContract)
-        # Создаем поле ввода для поиска
-       
-       
-    
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.label_cont)
-        icon_path = "Pics/icons8-фильтр-ios-17-32.png"
-        self.label_cont.setAlignment(Qt.AlignHCenter)
-        icon = QIcon(icon_path)
-        # Добавляем горизонтальную линию
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)  # Форма линии (горизонтальная)
-        line.setFrameShadow(QFrame.Shadow.Sunken)  # Тень линии
-        line.setStyleSheet("background-color: grey;")  # Цвет фона
-        line.setFixedHeight(2)
 
-        line1 = QFrame()
-        line1.setFrameShape(QFrame.Shape.HLine)
-        line1.setFrameShadow(QFrame.Shadow.Sunken)
-        line1.setStyleSheet("background-color: grey;")
-        line1.setFixedHeight(2)
-        line2 = QFrame()
-        line2.setFrameShape(QFrame.Shape.HLine)
-        line2.setFrameShadow(QFrame.Shadow.Sunken)
-        line2.setStyleSheet("background-color: grey;")
-        line2.setFixedHeight(2)
+        # ── Фильтры ───────────────────────────────────────────
+        self.sort_options_contract = QComboBox()
+        self.sort_options_contract.addItems([
+            "Сортировать по цене (возрастание)",
+            "Сортировать по цене (убывание)",
+            "Сортировать по дате (возрастание)",
+            "Сортировать по дате (убывание)",
+        ])
+        self.sort_options_contract.setFixedWidth(250)
+        self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item_contract)
 
-        line3 = QFrame()
-        line3.setFrameShape(QFrame.Shape.HLine)
-        line3.setFrameShadow(QFrame.Shadow.Sunken)
-        line3.setStyleSheet("background-color: grey;")
-        line3.setFixedHeight(2)
-        # Добавляем кнопку "Применить фильтр"
-        self.apply_filter_button_contract = QPushButton("Применить фильтры контрактов", self)
-        self.apply_filter_button_contract.setIcon(icon)
+        self.sort_by_putch_winner = QComboBox()
+        self.sort_by_putch_winner.addItem("Фильтрация по победителю")
+        self.sort_by_putch_winner.setFixedWidth(250)
+        for w in Contract.select(Contract.WinnerExecutor).distinct().order_by(fn.Lower(Contract.WinnerExecutor)):
+            if w.WinnerExecutor:
+                self.sort_by_putch_winner.addItem(str(w.WinnerExecutor))
+        self.sort_by_putch_winner.currentIndexChanged.connect(self.highlight_current_item_contract)
+
+        # ── Цена ──────────────────────────────────────────────
+        self.min_price_input_contrac = QLineEdit()
+        self.min_price_input_contrac.setFixedWidth(120)
+        self.min_price_input_contrac.setPlaceholderText("Мин. цена")
+        self.max_price_input_contrac = QLineEdit()
+        self.max_price_input_contrac.setFixedWidth(120)
+        self.max_price_input_contrac.setPlaceholderText("Макс. цена")
+        self.min_price_input_contrac.textChanged.connect(self.highlight_input_contract)
+        self.max_price_input_contrac.textChanged.connect(self.highlight_input_contract)
+
+        # ── Дата ──────────────────────────────────────────────
+        self.min_data_input_contrac = QDateEdit()
+        self.min_data_input_contrac.setCalendarPopup(True)
+        self.min_data_input_contrac.setStyleSheet(self.transparent_style)
+        self.min_data_input_contrac.setFixedWidth(150)
+        self.max_data_input_contrac = QDateEdit()
+        self.max_data_input_contrac.setCalendarPopup(True)
+        self.max_data_input_contrac.setDate(self.max_data_input_contrac.date().currentDate())
+        self.max_data_input_contrac.setStyleSheet(self.transparent_style)
+        self.max_data_input_contrac.setFixedWidth(150)
+        self.min_data_input_contrac.dateChanged.connect(self.highlight_input_contract)
+        self.max_data_input_contrac.dateChanged.connect(self.highlight_input_contract)
+
+        # ── Кнопки ────────────────────────────────────────────
+        self.apply_filter_button_contract = QPushButton("Применить фильтры")
+        self.apply_filter_button_contract.setIcon(QIcon("Pics/icons8-фильтр-ios-17-32.png"))
+        self.apply_filter_button_contract.setFixedWidth(200)
         self.apply_filter_button_contract.clicked.connect(self.apply_filter_contract)
-        self.apply_filter_button_contract.setFixedWidth(250)
-        self.QwordFinderContract = QPushButton("Поиск по ключевому слову")
-        self.QwordFinderContract.setIcon(QIcon("Pics/right-arrow.png"))
-        self.QwordFinderContract.setMaximumWidth(300)
-        self.QwordFinderContract.clicked.connect(self.toggle_menu_contract)
-         #меню по ключевому слову
-        self.menu_content_contract = QWidget()
-        menu_layout_contract = QVBoxLayout()
-        self.Qword_contract = QLabel("Поиск по ключевому слову")
-        menu_layout_contract.addWidget(line)
-        menu_layout_contract.addWidget(self.Qword_contract)
-        menu_layout_contract.addWidget(self.search_input_contract)
-        
-        self.menu_content_contract.setLayout(menu_layout_contract)
+        self.apply_filter_button_contract.clicked.connect(self.highlight_apply_filter_button_contract)
+
+        self.reset_filters_button_contract = QPushButton("Сбросить фильтры")
+        self.reset_filters_button_contract.setFixedWidth(200)
+        self.reset_filters_button_contract.clicked.connect(self.resetFiltersContract)
+
+        self.toExcel_contract = QPushButton("Экспорт в Excel")
+        self.toExcel_contract.setFixedWidth(400)
+        self.toExcel_contract.clicked.connect(self.export_to_excel_clicked_contract)
+
+        # ── Сворачиваемые панели ──────────────────────────────
+        icon_right = QIcon("Pics/right-arrow.png")
+        icon_down = QIcon("Pics/arrow-down.png")
+
+        def make_toggle_btn(label):
+            btn = QPushButton(label)
+            btn.setIcon(icon_right)
+            btn.setMaximumWidth(300)
+            return btn
+
+        self.QwordFinderContract = make_toggle_btn("Поиск по ключевому слову")
+        self.FilterCollapseContract = make_toggle_btn("Фильтры")
+        self.FilterPriceContract = make_toggle_btn("Цена")
+        self.FilterDateContract = make_toggle_btn("Дата")
+
+        # Панель: поиск
+        panel_search = QWidget()
+        pl = QVBoxLayout(panel_search)
+        pl.addWidget(QLabel("Поиск по ключевому слову"))
+        pl.addWidget(self.search_input_contract)
         self.menu_frame_contract = QFrame()
         self.menu_frame_contract.setLayout(QVBoxLayout())
-        self.menu_frame_contract.layout().addWidget(self.menu_content_contract)
+        self.menu_frame_contract.layout().addWidget(panel_search)
         self.menu_frame_contract.setVisible(False)
 
-        # Добавляем кнопку выпадающего меню по фильтрам
-        self.FilterCollapseContract = QPushButton("Фильтры")
-        self.FilterCollapseContract.setIcon(QIcon("Pics/right-arrow.png"))
-        self.FilterCollapseContract.setMaximumWidth(300)
-        self.FilterCollapseContract.clicked.connect(self.toggle_menu_filters_contract)
-
-         # Добавляем кнопку выпадающего меню по цене
-        self.FilterPriceContract = QPushButton("Цена")
-        self.FilterPriceContract.setIcon(QIcon("Pics/right-arrow.png"))
-        self.FilterPriceContract.setMaximumWidth(300)
-        self.FilterPriceContract.clicked.connect(self.toggle_menu_price_contract)
-        # Добавляем кнопку выпадающего меню по дате
-        self.FilterDateContract = QPushButton("Дата")
-        self.FilterDateContract.setIcon(QIcon("Pics/right-arrow.png"))
-        self.FilterDateContract.setMaximumWidth(300)
-        self.FilterDateContract.clicked.connect(self.toggle_menu_date_contract)
-         # Добавляем кнопку выпадающего меню по цене
-
-        #меню по ключевому фильтрам
-        self.menu_content_filters_contract  = QWidget()
-        menu_layout_filters = QHBoxLayout()
-        self.FilterLable_contract  = QLabel("Расширенная фильтрация по справочникам контрактов")
-        menu_layout_filtersH = QVBoxLayout()
-        menu_layout_filtersH.addWidget(line1)
-        menu_layout_filtersH.addWidget(self.FilterLable_contract )
-        menu_layout_filters.addWidget(self.sort_options_contract)
-        menu_layout_filters.addWidget(self.sort_by_putch_winner)
-        # menu_layout_filters.addWidget(self.sort_by_putch_order)
-        # menu_layout_filters.addWidget(self.sort_by_putch_okpd2)
-        # menu_layout_filters.addWidget(self.sort_by_putch_ProcurementMethod)
-        # menu_layout_filters.addWidget(self.sort_by_putch_CustomerName)
-        menu_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        menu_layout_filtersH.addLayout(menu_layout_filters)
-        self.menu_content_filters_contract .setLayout(menu_layout_filtersH)
-        self.menu_frame_filters_contract  = QFrame()
+        # Панель: фильтры
+        panel_filters = QWidget()
+        pfl = QHBoxLayout(panel_filters)
+        pfl.addWidget(self.sort_options_contract)
+        pfl.addWidget(self.sort_by_putch_winner)
+        pfl.setAlignment(Qt.AlignLeft)
+        self.menu_frame_filters_contract = QFrame()
         self.menu_frame_filters_contract.setLayout(QVBoxLayout())
-        self.menu_frame_filters_contract.layout().addWidget(self.menu_content_filters_contract )
+        self.menu_frame_filters_contract.layout().addWidget(panel_filters)
         self.menu_frame_filters_contract.setVisible(False)
-        #меню по  фильтрам цена
-        self.menu_content_price_contrac = QWidget()
-        menu_layout_price_contrac = QHBoxLayout()
-        menu_layout_priceV_contrac = QVBoxLayout()
-        self.PriceLabel_contrac = QLabel("Фильтрация по цене контрактов")
-        menu_layout_priceV_contrac.addWidget( self.PriceLabel_contrac)
-        menu_layout_priceV_contrac.addWidget(line2)
-        menu_layout_price_contrac.addWidget(self.min_price_label_contrac)
-        menu_layout_price_contrac.addWidget(self.min_price_input_contrac)
-        menu_layout_price_contrac.addWidget(self.max_price_label_contrac)
-        menu_layout_price_contrac.addWidget(self.max_price_input_contrac)
-        menu_layout_priceV_contrac.addLayout(menu_layout_price_contrac)
-        menu_layout_price_contrac.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        menu_layout_price_contrac.addItem(spacer)
-        self.menu_content_price_contrac.setLayout(menu_layout_priceV_contrac)
+
+        # Панель: цена
+        panel_price = QWidget()
+        ppr = QHBoxLayout(panel_price)
+        ppr.addWidget(QLabel("Мин. цена:"));
+        ppr.addWidget(self.min_price_input_contrac)
+        ppr.addWidget(QLabel("Макс. цена:"));
+        ppr.addWidget(self.max_price_input_contrac)
+        ppr.setAlignment(Qt.AlignLeft)
         self.menu_frame_price_contrac = QFrame()
         self.menu_frame_price_contrac.setLayout(QVBoxLayout())
-        self.menu_frame_price_contrac.layout().addWidget(self.menu_content_price_contrac)
+        self.menu_frame_price_contrac.layout().addWidget(panel_price)
         self.menu_frame_price_contrac.setVisible(False)
-        #меню по  фильтрам дата
-        self.menu_content_data_contrac = QWidget()
-        menu_layout_data_contrac = QHBoxLayout()
-        DataLabel_contrac = QLabel("Фильтрация по дате размещения контракта")
-        menu_layout_dataV_contrac = QVBoxLayout()
-        menu_layout_dataV_contrac.addWidget(DataLabel_contrac)
-        menu_layout_dataV_contrac.addWidget(line3)
-        menu_layout_data_contrac.addWidget(self.min_data_label_contrac)
-        menu_layout_data_contrac.addWidget(self.min_data_input_contrac)
-        menu_layout_data_contrac.addWidget(self.max_data_label_contrac)
-        menu_layout_data_contrac.addWidget(self.max_data_input_contrac)
-        menu_layout_data_contrac.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        menu_layout_dataV_contrac.addLayout(menu_layout_data_contrac)
-        spacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
-        menu_layout_data_contrac.addItem(spacer)
-        self.menu_content_data_contrac.setLayout(menu_layout_dataV_contrac)
+
+        # Панель: дата
+        panel_date = QWidget()
+        pdt = QHBoxLayout(panel_date)
+        pdt.addWidget(QLabel("Начало:"));
+        pdt.addWidget(self.min_data_input_contrac)
+        pdt.addWidget(QLabel("Конец:"));
+        pdt.addWidget(self.max_data_input_contrac)
+        pdt.setAlignment(Qt.AlignLeft)
         self.menu_frame_data_contrac = QFrame()
         self.menu_frame_data_contrac.setLayout(QVBoxLayout())
-        self.menu_frame_data_contrac.layout().addWidget(self.menu_content_data_contrac)
+        self.menu_frame_data_contrac.layout().addWidget(panel_date)
         self.menu_frame_data_contrac.setVisible(False)
-        
-        self.All_parametrs_finder_contract = QLabel("Все параметры поиска")
-        font = QFont()
+
+        # Подключаем toggle
+        self.QwordFinderContract.clicked.connect(self.toggle_menu_contract)
+        self.FilterCollapseContract.clicked.connect(self.toggle_menu_filters_contract)
+        self.FilterPriceContract.clicked.connect(self.toggle_menu_price_contract)
+        self.FilterDateContract.clicked.connect(self.toggle_menu_date_contract)
+
+        # ── Сборка layout ─────────────────────────────────────
+        header_lbl = QLabel("Все параметры поиска")
+        font = QFont();
         font.setPointSize(16)
-        # layout = QVBoxLayout(self)
-        # Устанавливаем созданный шрифт для QLabel
-        self.All_parametrs_finder_contract.setFont(font)
-        # layout.addWidget(self.search_input)
-        button_layout_filters = QHBoxLayout()
-        button_layout_filters.addWidget(self.QwordFinderContract)
-        button_layout_filters.addWidget(self.FilterCollapseContract)
-        button_layout_filters.addWidget(self.FilterPriceContract)
-        button_layout_filters.addWidget(self.FilterDateContract)
-        button_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(self.All_parametrs_finder_contract,alignment=Qt.AlignmentFlag.AlignLeft)
-        layout.addLayout(button_layout_filters)
+        header_lbl.setFont(font)
+        layout.addWidget(header_lbl, alignment=Qt.AlignLeft)
+
+        btn_row = QHBoxLayout()
+        for b in (self.QwordFinderContract, self.FilterCollapseContract,
+                  self.FilterPriceContract, self.FilterDateContract):
+            btn_row.addWidget(b)
+        btn_row.setAlignment(Qt.AlignLeft)
+        layout.addLayout(btn_row)
+
         layout.addWidget(self.menu_frame_contract)
         layout.addWidget(self.menu_frame_filters_contract)
         layout.addWidget(self.menu_frame_price_contrac)
         layout.addWidget(self.menu_frame_data_contrac)
-        
 
-        # Добавляем кнопку "Применить фильтр"
-        button_layout_filters = QHBoxLayout()
-        button_layout_filters.addWidget(self.apply_filter_button_contract)
-        button_layout_filters.addWidget(self.reset_filters_button_contract)
-        button_layout_filters.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addLayout(button_layout_filters)
-        # Добавляем таблицу и остальные элементы в макет
+        action_row = QHBoxLayout()
+        action_row.addWidget(self.apply_filter_button_contract)
+        action_row.addWidget(self.reset_filters_button_contract)
+        action_row.setAlignment(Qt.AlignLeft)
+        layout.addLayout(action_row)
+
         layout.addWidget(self.table_cont)
-        layout.addLayout(button_layout)
-        layout.addLayout(button_layout3)
-        # Получаем данные из базы данных и отображаем первую запись
-        self.reload_data_cont()
+        layout.addWidget(self.label_cont)
 
-        self.min_price_input_contrac.textChanged.connect(self.highlight_input_contract)
-        self.max_price_input_contrac.textChanged.connect(self.highlight_input_contract)
-        self.min_data_input_contrac.dateChanged.connect(self.highlight_input_contract)
-        self.max_data_input_contrac.dateChanged.connect(self.highlight_input_contract)
-        self.search_input_contract.textChanged.connect(self.highlight_input_contract)
-        self.apply_filter_button_contract.clicked.connect(self.highlight_apply_filter_button_contract)
-       
+        excel_row = QHBoxLayout()
+        excel_row.addWidget(self.toExcel_contract)
+        excel_row.setAlignment(Qt.AlignHCenter)
+        layout.addLayout(excel_row)
 
         if self.role == "Гость":
-            self.toExcel.hide()
             self.toExcel_contract.hide()
-        else:
-            self.toExcel.show()
-            self.toExcel_contract.show()
+
+        self.reload_data_cont()
         return tab
+
+    def create_supplier_tab(self):
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        self.table_supplier = QTableWidget(self)
+        self.table_supplier.setColumnCount(9)
+        headers = ["№ПП", "Организация", "ИНН", "КПП", "Страна",
+                   "Адрес", "Телефон", "Email", "Статус"]
+        self.table_supplier.setHorizontalHeaderLabels(headers)
+        self.table_supplier.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.table_supplier.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
+        self.table_supplier.setColumnWidth(1, 400)
+        self.table_supplier.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.table_supplier.setShowGrid(True)
+        self.table_supplier.verticalHeader().setVisible(False)
+        self.table_supplier.setWordWrap(True)
+
+        self.label_supplier = QLabel("Всего записей", self)
+        self.label_supplier.setAlignment(Qt.AlignHCenter)
+
+        # Поиск
+        self.search_supplier = QLineEdit()
+        self.search_supplier.setPlaceholderText("Поиск по организации, ИНН, КПП")
+        self.search_supplier.setFixedWidth(400)
+        self.search_supplier.textChanged.connect(self.apply_filter_supplier)
+
+        # Сброс
+        btn_reset_supplier = QPushButton("Сбросить фильтры")
+        btn_reset_supplier.setFixedWidth(150)
+        btn_reset_supplier.clicked.connect(self.reset_supplier)
+
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Поиск:"))
+        search_layout.addWidget(self.search_supplier)
+        search_layout.addWidget(btn_reset_supplier)
+        search_layout.setAlignment(Qt.AlignLeft)
+
+        layout.addLayout(search_layout)
+        layout.addWidget(self.table_supplier)
+        layout.addWidget(self.label_supplier)
+
+        self.reload_supplier()
+        return tab
+
+    def create_customer_tab(self):
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        self.table_customer = QTableWidget(self)
+        self.table_customer.setColumnCount(8)
+        headers = ["№ПП", "Наименование", "ИНН", "КПП", "ОГРН",
+                   "Регион", "Город", "Закон"]
+        self.table_customer.setHorizontalHeaderLabels(headers)
+        self.table_customer.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.table_customer.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
+        self.table_customer.setColumnWidth(1, 500)
+        self.table_customer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.table_customer.setShowGrid(True)
+        self.table_customer.verticalHeader().setVisible(False)
+        self.table_customer.setWordWrap(True)
+
+        self.label_customer = QLabel("Всего записей", self)
+        self.label_customer.setAlignment(Qt.AlignHCenter)
+
+        # Поиск
+        self.search_customer = QLineEdit()
+        self.search_customer.setPlaceholderText("Поиск по наименованию, ИНН, региону")
+        self.search_customer.setFixedWidth(400)
+        self.search_customer.textChanged.connect(self.apply_filter_customer)
+
+        # Фильтр по закону
+        self.filter_customer_law = QComboBox()
+        self.filter_customer_law.addItem("Все законы")
+        for law in Customer.select(Customer.law).distinct():
+            if law.law:
+                self.filter_customer_law.addItem(str(law.law))
+        self.filter_customer_law.setFixedWidth(150)
+        self.filter_customer_law.currentIndexChanged.connect(self.apply_filter_customer)
+
+        btn_reset_customer = QPushButton("Сбросить")
+        btn_reset_customer.setFixedWidth(100)
+        btn_reset_customer.clicked.connect(self.reset_customer)
+
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Поиск:"))
+        search_layout.addWidget(self.search_customer)
+        search_layout.addWidget(self.filter_customer_law)
+        search_layout.addWidget(btn_reset_customer)
+        search_layout.setAlignment(Qt.AlignLeft)
+
+        layout.addLayout(search_layout)
+        layout.addWidget(self.table_customer)
+        layout.addWidget(self.label_customer)
+
+        self.reload_customer()
+        return tab
+
+    def create_vessel_tab(self):
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+
+        self.table_vessel = QTableWidget(self)
+        self.table_vessel.setColumnCount(10)
+        headers = ["№ПП", "Проект судна", "Тип (РМРС)", "Класс",
+                   "Год постройки", "Страна постройки", "Верфь",
+                   "Дедвейт", "Реестр. номер закупки", "Сумма контракта"]
+        self.table_vessel.setHorizontalHeaderLabels(headers)
+        self.table_vessel.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.table_vessel.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
+        self.table_vessel.horizontalHeader().setSectionResizeMode(6, QHeaderView.Fixed)
+        self.table_vessel.setColumnWidth(1, 300)
+        self.table_vessel.setColumnWidth(6, 300)
+        self.table_vessel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.table_vessel.setShowGrid(True)
+        self.table_vessel.verticalHeader().setVisible(False)
+        self.table_vessel.setWordWrap(True)
+
+        self.label_vessel = QLabel("Всего записей", self)
+        self.label_vessel.setAlignment(Qt.AlignHCenter)
+
+        # Поиск
+        self.search_vessel = QLineEdit()
+        self.search_vessel.setPlaceholderText("Поиск по проекту, типу, верфи")
+        self.search_vessel.setFixedWidth(400)
+        self.search_vessel.textChanged.connect(self.apply_filter_vessel)
+
+        # Фильтр по году
+        self.filter_vessel_year = QComboBox()
+        self.filter_vessel_year.addItem("Все годы")
+        for v in Vessel.select(Vessel.year_built).distinct().order_by(Vessel.year_built):
+            if v.year_built:
+                self.filter_vessel_year.addItem(str(v.year_built))
+        self.filter_vessel_year.setFixedWidth(120)
+        self.filter_vessel_year.currentIndexChanged.connect(self.apply_filter_vessel)
+
+        btn_reset_vessel = QPushButton("Сбросить")
+        btn_reset_vessel.setFixedWidth(100)
+        btn_reset_vessel.clicked.connect(self.reset_vessel)
+
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(QLabel("Поиск:"))
+        search_layout.addWidget(self.search_vessel)
+        search_layout.addWidget(QLabel("Год:"))
+        search_layout.addWidget(self.filter_vessel_year)
+        search_layout.addWidget(btn_reset_vessel)
+        search_layout.setAlignment(Qt.AlignLeft)
+
+        layout.addLayout(search_layout)
+        layout.addWidget(self.table_vessel)
+        layout.addWidget(self.label_vessel)
+
+        self.reload_vessel()
+        return tab
+
+    # ── Поставщики ────────────────────────────────────────────
+    def reload_supplier(self):
+        self.suppliers_qs = Supplier.select()
+        self._show_suppliers(list(self.suppliers_qs))
+
+    def apply_filter_supplier(self):
+        keyword = self.search_supplier.text().strip()
+        q = Supplier.select()
+        if keyword:
+            q = q.where(
+                Supplier.organization.contains(keyword) |
+                Supplier.inn.contains(keyword) |
+                Supplier.kpp.contains(keyword)
+            )
+        self._show_suppliers(list(q))
+
+    def reset_supplier(self):
+        self.search_supplier.clear()
+        self.reload_supplier()
+
+    def _show_suppliers(self, rows: list):
+        self.table_supplier.setRowCount(0)
+        self.label_supplier.setText(f"Всего записей: {len(rows)}")
+        for i, s in enumerate(rows):
+            self.table_supplier.insertRow(i)
+            for col, val in enumerate([
+                s.id, s.organization, s.inn, s.kpp, s.country,
+                s.address, s.phone, s.mail, s.status
+            ]):
+                item = QTableWidgetItem(str(val) if val is not None else "")
+                item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
+                self.table_supplier.setItem(i, col, item)
+
+    # ── Заказчики ─────────────────────────────────────────────
+    def reload_customer(self):
+        self.customers_qs = Customer.select()
+        self._show_customers(list(self.customers_qs))
+
+    def apply_filter_customer(self):
+        keyword = self.search_customer.text().strip()
+        law = self.filter_customer_law.currentText()
+        q = Customer.select()
+        if keyword:
+            q = q.where(
+                Customer.name.contains(keyword) |
+                Customer.inn.contains(keyword) |
+                Customer.region.contains(keyword)
+            )
+        if law != "Все законы":
+            q = q.where(Customer.law == law)
+        self._show_customers(list(q))
+
+    def reset_customer(self):
+        self.search_customer.clear()
+        self.filter_customer_law.setCurrentIndex(0)
+        self.reload_customer()
+
+    def _show_customers(self, rows: list):
+        self.table_customer.setRowCount(0)
+        self.label_customer.setText(f"Всего записей: {len(rows)}")
+        for i, c in enumerate(rows):
+            self.table_customer.insertRow(i)
+            for col, val in enumerate([
+                c.id, c.name, c.inn, c.kpp, c.ogrn,
+                c.region, c.city, c.law
+            ]):
+                item = QTableWidgetItem(str(val) if val is not None else "")
+                item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
+                self.table_customer.setItem(i, col, item)
+
+    # ── Суда ──────────────────────────────────────────────────
+    def reload_vessel(self):
+        self.vessels_qs = Vessel.select()
+        self._show_vessels(list(self.vessels_qs))
+
+    def apply_filter_vessel(self):
+        keyword = self.search_vessel.text().strip()
+        year = self.filter_vessel_year.currentText()
+        q = Vessel.select()
+        if keyword:
+            q = q.where(
+                Vessel.ship_project.contains(keyword) |
+                Vessel.ship_type_rmrs.contains(keyword) |
+                Vessel.shipyard_name.contains(keyword)
+            )
+        if year != "Все годы":
+            q = q.where(Vessel.year_built == int(year))
+        self._show_vessels(list(q))
+
+    def reset_vessel(self):
+        self.search_vessel.clear()
+        self.filter_vessel_year.setCurrentIndex(0)
+        self.reload_vessel()
+
+    def _show_vessels(self, rows: list):
+        self.table_vessel.setRowCount(0)
+        self.label_vessel.setText(f"Всего записей: {len(rows)}")
+        for i, v in enumerate(rows):
+            self.table_vessel.insertRow(i)
+            for col, val in enumerate([
+                v.id, v.ship_project, v.ship_type_rmrs, v.ship_class,
+                v.year_built, v.country_built, v.shipyard_name,
+                v.deadweight, v.purchase_registry_number, v.contract_sum
+            ]):
+                item = QTableWidgetItem(str(val) if val is not None else "")
+                item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
+                self.table_vessel.setItem(i, col, item)
+
+
+
+
+
+
     def toggle_menu_contract(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_contract.setVisible(not self.menu_frame_contract.isVisible())
@@ -758,45 +917,49 @@ class PurchasesWidgetAll(QWidget):
                     self.table.setRowHeight(current_position, self.table.rowHeight(current_position) + 3)  # Увеличиваем высоту строки                        
                     # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
         else:
-            self.label.setText("Нет записей")     
-
-
+            self.label.setText("Нет записей")
 
     def show_all_contracts(self):
-    # Очищаем таблицу перед добавлением новых данных
         self.table_cont.setRowCount(0)
-        self.label_cont.setText(f"Всего записей {len(self.contracts_list)}")
-        if len(self.contracts_list) != 0:
-            for current_position, current_purchase in enumerate(self.contracts_list):
-                # Добавляем новую строку для каждой записи
-                self.table_cont.insertRow(current_position)
-                total_cost = format_string("%.0f", current_purchase[22], grouping=True) + ' ₽'
-                difference = format_string("%.0f", current_purchase[22] - current_purchase[5], grouping=True) + ' ₽'
-                advance_payment = format_string("%.0f", current_purchase[5], grouping=True) + ' ₽'
-                # total_cost = currency(current_purchase[22], grouping=True )
-                # total_cost = format_string("%.0f", current_purchase[22], grouping=True)
-                # difference = currency(current_purchase[22] - current_purchase[5], grouping=True)
-                # advance_payment = currency(current_purchase[5], grouping=True)
+        self.label_cont.setText(f"Всего записей: {len(self.contracts_list)}")
 
-                
-                # Добавляем данные в каждую ячейку для текущей записи
-                for col, value in enumerate([current_purchase[0], current_purchase[1], current_purchase[2],
-                                  str(current_purchase[3]), current_purchase[4],
-                                   advance_payment,
-                                  total_cost,
-                                  difference
-                                  ,
-                                  str(current_purchase[6]), current_purchase[7],
-                                  current_purchase[8]
-                                  ]):
-                    item = QTableWidgetItem(str(value))
-                    item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                    item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
-                    self.table_cont.setItem(current_position, col, item)
-                    self.table_cont.setRowHeight(current_position, self.table_cont.rowHeight(current_position) + 3)
-        
-        else:
-            self.label_cont.setText("Нет записей")     
+        for i, c in enumerate(self.contracts_list):
+            self.table_cont.insertRow(i)
+
+            # Цены
+            price = c.ContractPrice or 0.0
+            nmck = c.purchase.InitialMaxContractPrice or 0.0
+            diff = price - nmck
+            reduction = c.ReductionNMCPercent
+
+            price_str = format_string("%.0f", price, grouping=True) + " ₽" if price else "—"
+            nmck_str = format_string("%.0f", nmck, grouping=True) + " ₽" if nmck else "—"
+            diff_str = format_string("%.0f", diff, grouping=True) + " ₽" if (price and nmck) else "—"
+            reduction_str = f"{reduction:.2f}%" if reduction is not None else "—"
+
+            values = [
+                c.Id,
+                c.RegistryNumber or "—",
+                c.purchase.RegistryNumber or "—",
+                c.ContractNumber or "—",
+                str(c.StartDate) if c.StartDate else "—",
+                str(c.EndDate) if c.EndDate else "—",
+                price_str,
+                nmck_str,
+                diff_str,
+                reduction_str,
+                c.ContractingAuthority or "—",
+                c.WinnerExecutor or "—",
+                c.purchase.PurchaseName or "—",
+            ]
+
+            for col, val in enumerate(values):
+                item = QTableWidgetItem(str(val))
+                item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
+                self.table_cont.setItem(i, col, item)
+
+            self.table_cont.setRowHeight(i, self.table_cont.rowHeight(i) + 3)
     def highlight_apply_filter_button(self):
     # Подсвечиваем кнопку apply_filter_button
         self.apply_filter_button.setStyleSheet("background-color: #ccffcc;")
@@ -993,61 +1156,67 @@ class PurchasesWidgetAll(QWidget):
         self.show_all_purchases()
 
     def apply_filter_contract(self):
-        self.current_position = 0
-        self.selected_option_contract = self.sort_options_contract.currentText()
-        
-        if  self.selected_option_contract == "Сортировать по цене (возрастание)":
-            order_by = Contract.ContractPrice
-        elif  self.selected_option_contract == "Сортировать по цене (убывание)":
-            order_by = Contract.ContractPrice.desc()
-        elif  self.selected_option_contract == "Сортировать по дате (убывание)":
-            order_by = Contract.StartDate.desc()
-        elif  self.selected_option_contract == "Сортировать по дате (возрастание)":
-            order_by = Contract.StartDate
+        keyword = self.search_input_contract.text().strip()
+        winner = self.sort_by_putch_winner.currentText()
+        sort_idx = self.sort_options_contract.currentIndex()
+        min_p = self.min_price_input_contrac.text().strip()
+        max_p = self.max_price_input_contrac.text().strip()
+        min_d = self.min_data_input_contrac.date()
+        max_d = self.max_data_input_contrac.date()
 
-        min_price = float(self.min_price_input_contrac.text()) if self.min_price_input_contrac.text() else float('-inf')
-        max_price = float(self.max_price_input_contrac.text()) if self.max_price_input_contrac.text() else float('inf')
-        
-        min_date_str = self.min_data_input_contrac.date()
-        max_date_str = self.max_data_input_contrac.date()
-
-        min_date = min_date_str.toPython() if min_date_str.isValid() else None
-        max_date = max_date_str.toPython() if max_date_str.isValid() else None
-
-         # Фильтр по цене
-        self.contracts = self.contracts.where(
-            (Contract.ContractPrice.between(min_price, max_price))
-                                        ).order_by(order_by)
-        # Фильтр по дате
-        if  min_date and max_date:
-            self.contracts = self.contracts.where(
-                (Contract.StartDate.between( min_date,  max_date))
-            )
-
-        # Фильтр по цене и дате
-        self.contracts = self.contracts.where(
-            (Contract.ContractPrice.between(min_price, max_price)) &
-            (Contract.StartDate.between(min_date,  max_date) if min_date and  max_date else True)
-        )
-
-        self.selected_contr = self.sort_by_putch_winner.currentText()
-        if  self.selected_contr != "Фильтрация по победителю-исполнителю контракта":
-            self.contracts = self.contracts.where(
-                Contract.WinnerExecutor == self.selected_contr )
-            
-        keyword  = self.search_input_contract.text()
+        q = Contract.select(Contract, Purchase).join(Purchase)
 
         if keyword:
-            self.contracts  = self.contracts .where(
-                (Contract.WinnerExecutor.contains(keyword)) |
-                (Contract.ContractingAuthority.contains(keyword)) |
-                     (Purchase.PurchaseName.contains(keyword)) |
-                     (Purchase.CustomerName.contains(keyword))
+            q = q.where(
+                Contract.WinnerExecutor.contains(keyword) |
+                Contract.ContractingAuthority.contains(keyword) |
+                Contract.RegistryNumber.contains(keyword) |
+                Purchase.PurchaseName.contains(keyword)
             )
-        
+        if winner and winner != "Фильтрация по победителю":
+            q = q.where(Contract.WinnerExecutor == winner)
+        if min_p:
+            try:
+                q = q.where(Contract.ContractPrice >= float(min_p.replace(" ", "")))
+            except ValueError:
+                pass
+        if max_p:
+            try:
+                q = q.where(Contract.ContractPrice <= float(max_p.replace(" ", "")))
+            except ValueError:
+                pass
+        if min_d.isValid():
+            q = q.where(Contract.StartDate >= min_d.toPython())
+        if max_d.isValid():
+            q = q.where(Contract.StartDate <= max_d.toPython())
 
-        self.contracts_list = list(self.contracts.order_by(order_by).tuples())
+        order_map = {
+            0: Contract.ContractPrice.asc(),
+            1: Contract.ContractPrice.desc(),
+            2: Contract.StartDate.asc(),
+            3: Contract.StartDate.desc(),
+        }
+        q = q.order_by(order_map.get(sort_idx, Contract.StartDate.desc()))
+
+        self.contracts = q  # ← сохраняем query
+        self.contracts_list = list(q)  # ← и список
         self.show_all_contracts()
+
+    def resetFiltersContract(self):
+        self.search_input_contract.clear()
+        self.sort_options_contract.setCurrentIndex(0)
+        self.sort_by_putch_winner.setCurrentIndex(0)
+        self.min_price_input_contrac.clear()
+        self.max_price_input_contrac.clear()
+        self.min_data_input_contrac.setStyleSheet(self.transparent_style)
+        self.max_data_input_contrac.setDate(self.max_data_input_contrac.date().currentDate())
+        # сбрасываем подсветку
+        for w in (self.apply_filter_button_contract, self.FilterCollapseContract,
+                  self.FilterPriceContract, self.FilterDateContract,
+                  self.QwordFinderContract, self.sort_by_putch_winner,
+                  self.sort_options_contract):
+            w.setStyleSheet("")
+        self.reload_data_cont()
   
     def handle_cell_click(self, row, column):
         # Получаем Id из выбранной строки и выводим в консоль
@@ -1363,65 +1532,13 @@ class PurchasesWidgetAll(QWidget):
         self.show_all_purchases()
 
     def reload_data_cont(self):
-        self.contracts =  (
-    Contract.select(
-        Purchase.Id,
-        Contract.RegistryNumber,
-        Purchase.RegistryNumber,
-        Contract.ContractNumber,
-        Contract.StartDate,
-        Contract.ContractPrice,
-        Contract.ContractingAuthority,
-        Contract.WinnerExecutor,
-        Purchase.PurchaseName,
-        Contract.TotalApplications,
-        Contract.AdmittedApplications,
-        Contract.RejectedApplications,
-        Contract.PriceProposal,
-        Contract.Applicant,
-        Contract.Applicant_satatus,
-        Contract.ContractIdentifier,
-        Contract.EndDate,
-        Contract.AdvancePayment,
-        Contract.ReductionNMC,
-        Contract.ReductionNMCPercent,
-        Contract.SupplierProtocol,
-        Contract.ContractFile,
-        Purchase.InitialMaxContractPrice,
-        Purchase.PurchaseOrder,
-        Purchase.CoefficientOfVariation,
-    )
-    .join(Purchase, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-    .where(Contract.ContractNumber != "Нет данных"))
-    #     self.contracts  = (
-    # Purchase.select(
-    #     Purchase.Id,
-    #     Contract.RegistryNumber,
-    #     Purchase.RegistryNumber,
-    #     Contract.ContractNumber,
-    #     Contract.StartDate,
-    #     Contract.ContractPrice,
-    #     Contract.ContractingAuthority,
-    #     Contract.WinnerExecutor,
-    #     Purchase.PurchaseName,
-    #     Contract.TotalApplications,
-    #     Contract.AdmittedApplications,
-    #     Contract.RejectedApplications,
-    #     Contract.PriceProposal,
-    #     Contract.Applicant,
-    #     Contract.Applicant_satatus,
-    #     Contract.ContractIdentifier,
-    #     Contract.EndDate,
-    #     Contract.AdvancePayment,
-    #     Contract.ReductionNMC,
-    #     Contract.ReductionNMCPercent,
-    #     Contract.SupplierProtocol,
-    #     Contract.ContractFile
-    # )
-    # .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-    # .where(Contract.ContractNumber != "Нет данных"))
-        self.contracts_list = list(self.contracts.tuples())
-        self.update()
+        self.contracts = (
+            Contract.select(Contract, Purchase)
+            .join(Purchase)
+            .where(Contract.ContractNumber != None)
+            .order_by(Contract.StartDate.desc())
+        )
+        self.contracts_list = list(self.contracts)
         self.show_all_contracts()
     def return_filters_variabels(self):
     

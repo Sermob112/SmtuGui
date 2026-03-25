@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 from peewee import SqliteDatabase
-from smtuIdle.BD.models import Purchase, Contract, Customer,Supplier
+from smtuIdle.BD.models import Purchase, Contract, Customer,Supplier,ContractVersion
 import re
 db = SqliteDatabase('database.db')
 FIELD_MAP = {
@@ -100,6 +100,34 @@ SUPPLIER_FIELD_MAP = {
     "status":        "status",
     "inn":           "inn",
     "kpp":           "kpp",
+}
+JSONB_FIELDS_CV = {
+    "common_info_json", "payment_targets_json", "process_info_json",
+    "documents_json", "journal_versions_json", "event_log_json",
+}
+
+CV_FIELD_MAP = {
+    "reg_number":               "reg_number",
+    "contract_url":             "contract_url",
+    "law":                      "law",
+    "number":                   "number",
+    "status":                   "status",
+    "object_name":              "object_name",
+    "customer_name":            "customer_name",
+    "customer_url":             "customer_url",
+    "contract_price":           "contract_price",
+    "date_contract_signed":     "date_contract_signed",
+    "date_execution_due":       "date_execution_due",
+    "date_registered":          "date_registered",
+    "date_updated_in_registry": "date_updated_in_registry",
+    "version":                  "version",
+    "captured_at":              "captured_at",
+    "common_info_json":         "common_info_json",
+    "payment_targets_json":     "payment_targets_json",
+    "process_info_json":        "process_info_json",
+    "documents_json":           "documents_json",
+    "journal_versions_json":    "journal_versions_json",
+    "event_log_json":           "event_log_json",
 }
 
 def parse_date(value: str | None) -> str | None:
@@ -238,7 +266,10 @@ def parse_price(value) -> float | None:
         return float(cleaned)
     except ValueError:
         return None
-
+def normalize_reg(value: str) -> str:
+    if not value:
+        return value
+    return value.replace("№", "").strip()
 
 def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str]]:
     inserted = 0
@@ -252,27 +283,30 @@ def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str
             try:
                 raw    = json.loads(line)
                 mapped = map_contract_record(raw)
-                reg    = raw.get("reg_number")
-                number = raw.get("number")  # номер контракта для поиска дубля
+                reg    = normalize_reg(raw.get("reg_number"))   # ← нормализуем
+                number = raw.get("number")
 
-                # Исправляем цену прямо здесь, поверх map_contract_record
                 mapped["ContractPrice"] = parse_price(raw.get("contract_price"))
 
                 if not reg:
                     errors.append(f"Строка {i}: нет reg_number, пропущено")
                     continue
 
-                # Ищем связанную закупку
-                purchase = Purchase.get_or_none(Purchase.RegistryNumber == reg)
+                # Ищем закупку перебирая форматы
+                purchase = (
+                    Purchase.get_or_none(Purchase.RegistryNumber == reg)
+                    or Purchase.get_or_none(Purchase.RegistryNumber == f"№{reg}")
+                    or Purchase.get_or_none(Purchase.RegistryNumber.contains(reg))
+                )
+
                 if purchase is None:
                     errors.append(f"Строка {i}: закупка {reg} не найдена в SQLite, пропущено")
                     continue
 
-                # Ищем существующий контракт по номеру контракта
+                # Ищем существующий контракт
                 existing = None
                 if number:
                     existing = Contract.get_or_none(Contract.ContractNumber == number)
-                # Запасной поиск — по purchase FK
                 if existing is None:
                     existing = Contract.get_or_none(Contract.purchase == purchase)
 
@@ -289,7 +323,6 @@ def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str
                         if current in (None, "Нет данных", "[]", ""):
                             setattr(existing, field, value)
                             changed = True
-                    # purchase всегда обновляем если не привязан
                     if existing.purchase_id is None:
                         existing.purchase = purchase
                         changed = True
@@ -443,4 +476,116 @@ def insert_suppliers(filepath: str, user: str, role: str) -> tuple[int, list[str
             except Exception as e:
                 errors.append(f"Строка {i}: {e}")
 
+    return inserted, errors
+
+
+def map_cv_record(raw: dict) -> dict:
+    mapped = {}
+    for pg_field, sqlite_field in CV_FIELD_MAP.items():
+        val = raw.get(pg_field)
+        if val is None:
+            continue
+        if pg_field in JSONB_FIELDS_CV:
+            mapped[sqlite_field] = (
+                json.dumps(val, ensure_ascii=False) if isinstance(val, (dict, list)) else val
+            )
+        else:
+            mapped[sqlite_field] = val
+    return mapped
+
+def normalize_reg(value: str) -> str:
+    """Убирает '№', пробелы для сравнения."""
+    if not value:
+        return value
+    return value.replace("№", "").strip()
+
+
+def find_contract_by_reg(reg: str):
+    """Ищет контракт перебирая возможные форматы."""
+    reg_clean = normalize_reg(reg)
+
+    # Вариант 1: точное совпадение
+    c = Contract.get_or_none(Contract.RegistryNumber == reg_clean)
+    if c:
+        return c
+
+    # Вариант 2: с префиксом №
+    c = Contract.get_or_none(Contract.RegistryNumber == f"№{reg_clean}")
+    if c:
+        return c
+
+    # Вариант 3: LIKE (на случай пробелов)
+    c = Contract.get_or_none(Contract.RegistryNumber.contains(reg_clean))
+    return c
+def insert_contract_versions(filepath: str, user: str, role: str) -> tuple[int, list[str]]:
+    inserted = 0
+    errors   = []
+
+    with open(filepath, "r", encoding="utf-8") as f:
+        lines = [line.strip() for line in f if line.strip()]
+
+    print(f"Строк для загрузки: {len(lines)}")
+
+    with db.atomic():
+        for i, line in enumerate(lines, start=1):
+            try:
+                raw    = json.loads(line)
+                mapped = map_cv_record(raw)
+                reg    = mapped.get("reg_number")
+                ver    = mapped.get("version")
+
+                if not reg:
+                    errors.append(f"Строка {i}: нет reg_number, пропущено")
+                    continue
+
+                # ── contract_url: если пустой — ставим заглушку ───────
+                if not mapped.get("contract_url"):
+                    mapped["contract_url"] = ""
+
+                # ── captured_at: строка → datetime ────────────────────
+                cap = mapped.get("captured_at")
+                if cap and isinstance(cap, str):
+                    try:
+                        mapped["captured_at"] = datetime.fromisoformat(cap)
+                    except ValueError:
+                        mapped.pop("captured_at", None)  # удаляем, модель подставит default
+
+                # ── Ищем контракт по RegistryNumber ───────────────────
+                contract = find_contract_by_reg(reg)
+                if contract is None:
+                    errors.append(f"Строка {i}: контракт {reg} не найден, пропущено")
+                    continue
+
+                # ── Уникальность: contract + version ──────────────────
+                existing = ContractVersion.get_or_none(
+                    (ContractVersion.contract == contract) &
+                    (ContractVersion.version  == ver)
+                )
+
+                if existing is None:
+                    mapped["contract"] = contract
+                    ContractVersion.create(**mapped)
+                    inserted += 1
+                else:
+                    changed = False
+                    for field, value in mapped.items():
+                        if value is None:
+                            continue
+                        current = getattr(existing, field, None)
+                        if current in (None, ""):
+                            setattr(existing, field, value)
+                            changed = True
+                    if changed:
+                        existing.save()
+                        inserted += 1
+
+            except json.JSONDecodeError as e:
+                errors.append(f"Строка {i}: ошибка JSON — {e}")
+            except Exception as e:
+                errors.append(f"Строка {i}: {e}")
+
+            if i % 500 == 0:
+                print(f"  Обработано: {i}/{len(lines)}", end="\r")
+
+    print(f"\nЗагружено версий: {inserted}")
     return inserted, errors

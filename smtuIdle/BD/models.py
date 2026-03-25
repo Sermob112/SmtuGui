@@ -255,7 +255,7 @@ class Customer(BaseModel):
     city             = CharField(null=True, max_length=255, verbose_name="Город")
     address_full     = CharField(null=True, max_length=512, verbose_name="Полный адрес")
     organization_url = CharField(null=True, max_length=512, verbose_name="Сайт организации")
-    organization_id  = IntegerField(null=True,              verbose_name="ID организации")
+    organization_id  = IntegerField(null=True,verbose_name="ID организации")
     customer_code    = CharField(null=True, max_length=100, verbose_name="Код заказчика")
     purchases_url    = CharField(null=True, max_length=512, verbose_name="Ссылка на закупки")
     contracts_url    = CharField(null=True, max_length=512, verbose_name="Ссылка на контракты")
@@ -313,8 +313,11 @@ class Vessel(BaseModel):
     id = AutoField(primary_key=True, verbose_name="Идентификатор")
 
     # ── Идентификация ─────────────────────────
-    imo_number        = CharField(null=True, max_length=50,  verbose_name="Номер ИМО")
-    ship_project      = CharField(null=True, max_length=255, verbose_name="Проект судна")
+    # ── Идентификация ─────────────────────────
+    imo_number = CharField(null=True, max_length=50, verbose_name="Номер ИМО")
+    ship_project = CharField(null=True, max_length=255, verbose_name="Проект судна")
+    registry_number = CharField(null=True, max_length=255, verbose_name="Реестровый номер")  # ← новое
+    build_number = CharField(null=True, max_length=255, verbose_name="Строительный номер")  # ← новое
 
     # ── Классификация РМРС / РКО ──────────────
     ship_type_rmrs    = CharField(null=True, max_length=255, verbose_name="Тип судна (РМРС)")
@@ -346,22 +349,6 @@ class Vessel(BaseModel):
     length_width_ratio = FloatField(null=True, verbose_name="Отношение Длина/Ширина")
     speed_max         = FloatField(null=True, verbose_name="Скорость наибольшая")
 
-    # ── Силовая установка ─────────────────────
-    power_plant_type       = CharField(null=True, max_length=255, verbose_name="Тип силовой установки в целом")
-    main_engines_count     = IntegerField(null=True, verbose_name="Главные двигатели (количество)")
-    main_engine_type       = CharField(null=True, max_length=255, verbose_name="Главный двигатель, тип")
-    main_engine_brand      = CharField(null=True, max_length=255, verbose_name="Главный двигатель, фирма")
-    main_engine_model      = CharField(null=True, max_length=255, verbose_name="Главный двигатель, марка")
-    main_engine_year       = IntegerField(null=True, verbose_name="Главный двигатель, год")
-    main_engine_kw         = FloatField(null=True,   verbose_name="Главный двигатель, кВт")
-    main_engine_rpm        = FloatField(null=True,   verbose_name="Главный двигатель, об/мин")
-    battery_capacity       = FloatField(null=True,   verbose_name="Ёмкость АКБ")
-
-    # ── Движители ─────────────────────────────
-    propellers_count  = IntegerField(null=True, verbose_name="Количество движителей")
-    propeller_type    = CharField(null=True, max_length=255, verbose_name="Движитель, тип")
-    propeller_blades  = IntegerField(null=True, verbose_name="Количество лопастей")
-
     # ── Грузовые характеристики ───────────────
     cargo_holds_count    = IntegerField(null=True, verbose_name="Количество грузовых трюмов")
     liquid_tanks_count   = IntegerField(null=True, verbose_name="Наливные танки (количество)")
@@ -383,15 +370,6 @@ class Vessel(BaseModel):
     superstructure_material = CharField(null=True, max_length=255, verbose_name="Материал надстройки")
     has_hydrofoil          = BooleanField(null=True, verbose_name="Наличие подводных крыльев")
 
-    # ── Закупка / Контракт ────────────────────
-    purchase_law           = CharField(null=True, max_length=100, verbose_name="Закон закупки")
-    purchase_registry_number = CharField(null=True, max_length=255, verbose_name="Реестровый номер закупки")
-    nmck                   = FloatField(null=True, verbose_name="НМЦК")
-    contract_registry_number = CharField(null=True, max_length=255, verbose_name="Реестровый номер контракта")
-    contract_number        = CharField(null=True, max_length=255, verbose_name="Номер контракта")
-    contract_sum           = FloatField(null=True, verbose_name="Сумма контракта")
-    contract_date          = DateField(null=True,  verbose_name="Дата контракта")
-    okpd2_code             = CharField(null=True, max_length=255, verbose_name="Код ОКПД2")
 
     # ── Верфь постройки ───────────────────────
     city_built             = CharField(null=True, max_length=255, verbose_name="Город постройки судна")
@@ -404,10 +382,88 @@ class Vessel(BaseModel):
 
     # ── Связь с закупкой (FK, опционально) ────
     purchase  = ForeignKeyField(Purchase,  null=True, on_delete='SET NULL', backref='vessels', verbose_name="Закупка")
-    contract  = ForeignKeyField(Contract,  null=True, on_delete='SET NULL', backref='vessels', verbose_name="Контракт")
 
     class Meta:
         table_name = 'vessel'
+
+# ─────────────────────────────────────────────
+# VesselEngine — Силовые установки судна
+# ─────────────────────────────────────────────
+class VesselEngine(BaseModel):
+    id = AutoField(primary_key=True, verbose_name="Идентификатор")
+
+    # ── Тип и порядковый номер ────────────────
+    engine_number = IntegerField(null=True, verbose_name="Порядковый номер двигателя")
+    engine_role = CharField(null=True, max_length=100, verbose_name="Роль установки")
+    # например: "Главный", "Вспомогательный", "Подруливающий"
+
+    # ── Силовая установка ─────────────────────
+    power_plant_type = CharField(null=True, max_length=255, verbose_name="Тип силовой установки")
+    engine_type = CharField(null=True, max_length=255, verbose_name="Тип двигателя")
+    engine_brand = CharField(null=True, max_length=255, verbose_name="Фирма")
+    engine_model = CharField(null=True, max_length=255, verbose_name="Марка")
+    engine_year = IntegerField(null=True, verbose_name="Год выпуска")
+    engine_kw = FloatField(null=True, verbose_name="Мощность, кВт")
+    engine_rpm = FloatField(null=True, verbose_name="Обороты, об/мин")
+    battery_capacity = FloatField(null=True, verbose_name="Ёмкость АКБ")
+
+    # ── Движитель ─────────────────────────────
+    propeller_type = CharField(null=True, max_length=255, verbose_name="Движитель, тип")
+    propeller_blades = IntegerField(null=True, verbose_name="Количество лопастей")
+
+    # ── Связь с судном ────────────────────────
+    vessel = ForeignKeyField(Vessel, on_delete='CASCADE', backref='engines', verbose_name="Судно")
+
+    class Meta:
+        table_name = 'vessel_engine'
+
+# ─────────────────────────────────────────────
+# ContractVersion — Версии контрактов (снимки)
+# ─────────────────────────────────────────────
+class ContractVersion(BaseModel):
+    id = AutoField(primary_key=True, verbose_name="Идентификатор")
+
+    # ── Связь с актуальным контрактом ─────────
+    contract    = ForeignKeyField(Contract, on_delete='CASCADE',
+                                  backref='versions', verbose_name="Контракт")
+    reg_number  = CharField(max_length=512, verbose_name="Реестровый номер")  # денормализован для поиска
+    contract_url = TextField(verbose_name="Ссылка на контракт")
+
+    # ── Плоские поля — зеркало Contract ───────
+    law                       = TextField(null=True, verbose_name="Закон")
+    number                    = TextField(null=True, verbose_name="Номер контракта")
+    status                    = TextField(null=True, verbose_name="Статус")
+    object_name               = TextField(null=True, verbose_name="Наименование объекта")
+    customer_name             = TextField(null=True, verbose_name="Заказчик")
+    customer_url              = TextField(null=True, verbose_name="Ссылка на заказчика")
+    contract_price            = TextField(null=True, verbose_name="Цена контракта")
+    date_contract_signed      = TextField(null=True, verbose_name="Дата подписания")
+    date_execution_due        = TextField(null=True, verbose_name="Дата исполнения")
+    date_registered           = TextField(null=True, verbose_name="Дата регистрации")
+    date_updated_in_registry  = TextField(null=True, verbose_name="Дата обновления в реестре")
+    version                   = TextField(null=True, verbose_name="Версия из реестра")
+
+    # ── JSON-поля — полный слепок ──────────────
+    common_info_json       = TextField(null=True, verbose_name="Общая информация")
+    payment_targets_json   = TextField(null=True, verbose_name="Платежи и объекты закупки")
+    process_info_json      = TextField(null=True, verbose_name="Исполнение контракта")
+    documents_json         = TextField(null=True, verbose_name="Вложения")
+    journal_versions_json  = TextField(null=True, verbose_name="Журнал версий")
+    event_log_json         = TextField(null=True, verbose_name="Журнал событий")
+
+    # ── Метаданные снимка ─────────────────────
+    captured_at = DateTimeField(default=datetime.now, verbose_name="Дата и время снимка")
+
+    class Meta:
+        table_name = 'contract_versions'
+        indexes = (
+            # UNIQUE: одна запись на (contract, version)
+            (('contract', 'version'), True),
+            # обычные индексы для поиска
+            (('contract',), False),
+            (('reg_number',), False),
+        )
+
 # ─────────────────────────────────────────────
 #  Инициализация БД
 # ─────────────────────────────────────────────
@@ -424,6 +480,8 @@ ALL_MODELS = [
     Customer,
     Supplier,
 Vessel,
+ContractVersion,
+VesselEngine
 ]
 
 

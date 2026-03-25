@@ -430,6 +430,7 @@ class StatisticWidgetContract(QWidget):
         self.label_filter_order.setText(f"Фильтр по закону:{sort_by_putch_order}")
         self.label_filter_price.setText(f"Фильтр по цене:{min_price} - {max_price}")
         self.label_filter_okpd2.setText(f"Фильтр по ОКПД2:{okpd2}")
+
     def analyze_price_count(self):
         coeff_range_order = [
             'Ценовое предложение №1',
@@ -439,55 +440,71 @@ class StatisticWidgetContract(QWidget):
             'Ценовое предложение №5',
             'Ценовое предложение №6',
         ]
-        new_column_names = [
-            'Одно',
-            'Два',
-            'Три',
-            'Четыре',
-            'Пять',
-            'Более пяти'
-        ]
+        new_column_names = ['Одно', 'Два', 'Три', 'Четыре', 'Пять', 'Более пяти']
 
-        query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase)).where(Contract.PriceProposal.is_null(False))
-        data = list(query)
+        query = (Purchase
+                 .select(Purchase.PurchaseOrder, Contract.PriceProposal)
+                 .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                 .where(Contract.PriceProposal.is_null(False))
+                 .dicts())  # ← безопасный способ, без проблем с атрибутами
+
         df_data = []
 
-        for purchase in data:
-            try:
-                price_proposal_dict = json.loads(purchase.contract.PriceProposal)
-            except json.JSONDecodeError:
-                continue  # Пропустить запись, если JSON не может быть разобран
+        for row in query:
+            raw = row.get("PriceProposal")
+            if not raw:
+                continue
 
-            row_data = [purchase.PurchaseOrder]
+            try:
+                parsed = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                continue
+
+            # PriceProposal может быть списком [{"key": ..., "value": ...}]
+            # или словарём {"Ценовое предложение №1": "...", ...}
+            # Приводим к словарю в любом случае
+            if isinstance(parsed, list):
+                # Список вида [{"Ценовое предложение №1": "5 000 000"}, ...]
+                # или [{"key": "Ценовое предложение №1", "value": "..."}]
+                price_proposal_dict = {}
+                for item in parsed:
+                    if isinstance(item, dict):
+                        # Если элемент сам является словарём с нужными ключами
+                        for k, v in item.items():
+                            price_proposal_dict[k] = v
+            elif isinstance(parsed, dict):
+                price_proposal_dict = parsed
+            else:
+                continue
+
+            row_data = [row.get("PurchaseOrder")]
             for key in coeff_range_order:
                 value = price_proposal_dict.get(key, "")
                 row_data.append(self.count_non_empty_values({key: value}))
 
             df_data.append(row_data)
 
-        df_columns = [f'{self.formular_texts[7]}'] + coeff_range_order
+        if not df_data:
+            # Возвращаем пустые таблицы чтобы не упасть при отображении
+            empty_df = pd.DataFrame(columns=[self.formular_texts[7]] + new_column_names)
+            empty_df.set_index(self.formular_texts[7], inplace=True)
+            return empty_df.T, pd.Series(dtype=float)
+
+        df_columns = [self.formular_texts[7]] + coeff_range_order
         df = pd.DataFrame(df_data, columns=df_columns)
         df.rename(columns=dict(zip(coeff_range_order, new_column_names)), inplace=True)
-        
-        # Устанавливаем имя индекса до создания сводной таблицы
-        df.set_index(f'{self.formular_texts[7]}', inplace=True)
-        
-        # Создание сводной таблицы
+        df.set_index(self.formular_texts[7], inplace=True)
+
         pivot_table = df.pivot_table(index=df.index.name, aggfunc='sum', fill_value=0)
-        pivot_table.index.name = df.index.name  # Устанавливаем имя индекса после создания сводной таблицы
-        
-        # Суммы по строкам и столбцам
+        pivot_table.index.name = df.index.name
+
         transposed_table = pivot_table.T
         row_totals = transposed_table.sum(axis=1)
         transposed_table['Общий итог'] = row_totals
         column_sums = transposed_table.sum()
-        total_counts = column_sums.sum()
-        column_sums['Суммы'] = total_counts
+        column_sums['Суммы'] = column_sums.sum()
         transposed_table = transposed_table.reindex(new_column_names, axis=0)
 
-        # print(transposed_table)
-        # print(column_sums)
-        
         return transposed_table, column_sums
     
 
