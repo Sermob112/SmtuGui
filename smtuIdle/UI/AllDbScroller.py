@@ -2,14 +2,13 @@ import sys
 
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
-
 from smtuIdle.BD.models import Purchase, Contract, FinalDetermination, CurrencyRate, Supplier, Customer, Vessel
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer, QSize,QEvent
 from PySide6.QtGui import QIcon,QFont
 from PySide6.QtCore import QDate
 from peewee import JOIN
-from InsertWidgetCurrency import InsertWidgetCurrency
-from parserV3 import delete_records_by_id, export_to_excel,export_to_excel_contract
+from smtuIdle.InsertWidgetCurrency import InsertWidgetCurrency
+from smtuIdle.parserV3 import delete_records_by_id, export_to_excel,export_to_excel_contract
 from PySide6.QtWidgets import QSizePolicy
 from peewee import fn
 from locale import format_string
@@ -23,7 +22,34 @@ locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 db = SqliteDatabase('database.db')
 cursor = db.cursor()
 
+class _FlexTabBar(QTabBar):
+    def __init__(self, spacer_index: int, parent=None):
+        super().__init__(parent)
+        self._spacer_index = spacer_index
 
+    def tabSizeHint(self, index):
+        size = super().tabSizeHint(index)
+        if index == self._spacer_index:
+            # Берем доступную ширину от родительского QTabWidget
+            if self.parentWidget():
+                total = self.parentWidget().width()
+                # Считаем ширину всех остальных (настоящих) вкладок
+                used = sum(
+                    super(_FlexTabBar, self).tabSizeHint(i).width()
+                    for i in range(self.count())
+                    if i != self._spacer_index
+                )
+                # Вычитаем 5px на отступы, чтобы не появлялись стрелки прокрутки
+                size.setWidth(max(0, total - used - 5))
+        return size
+
+    def eventFilter(self, watched, event):
+        # Отлавливаем изменение размера самого QTabWidget, чтобы обновлять спейсер
+        if watched == self.parentWidget() and event.type() == QEvent.Type.Resize:
+            if self.count() > self._spacer_index:
+                # Трюк: обновление текста принудительно пересчитывает размеры вкладок
+                self.setTabText(self._spacer_index, '')
+        return super().eventFilter(watched, event)
 class PurchasesWidgetAll(QWidget):
     def __init__(self,main, role):
         super().__init__()
@@ -35,14 +61,27 @@ class PurchasesWidgetAll(QWidget):
         self.purchases_list = []
         self.contracts_list = []
         self.contracts = Contract.select()  # ← добавить эту строку
-         # Создаем компонент вкладок
+
+        # Создаем компонент вкладок
         tab_widget = QTabWidget()
 
-        tab_widget.addTab(self.create_purch_tab(), 'Закупки')
-        tab_widget.addTab(self.create_cont_tab(), 'Контракты')
-        tab_widget.addTab(self.create_supplier_tab(), 'Поставщики')
-        tab_widget.addTab(self.create_customer_tab(), 'Заказчики')
-        tab_widget.addTab(self.create_vessel_tab(), 'Суда')
+        # Передаем tab_widget как parent и устанавливаем EventFilter
+        flex_bar = _FlexTabBar(spacer_index=2, parent=tab_widget)
+        tab_widget.setTabBar(flex_bar)
+        tab_widget.installEventFilter(flex_bar)
+
+        tab_widget.addTab(self.create_purch_tab(), 'Закупки')  # 0
+        tab_widget.addTab(self.create_cont_tab(), 'Контракты')  # 1
+
+        # Индекс 2 — невидимая вкладка-спейсер
+        tab_widget.addTab(QWidget(), '')
+        tab_widget.setTabEnabled(2, False)
+        tab_widget.setStyleSheet('QTabBar::tab:disabled { background: transparent; border: none; }')
+
+        tab_widget.addTab(self.create_supplier_tab(), 'Поставщики')  # 3
+        tab_widget.addTab(self.create_customer_tab(), 'Заказчики')  # 4
+        tab_widget.addTab(self.create_vessel_tab(), 'Данные по объекту закупки')  # 5
+
         layout = QVBoxLayout(self)
         layout.addWidget(tab_widget)
         self.setLayout(layout)
@@ -174,7 +213,7 @@ class PurchasesWidgetAll(QWidget):
     
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.label)
-        icon_path = "Pics/icons8-фильтр-ios-17-32.png"
+        icon_path = "../Pics/icons8-фильтр-ios-17-32.png"
         self.label.setAlignment(Qt.AlignHCenter)
         icon = QIcon(icon_path)
         # Добавляем горизонтальную линию
@@ -208,22 +247,22 @@ class PurchasesWidgetAll(QWidget):
         self.apply_filter_button.setFixedWidth(150)
         # Добавляем кнопку выпадающего меню по ключевому слову
         self.QwordFinder = QPushButton("Поиск по ключевому слову")
-        self.QwordFinder.setIcon(QIcon("Pics/right-arrow.png"))
+        self.QwordFinder.setIcon(QIcon("../Pics/right-arrow.png"))
         self.QwordFinder.setMaximumWidth(300)
         self.QwordFinder.clicked.connect(self.toggle_menu)
         # Добавляем кнопку выпадающего меню по фильтрам
         self.FilterCollapse = QPushButton("Фильтры")
-        self.FilterCollapse.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FilterCollapse.setIcon(QIcon("../Pics/right-arrow.png"))
         self.FilterCollapse.setMaximumWidth(300)
         self.FilterCollapse.clicked.connect(self.toggle_menu_filters)
          # Добавляем кнопку выпадающего меню по цене
         self.FilterPrice = QPushButton("Цена")
-        self.FilterPrice.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FilterPrice.setIcon(QIcon("../Pics/right-arrow.png"))
         self.FilterPrice.setMaximumWidth(300)
         self.FilterPrice.clicked.connect(self.toggle_menu_price)
         # Добавляем кнопку выпадающего меню по дате
         self.FilterDate = QPushButton("Дата")
-        self.FilterDate.setIcon(QIcon("Pics/right-arrow.png"))
+        self.FilterDate.setIcon(QIcon("../Pics/right-arrow.png"))
         self.FilterDate.setMaximumWidth(300)
         self.FilterDate.clicked.connect(self.toggle_menu_date)
         #меню по ключевому слову
@@ -443,7 +482,7 @@ class PurchasesWidgetAll(QWidget):
 
         # ── Кнопки ────────────────────────────────────────────
         self.apply_filter_button_contract = QPushButton("Применить фильтры")
-        self.apply_filter_button_contract.setIcon(QIcon("Pics/icons8-фильтр-ios-17-32.png"))
+        self.apply_filter_button_contract.setIcon(QIcon("../Pics/icons8-фильтр-ios-17-32.png"))
         self.apply_filter_button_contract.setFixedWidth(200)
         self.apply_filter_button_contract.clicked.connect(self.apply_filter_contract)
         self.apply_filter_button_contract.clicked.connect(self.highlight_apply_filter_button_contract)
@@ -457,8 +496,8 @@ class PurchasesWidgetAll(QWidget):
         self.toExcel_contract.clicked.connect(self.export_to_excel_clicked_contract)
 
         # ── Сворачиваемые панели ──────────────────────────────
-        icon_right = QIcon("Pics/right-arrow.png")
-        icon_down = QIcon("Pics/arrow-down.png")
+        icon_right = QIcon("../Pics/right-arrow.png")
+        icon_down = QIcon("../Pics/arrow-down.png")
 
         def make_toggle_btn(label):
             btn = QPushButton(label)
@@ -834,60 +873,60 @@ class PurchasesWidgetAll(QWidget):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_contract.setVisible(not self.menu_frame_contract.isVisible())
         if self.menu_frame_contract.isVisible():
-            self.QwordFinderContract.setIcon(QIcon("Pics/arrow-down.png"))
+            self.QwordFinderContract.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
-            self.QwordFinderContract.setIcon(QIcon("Pics/right-arrow.png"))
+            self.QwordFinderContract.setIcon(QIcon("../Pics/right-arrow.png"))
     def toggle_menu(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame.setVisible(not self.menu_frame.isVisible())
         if self.menu_frame.isVisible():
-            self.QwordFinder.setIcon(QIcon("Pics/arrow-down.png"))
+            self.QwordFinder.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
-            self.QwordFinder.setIcon(QIcon("Pics/right-arrow.png"))
+            self.QwordFinder.setIcon(QIcon("../Pics/right-arrow.png"))
     def toggle_menu_filters(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_filters.setVisible(not self.menu_frame_filters.isVisible())
         if self.menu_frame_filters.isVisible():
-            self.FilterCollapse.setIcon(QIcon("Pics/arrow-down.png"))
+            self.FilterCollapse.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
-            self.FilterCollapse.setIcon(QIcon("Pics/right-arrow.png"))
+            self.FilterCollapse.setIcon(QIcon("../Pics/right-arrow.png"))
     def toggle_menu_price(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_price.setVisible(not self.menu_frame_price.isVisible())
         if self.menu_frame_price.isVisible():
-            self.FilterPrice.setIcon(QIcon("Pics/arrow-down.png"))
+            self.FilterPrice.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
-            self.FilterPrice.setIcon(QIcon("Pics/right-arrow.png"))
+            self.FilterPrice.setIcon(QIcon("../Pics/right-arrow.png"))
     def toggle_menu_date(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_data.setVisible(not self.menu_frame_data.isVisible())
         if self.menu_frame_data.isVisible():
-            self.FilterDate.setIcon(QIcon("Pics/arrow-down.png"))
+            self.FilterDate.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
-            self.FilterDate.setIcon(QIcon("Pics/right-arrow.png"))
+            self.FilterDate.setIcon(QIcon("../Pics/right-arrow.png"))
     
     def toggle_menu_filters_contract(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_filters_contract.setVisible(not self.menu_frame_filters_contract.isVisible())
         if self.menu_frame_filters_contract.isVisible():
-            self.FilterCollapseContract.setIcon(QIcon("Pics/arrow-down.png"))
+            self.FilterCollapseContract.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
-            self.FilterCollapseContract.setIcon(QIcon("Pics/right-arrow.png"))
+            self.FilterCollapseContract.setIcon(QIcon("../Pics/right-arrow.png"))
 
     def toggle_menu_price_contract(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_price_contrac.setVisible(not self.menu_frame_price_contrac.isVisible())
         if self.menu_frame_price_contrac.isVisible():
-            self.FilterPriceContract.setIcon(QIcon("Pics/arrow-down.png"))
+            self.FilterPriceContract.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
-            self.FilterPriceContract.setIcon(QIcon("Pics/right-arrow.png"))
+            self.FilterPriceContract.setIcon(QIcon("../Pics/right-arrow.png"))
     def toggle_menu_date_contract(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_data_contrac.setVisible(not self.menu_frame_data_contrac.isVisible())
         if self.menu_frame_data_contrac.isVisible():
-            self.FilterDateContract.setIcon(QIcon("Pics/arrow-down.png"))
+            self.FilterDateContract.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
-            self.FilterDateContract.setIcon(QIcon("Pics/right-arrow.png"))
+            self.FilterDateContract.setIcon(QIcon("../Pics/right-arrow.png"))
     def show_all_purchases(self):
       
     # Очищаем таблицу перед добавлением новых данных
@@ -1217,23 +1256,24 @@ class PurchasesWidgetAll(QWidget):
                   self.sort_options_contract):
             w.setStyleSheet("")
         self.reload_data_cont()
-  
+
     def handle_cell_click(self, row, column):
-        # Получаем Id из выбранной строки и выводим в консоль
-
         selected_id = self.table.item(row, 0).text()
-        self.window.stackedWidget.setCurrentIndex(2)
+
+        # Используем единую функцию маршрутизации из MainWindow (окно 2 - закупки)
+        self.window.navigate_to_page(2)
+
+        # Обновляем данные
         self.window.purchaseViewer.reload_data_id(selected_id)
-        # from DBtest import PurchasesWidget
-        # self.wind = PurchasesWidget(selected_id)
-        # self.wind.show()
+
     def handle_cell_click_contract(self, row, column):
-        # Получаем Id из выбранной строки и выводим в консоль
+        selected_id = self.tablecont.item(row, 0).text()
 
-        selected_id = self.table_cont.item(row, 0).text()
-        self.window.stackedWidget.setCurrentIndex(8)
+        # Используем единую функцию маршрутизации из MainWindow (окно 8 - контракты)
+        self.window.navigate_to_page(8)
+
+        # Обновляем данные
         self.window.contractFormular.reload_data_id(selected_id)
-
 
     def findUnic(self):
             unique_values_list = []

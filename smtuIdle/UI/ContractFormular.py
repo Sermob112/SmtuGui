@@ -5,12 +5,12 @@ from PySide6.QtCore import *
 from PySide6.QtGui import QColor
 import json
 from PySide6.QtGui import QFont,QDesktopServices
-from insertPanel import InsertWidgetPanel
-from insertPanelContract import InsertPanelContract
+from smtuIdle.insertPanel import InsertWidgetPanel
+from smtuIdle.insertPanelContract import InsertPanelContract
 
-from InsertWidgetNMCK import InsertWidgetNMCK
-from InsertWidgetCEIA import InsertWidgetCEIA
-from parserV3 import delete_records_by_id
+from smtuIdle.InsertWidgetNMCK import InsertWidgetNMCK
+from smtuIdle.InsertWidgetCEIA import InsertWidgetCEIA
+from smtuIdle.parserV3 import delete_records_by_id
 from PySide6.QtWidgets import QSizePolicy
 import os
 import subprocess

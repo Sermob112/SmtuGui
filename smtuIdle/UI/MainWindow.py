@@ -3,19 +3,18 @@ from PySide6.QtWidgets import *
 from PySide6.QtGui import QIcon
 from PySide6 import QtCore
 from PySide6 import QtWidgets
-from DBtest import PurchasesWidget
-from LoadCsv import CsvLoaderWidget
-from statisticWidget import StatisticWidget
-from CurrencyWindow import CurrencyWidget
-from UI.AdminPanel import DebugWidget
-from HelpPanel import HelpPanel
-from ContractFormular import ContractFormularWidget
-from AllDbScroller import PurchasesWidgetAll
-from ChangeLogWindow import ChangeLogWindow
-from statisticWidgetContract import StatisticWidgetContract
-from parserV3 import count_total_records
-from datetime import datetime
-from parserV3 import export_to_excel_all
+from smtuIdle.UI.PurchaseFormular import PurchasesWidget
+from smtuIdle.LoadCsv import CsvLoaderWidget
+from smtuIdle.statisticWidget import StatisticWidget
+from smtuIdle.CurrencyWindow import CurrencyWidget
+from smtuIdle.UI.AdminPanel import DebugWidget
+from smtuIdle.HelpPanel import HelpPanel
+from smtuIdle.UI.ContractFormular import ContractFormularWidget
+from smtuIdle.UI.AllDbScroller import PurchasesWidgetAll
+from smtuIdle.ChangeLogWindow import ChangeLogWindow
+from smtuIdle.statisticWidgetContract import StatisticWidgetContract
+from smtuIdle.parserV3 import count_total_records
+from smtuIdle.parserV3 import export_to_excel_all
 from smtuIdle.BD.models import *
 from peewee import JOIN
 
@@ -31,6 +30,15 @@ class Ui_MainWindow(QMainWindow):
         self.username = username
         self.widgets = [] 
         self.setupUi()
+        # Кнопка создается после setupUi и сразу добавляется в layout главного окна
+        self.backButton = QPushButton("← Назад")
+        self.backButton.setFixedWidth(120)
+        self.backButton.setEnabled(False)  # Сначала выключена, так как истории еще нет
+        self.backButton.clicked.connect(self.go_back)
+
+        # Вставляем кнопку в самое начало верхнего меню (index 0)
+        self.topLayout.insertWidget(0, self.backButton)
+        self.page_history = []
     def setupUi(self):
 
         style = QStyleFactory.create('Fusion')
@@ -44,12 +52,7 @@ class Ui_MainWindow(QMainWindow):
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.topLayout = QtWidgets.QHBoxLayout()
         # Статический виджет в центре
-        # self.centerWidget = QtWidgets.QWidget(self.centralwidget)
-        # self.centerLayout = QtWidgets.QVBoxLayout(self.centerWidget)
-        # self.topLayout.addWidget(self.centerWidget)
-     
-        # self.rightTopWidget = QtWidgets.QWidget(self.centralwidget)
-        # self.rightTopLayout = QtWidgets.QVBoxLayout(self.rightTopWidget)
+
         self.layoutBut = QHBoxLayout()
         self.updateButton = QPushButton("Обновить БД")
         self.updateButton.setFixedWidth(150)
@@ -140,21 +143,6 @@ class Ui_MainWindow(QMainWindow):
         self.topLayout.addLayout(self.layoutBut)
         self.verticalLayout.addLayout(self.topLayout)
 
-        
-        # self.purchaseLabel.setText( self.totalRecords)
-        # self.purchaseLabel2.setText(self.date)
-        # self.purchaseLabel3.setText(self.dateUpdate)
-        # self.updatePurchaseLabel()
-        # self.rightTopLayout.addWidget(self.purchaseLabel)
-        # self.rightTopLayout.addWidget(self.purchaseLabel2)
-        # self.rightTopLayout.addWidget(self.purchaseLabel3)
-  
-        # self.topLayout.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
-        # self.topLayout.addWidget(self.rightTopWidget)
-        # self.layoutBut.addWidget(self.logoutButton, alignment=QtCore.Qt.AlignRight)
-        # self.verticalLayout.addLayout( self.layoutBut)
-        # self.verticalLayout.addLayout(self.topLayout)
-
          # Добавляем вертикальную разделительную черту внизу
         line = QtWidgets.QFrame(self.centralwidget)
         line.setFrameShape(QtWidgets.QFrame.HLine)
@@ -169,10 +157,7 @@ class Ui_MainWindow(QMainWindow):
     
         self.leftPanelLayout = QtWidgets.QVBoxLayout(self.centralwidget)
 
-        # self.pushButtonParser = QtWidgets.QPushButton(self.centralwidget)
-        # self.pushButtonParser.setObjectName("pushButtonParser")
-        # self.leftPanelLayout.addWidget(self.pushButtonParser)
-        # self.leftPanelLayout.addSpacing(20)
+
         
         self.pushButton0 = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton0.setObjectName("pushButton0")
@@ -218,14 +203,6 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.setObjectName("pushButton7")
         self.leftPanelLayout.addWidget(self.pushButton7)
         self.leftPanelLayout.addSpacing(20)
-        # self.pushButtonResult = QtWidgets.QPushButton(self.centralwidget)
-        # self.pushButtonResult.setObjectName("pushButtonResult")
-        # self.leftPanelLayout.addWidget(self.pushButtonResult)
-        # self.leftPanelLayout.addSpacing(20)
-        
-
-
-  
         # Задаем фиксированную высоту и максимальное расстояние между кнопками
         button_height = 30  # Задайте желаемую высоту
 
@@ -247,18 +224,18 @@ class Ui_MainWindow(QMainWindow):
         # self.leftPanelFrame.setMaximumHeight(max_height)
    
         # self.pushButtonParser.setIcon(QIcon("Pics/6.png"))
-        self.pushButton0.setIcon(QIcon("Pics/6.png"))
-        self.pushButton1.setIcon(QIcon("Pics/14.png"))
-        self.pushButton2.setIcon(QIcon("Pics/4.png"))
-        self.pushButton3.setIcon(QIcon("Pics/1.png"))
-        self.pushButton4.setIcon(QIcon("Pics/15.png"))
-        self.pushButton5.setIcon(QIcon("Pics/13.png"))
+        self.pushButton0.setIcon(QIcon("../Pics/6.png"))
+        self.pushButton1.setIcon(QIcon("../Pics/14.png"))
+        self.pushButton2.setIcon(QIcon("../Pics/4.png"))
+        self.pushButton3.setIcon(QIcon("../Pics/1.png"))
+        self.pushButton4.setIcon(QIcon("../Pics/15.png"))
+        self.pushButton5.setIcon(QIcon("../Pics/13.png"))
         # self.pushButtonResult.setIcon(QIcon("Pics/13.png"))
-        self.pushButton5_1.setIcon(QIcon("Pics/3.png"))
-        self.pushButton6.setIcon(QIcon("Pics/7.png"))
-        self.pushButton7.setIcon(QIcon("Pics/7.png"))
-        self.pushButton8.setIcon(QIcon("Pics/4.png"))
-        self.pushButton9.setIcon(QIcon("Pics/4.png"))
+        self.pushButton5_1.setIcon(QIcon("../Pics/3.png"))
+        self.pushButton6.setIcon(QIcon("../Pics/7.png"))
+        self.pushButton7.setIcon(QIcon("../Pics/7.png"))
+        self.pushButton8.setIcon(QIcon("../Pics/4.png"))
+        self.pushButton9.setIcon(QIcon("../Pics/4.png"))
         # Добавление кнопок в левую часть
         self.horizontalLayout.addLayout(self.leftPanelLayout)
         self.buttons = [
@@ -325,9 +302,6 @@ class Ui_MainWindow(QMainWindow):
         self.label10 = QtWidgets.QLabel(self.page10)
         self.stackedWidget.addWidget(self.page10)
 
-        # self.page11 = QtWidgets.QWidget()
-        # self.label11 = QtWidgets.QLabel(self.page11)
-        # self.stackedWidget.addWidget(self.page11)
         #Загрузка виджета изминений бд
         self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
         self.ChangeWindow.setParent(self)
@@ -378,21 +352,10 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page9)
         layout.addWidget(self.loadCsvContract)
 
-        
-        # self.parserWindow = MyWindow()
-        # layout = QVBoxLayout(self.page11)
-        # layout.addWidget(self.parserWindow)
-        #Загрузка виджета помощи
-        
         self.helper= HelpPanel()
         self.helper.setParent(self)
         layout = QVBoxLayout(self.page7)
         layout.addWidget(self.helper)
-
-        # self.ResultWidget = ResultWindow(self,self.users_roles[0])
-        # self.ResultWidget.setParent(self)
-        # layout = QVBoxLayout(self.page10)
-        # layout.addWidget(self.ResultWidget)
 
 
         self.purchaseViewerall.window = self
@@ -408,20 +371,21 @@ class Ui_MainWindow(QMainWindow):
         self.stackedWidget.currentChanged.connect(self.update_button_style)
         # Подключение сигналов к слотам
 
-        self.pushButton0.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
-        self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
-        self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
-        self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
-        self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
-        
+        self.pushButton0.clicked.connect(lambda: self.navigate_to_page(0))
+        self.pushButton1.clicked.connect(lambda: self.navigate_to_page(1))
+        self.pushButton2.clicked.connect(lambda: self.navigate_to_page(2))
+        self.pushButton3.clicked.connect(lambda: self.navigate_to_page(3))
+        self.pushButton4.clicked.connect(lambda: self.navigate_to_page(4))
+        self.pushButton5_1.clicked.connect(lambda: self.navigate_to_page(5))
+        self.pushButton6.clicked.connect(lambda: self.navigate_to_page(6))
+        self.pushButton7.clicked.connect(lambda: self.navigate_to_page(7))
+        self.pushButton8.clicked.connect(lambda: self.navigate_to_page(8))
+        self.pushButton9.clicked.connect(lambda: self.navigate_to_page(9))
         self.pushButton5.clicked.connect(self.export_to_excel_all)
-        self.pushButton5_1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
-        self.pushButton6.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(6))
-        self.pushButton7.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(7))
-        self.pushButton8.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(8))
-        self.pushButton9.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(9))
-        # self.pushButtonResult.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(10))
-        # self.pushButtonParser.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(11))
+
+
+
+
         self.retranslateUi(self)
         QtCore.QMetaObject.connectSlotsByName(self)
 
@@ -436,8 +400,31 @@ class Ui_MainWindow(QMainWindow):
         else:
             self.pushButton5.show()
             self.pushButton1.show()
-  
 
+    def navigate_to_page(self, index):
+        current_index = self.stackedWidget.currentIndex()
+        if current_index != index:
+            self.page_history.append(current_index)
+            self.stackedWidget.setCurrentIndex(index)
+            # ОБЯЗАТЕЛЬНО включаем кнопку здесь:
+            self.backButton.setEnabled(True)
+
+    def navigate_back(self):
+        if self.page_history:
+            prev_index = self.page_history.pop()
+            self.stackedWidget.setCurrentIndex(prev_index)
+        else:
+            self.stackedWidget.setCurrentIndex(0)
+
+    def go_back(self):
+        if self.page_history:
+            prev_index = self.page_history.pop()
+            self.stackedWidget.setCurrentIndex(prev_index)
+        else:
+            self.stackedWidget.setCurrentIndex(0)
+
+        if not self.page_history:
+            self.backButton.setEnabled(False)
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ЦЕН И ЭКОНОМИЧЕСКИХ ПОКАЗАТЕЛЕЙ ВЫПОЛНЕНИЯ ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
@@ -454,11 +441,7 @@ class Ui_MainWindow(QMainWindow):
         # self.pushButtonResult.setText(_translate("MainWindow", "Результаты"))
         self.pushButton8.setText(_translate("MainWindow", "Просмотр формуляра контрактов"))
         self.pushButton9.setText(_translate("MainWindow", "Статистический анализ контрактов"))
-        # self.pushButton1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
-        # self.pushButton2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
-        # self.pushButton3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
-        # self.pushButton4.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
-        # self.pushButton5.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
+
     def update_button_style(self, index):
         for i, button in enumerate(self.buttons):
             if i == index:
@@ -484,7 +467,7 @@ class Ui_MainWindow(QMainWindow):
         if result == 1:
             self.write_logout_log()
             self.close()
-            from start import AuthWindow
+            from smtuIdle.start import AuthWindow
             self.auth_window = AuthWindow()
             self.auth_window.show()
         else:
@@ -553,13 +536,7 @@ class Ui_MainWindow(QMainWindow):
                     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
                 )     
                 
-                # query = (
-                #     self.purchases
-                #     .select(Purchase, Contract, FinalDetermination, CurrencyRate)
-                #     .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-                #     .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
-                #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
-                # )     
+
                 self.data = list(query.tuples())
                 records, data, user = self.return_variabels()
                 # print(self.data[0])
@@ -570,21 +547,7 @@ class Ui_MainWindow(QMainWindow):
             else:
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
 
-    # def closeEvent(self, event):
-    #     # Обработка события закрытия главного окна
-    #     reply = QMessageBox()
-    #     reply.setWindowTitle("Предупреждение о выходе") 
-    #     reply.setText("Вы уверены, что хотите закрыть приложение?")
-    #     reply.addButton("Нет", QMessageBox.NoRole)
-    #     reply.addButton("Да", QMessageBox.YesRole)
-    #     result = reply.exec()
-       
 
-    #     if result == 1:
-    #         self.write_logout_log()
-    #         event.accept()
-    #     else:
-    #         event.ignore()
     def GlobalUpdate(self):
         self.ChangeWindow.populate_table()
         self.purchaseViewerall.reload_data()
@@ -612,12 +575,3 @@ class Ui_MainWindow(QMainWindow):
         except UserLog.DoesNotExist:
             # Если запись о входе пользователя не найдена, не делаем ничего
             pass
-
-# if __name__ == "__main__":
-#     import sys
-#     app = QtWidgets.QApplication(sys.argv)
-#     MainWindow = QtWidgets.QMainWindow()
-#     ui = Ui_MainWindow(username="user")
-#     ui.setupUi(MainWindow)
-#     MainWindow.show()
-#     sys.exit(app.exec())

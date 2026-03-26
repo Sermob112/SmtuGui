@@ -2,7 +2,7 @@ from auth import *
 from smtuIdle.BD.models import UserLog
 from PySide6.QtWidgets import *
 from smtuIdle.BD.initialize_db import initialize_database
-from MainWindow import Ui_MainWindow
+from smtuIdle.UI.MainWindow import Ui_MainWindow
 from PySide6.QtGui import QFont,QIcon,QPixmap
 from datetime import datetime
 from PySide6.QtCore import Qt

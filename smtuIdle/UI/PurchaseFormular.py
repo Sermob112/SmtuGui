@@ -5,12 +5,12 @@ from PySide6.QtCore import *
 from PySide6.QtGui import QColor
 import json
 from PySide6.QtGui import QFont,QDesktopServices
-from insertPanel import InsertWidgetPanel
-from insertPanelContract import InsertPanelContract
+from smtuIdle.insertPanel import InsertWidgetPanel
+from smtuIdle.insertPanelContract import InsertPanelContract
 
 # from InsertWidgetNMCK import InsertWidgetNMCK
 # from InsertWidgetCEIA import InsertWidgetCEIA
-from parserV3 import delete_records_by_id
+from smtuIdle.parserV3 import delete_records_by_id
 from PySide6.QtWidgets import QSizePolicy
 import os
 import subprocess
@@ -94,22 +94,12 @@ class PurchasesWidget(QWidget):
         # Создаем горизонтальный макет и добавляем элементы
         button_layout2 = QHBoxLayout()
 
-        
-        # button_layout2.addWidget(self.addButtonTKP)
-        # button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignLeft)
-        # button_layout2.addWidget(self.addButtonTKP,alignment=Qt.AlignLeft)
-        # button_layout2.addWidget(self.addButtonCIA)
-        # Создаем слой для центрирования
-       # Создаем слой для центрирования
-                
         # Добавляем первую кнопку
         button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignmentFlag.AlignCenter)
         button_layout.addStretch()
         button_layout2.addWidget(self.deleteButton)
         # button_layout2.setAlignment(Qt.AlignCenter)
-   
 
- 
        # Создаем горизонтальный макет и добавляем элементы
         layout = QVBoxLayout(self)
 
@@ -123,22 +113,6 @@ class PurchasesWidget(QWidget):
         
         # Получаем данные из базы данных и отображаем первую запись
         self.reload_data()
-    
-        # self.purchases = Purchase.select()
-        # self.purchases = (Purchase
-        #         .select()
-        #         .join(Contract, JOIN.LEFT_OUTER)
-        #           # Уточните условия, если нужно
-        #         )
-        # combined_list = (Purchase
-        #         .select()
-        #         .join(Contract, JOIN.LEFT_OUTER)
-        #           # Уточните условия, если нужно
-        #         .execute())
-   
-        # self.purchases_list = list(self.purchases)
-        # self.purchases_list = list(self.purchases)
-        # self.show_current_purchase()
 
         if self.role == "Гость":
             self.addButtonCurrency.hide()
@@ -188,10 +162,7 @@ class PurchasesWidget(QWidget):
      
         if len(self.purchases_list) != 0:
             current_purchase = self.purchases_list[self.current_position]
-            # Отображаем информацию о текущей записи в лейбле
-            # self.label.setText(f"Запись {self.current_position + 1} из {len(self.purchases_list)}")
-            # Дополнительный код для отображения записи в таблице (замените на свой код)
-            # self.table.setItem(row, column, QTableWidgetItem(str(current_purchase.some_property)))
+
         else:
             self.label.setText("Нет записей")
         # Очищаем таблицу перед добавлением новых данных
@@ -308,21 +279,54 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("Общее количество заявок", str(contract.TotalApplications))
                 self.add_row_to_table("Общее количество допущенных заявок", str(contract.AdmittedApplications))
                 self.add_row_to_table("Общее количество отклоненных заявок", str(contract.RejectedApplications))
-                price_proposal_dict = json.loads(contract.PriceProposal)
-                for key, value in price_proposal_dict.items():
-                    try:
-                        numeric_value = float(value)  # Пробуем преобразовать в число
-                        # Если преобразование удалось, добавляем число в таблицу
-                        self.add_row_to_table(key, format_string("%.0f", numeric_value, grouping=True) + self.symbol)
-                    except ValueError:
-                        # Если возникла ошибка при преобразовании, добавляем значение как строку
-                        self.add_row_to_table(key, str(value))
-                Applicant_dict = json.loads( contract.Applicant)
-                for key, value in Applicant_dict.items():
-                    self.add_row_to_table(key, str(value))
-                Applicant_satatus = json.loads(contract.Applicant_satatus)
-                for key, value in Applicant_satatus.items():
-                    self.add_row_to_table(key, str(value))
+                if contract.PriceProposal:
+                    price_proposal_data = json.loads(contract.PriceProposal)
+                    if isinstance(price_proposal_data, dict):
+                        for key, value in price_proposal_data.items():
+                            try:
+                                numeric_value = float(value)
+                                self.add_row_to_table(key,
+                                                      format_string('%.0f', numeric_value, grouping=True, symbol=''))
+                            except (ValueError, TypeError):
+                                self.add_row_to_table(key, str(value))
+                    elif isinstance(price_proposal_data, list):
+                        for idx, item in enumerate(price_proposal_data):
+                            if isinstance(item, dict):
+                                for key, value in item.items():
+                                    try:
+                                        numeric_value = float(value)
+                                        self.add_row_to_table(key, format_string('%.0f', numeric_value, grouping=True,
+                                                                                 symbol=''))
+                                    except (ValueError, TypeError):
+                                        self.add_row_to_table(key, str(value))
+                            else:
+                                self.add_row_to_table(f"Предложение {idx + 1}", str(item))
+
+                if contract.Applicant:
+                    applicant_data = json.loads(contract.Applicant)
+                    if isinstance(applicant_data, dict):
+                        for key, value in applicant_data.items():
+                            self.add_row_to_table(key, str(value))
+                    elif isinstance(applicant_data, list):
+                        for idx, item in enumerate(applicant_data):
+                            if isinstance(item, dict):
+                                for key, value in item.items():
+                                    self.add_row_to_table(key, str(value))
+                            else:
+                                self.add_row_to_table(f"Участник {idx + 1}", str(item))
+
+                if contract.Applicant_satatus:
+                    status_data = json.loads(contract.Applicant_satatus)
+                    if isinstance(status_data, dict):
+                        for key, value in status_data.items():
+                            self.add_row_to_table(key, str(value))
+                    elif isinstance(status_data, list):
+                        for idx, item in enumerate(status_data):
+                            if isinstance(item, dict):
+                                for key, value in item.items():
+                                    self.add_row_to_table(key, str(value))
+                            else:
+                                self.add_row_to_table(f"Статус {idx + 1}", str(item))
                 self.add_section_to_table("Заключение контракта")
                 self.add_row_to_table("Победитель-исполнитель контракта", contract.WinnerExecutor)
                 self.add_row_to_table("Заказчик по контракту", contract.ContractingAuthority)
@@ -353,15 +357,7 @@ class PurchasesWidget(QWidget):
                 self.add_row_to_table("ЦКЕИ на основе метода сопоставимых рыночных цен )", str(det.CEICostMethod))
                 self.add_row_to_table("ЦКЕИ, полученная с применением двух методов", str(det.CEIMethodsTwo))
           
-            # if current_purchase.isChanged == True:
-            #     self.currency = CurrencyRate.select().where(CurrencyRate.purchase == current_purchase)
-            #     for curr in self.currency:
-            #         self.add_section_to_table("Изменения валюты")
-            #         self.add_row_to_table("Значение валюты", str(curr.CurrencyValue))
-            #         self.add_row_to_table("Текущая валюта", str(curr.CurrentCurrency))
-            #         self.add_row_to_table("Дата изменения значения валюты", str(curr.DateValueChanged))
-            #         self.add_row_to_table("Дата курса валюты", str(curr.CurrencyRateDate))
-            #         self.add_row_to_table("Предыдущая валюта", str(curr.PreviousCurrency))
+
         else:
             self.label.setText("Нет записи")
 
@@ -401,10 +397,7 @@ class PurchasesWidget(QWidget):
         max_height = 100
         for row in range(self.table.rowCount()):
             self.table.setRowHeight(row, min(max_height, self.table.rowHeight(row)))
-        # max_height = 40  # Установите желаемую максимальную высоту здесь
-        # self.table.setRowHeight(row_position, min(max_height, self.table.rowHeight(row_position)))
 
-    
     def add_section_to_table(self, section_text):
         row_position = self.table.rowCount()
         self.table.insertRow(row_position)
@@ -470,37 +463,15 @@ class PurchasesWidget(QWidget):
             #    self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
 
 
-    # def add_button_tkp_clicked(self):
-    #     if len(self.purchases_list) != 0:
-    #         self.current_purchase = self.purchases_list[self.current_position]
-    #         purchase_id = self.current_purchase.Id
-    #         self.tkp_shower = InsertWidgetNMCK(purchase_id,self)
-    #         self.tkp_shower.show()
-    
-    # def add_button_cia_clicked(self):
-    #     if len(self.purchases_list) != 0:
-    #         self.current_purchase = self.purchases_list[self.current_position]
-    #         purchase_id = self.current_purchase.Id
-    #         self.cia_shower = InsertWidgetCEIA(purchase_id,self)
-    #         self.cia_shower.show()
+
     def go_back(self):
-        if self.window:
-            self.main_win.stackedWidget.setCurrentIndex(0)
+        if hasattr(self.mainwin, 'navigate_back'):
+            self.mainwin.navigate_back()
+        else:
+            self.mainwin.stackedWidget.setCurrentIndex(0)
      
 
-    # def file_exit(self):
-    #     if len(self.purchases_list) != 0:
-    #         self.current_purchase = self.purchases_list[self.current_position]
-    #         purchase_id = self.current_purchase.Id
-    #         self.curr_shower = InsertWidgetCurrency(purchase_id)
-    #         self.curr_shower.show()
-    # def update_currency(self):
-    #     if len(self.purchases_list) != 0:
-    #         self.current_purchase = self.purchases_list[self.current_position]
-    #         purchase_id = self.current_purchase.Id
-    #         self.curr_shower = InsertWidgetCurrency(purchase_id)
-    #         self.curr_shower.show()
-    
+
         
     def reload_data(self):
         self.purchases = Purchase.select()
