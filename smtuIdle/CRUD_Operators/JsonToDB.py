@@ -269,8 +269,21 @@ def parse_price(value) -> float | None:
 def normalize_reg(value: str) -> str:
     if not value:
         return value
-    return value.replace("№", "").strip()
-
+    return value.replace("№ ", "").strip()
+def normalize_contract_number(raw: str | None) -> str | None:
+    """
+    Приводит номер контракта к единому виду — только цифры.
+    '№ 1783939541915000006'  → '1783939541915000006'
+    '№  17839394...'        → '17839394...'
+    '3283939...'            → '3283939...'
+    """
+    if not raw:
+        return None
+    # Убираем №, знак #, пробелы, дефисы в начале
+    cleaned = re.sub(r'^[№#\s\-]+', '', str(raw).strip())
+    # Убираем внутренние двойные пробелы
+    cleaned = re.sub(r'\s+', '', cleaned)
+    return cleaned if cleaned else None
 def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str]]:
     inserted = 0
     errors   = []
@@ -283,8 +296,12 @@ def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str
             try:
                 raw    = json.loads(line)
                 mapped = map_contract_record(raw)
-                reg    = normalize_reg(raw.get("reg_number"))   # ← нормализуем
-                number = raw.get("number")
+                reg    = normalize_reg(raw.get("reg_number"))
+
+                # ── Нормализуем ContractNumber ──────────────────────
+                number = normalize_contract_number(raw.get("number"))
+                mapped["ContractNumber"] = number
+                # ────────────────────────────────────────────────────
 
                 mapped["ContractPrice"] = parse_price(raw.get("contract_price"))
 
@@ -292,7 +309,6 @@ def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str
                     errors.append(f"Строка {i}: нет reg_number, пропущено")
                     continue
 
-                # Ищем закупку перебирая форматы
                 purchase = (
                     Purchase.get_or_none(Purchase.RegistryNumber == reg)
                     or Purchase.get_or_none(Purchase.RegistryNumber == f"№{reg}")
@@ -300,19 +316,22 @@ def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str
                 )
 
                 if purchase is None:
-                    errors.append(f"Строка {i}: закупка {reg} не найдена в SQLite, пропущено")
+                    errors.append(f"Строка {i}: закупка {reg} не найдена, пропущено")
                     continue
 
-                # Ищем существующий контракт
+                # ── Ищем существующий контракт ──────────────────────
                 existing = None
                 if number:
-                    existing = Contract.get_or_none(Contract.ContractNumber == number)
+                    # Ищем по нормализованному номеру
+                    existing = Contract.get_or_none(
+                        Contract.ContractNumber == number
+                    )
                 if existing is None:
                     existing = Contract.get_or_none(Contract.purchase == purchase)
 
                 if existing is None:
                     mapped["purchase"] = purchase
-                    Contract.create(**mapped)
+                    contract = Contract.create(**mapped)
                     inserted += 1
                 else:
                     changed = False
@@ -329,6 +348,8 @@ def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str
                     if changed:
                         existing.save()
                         inserted += 1
+                    contract = existing
+
 
             except json.JSONDecodeError as e:
                 errors.append(f"Строка {i}: ошибка парсинга JSON — {e}")
@@ -517,9 +538,46 @@ def find_contract_by_reg(reg: str):
     # Вариант 3: LIKE (на случай пробелов)
     c = Contract.get_or_none(Contract.RegistryNumber.contains(reg_clean))
     return c
+
+
+def find_contract_for_version(raw: dict) -> Contract | None:
+    """
+    Ищет контракт для версии по приоритету:
+    1. ContractNumber (нормализованный)
+    2. RegistryNumber (реестровый номер закупки)
+    """
+    # ── 1. Поиск по номеру контракта ──────────────────────────
+    number_raw = raw.get("number") or raw.get("contract_number")
+    number = normalize_contract_number(number_raw)
+
+    if number:
+        contract = (
+            Contract.get_or_none(Contract.ContractNumber == number)
+            # Иногда в БД хранится с №, ищем и такой вариант
+            or Contract.get_or_none(Contract.ContractNumber == f"№ {number}")
+            or Contract.get_or_none(Contract.ContractNumber == f"№{number}")
+        )
+        if contract:
+            return contract
+
+    # ── 2. Запасной: поиск через RegistryNumber закупки ───────
+    reg = normalize_reg(raw.get("reg_number"))
+    if reg:
+        purchase = (
+            Purchase.get_or_none(Purchase.RegistryNumber == reg)
+            or Purchase.get_or_none(Purchase.RegistryNumber == f"№{reg}")
+            or Purchase.get_or_none(Purchase.RegistryNumber.contains(reg))
+        )
+        if purchase:
+            return Contract.get_or_none(Contract.purchase == purchase)
+
+    return None
 def insert_contract_versions(filepath: str, user: str, role: str) -> tuple[int, list[str]]:
     inserted = 0
     errors   = []
+    # Счётчики для диагностики
+    matched_by_number = 0
+    matched_by_reg    = 0
 
     with open(filepath, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f if line.strip()]
@@ -531,14 +589,8 @@ def insert_contract_versions(filepath: str, user: str, role: str) -> tuple[int, 
             try:
                 raw    = json.loads(line)
                 mapped = map_cv_record(raw)
-                reg    = mapped.get("reg_number")
                 ver    = mapped.get("version")
 
-                if not reg:
-                    errors.append(f"Строка {i}: нет reg_number, пропущено")
-                    continue
-
-                # ── contract_url: если пустой — ставим заглушку ───────
                 if not mapped.get("contract_url"):
                     mapped["contract_url"] = ""
 
@@ -548,12 +600,41 @@ def insert_contract_versions(filepath: str, user: str, role: str) -> tuple[int, 
                     try:
                         mapped["captured_at"] = datetime.fromisoformat(cap)
                     except ValueError:
-                        mapped.pop("captured_at", None)  # удаляем, модель подставит default
+                        mapped.pop("captured_at", None)
 
-                # ── Ищем контракт по RegistryNumber ───────────────────
-                contract = find_contract_by_reg(reg)
+                # ── Ищем контракт: сначала по ContractNumber ──────────
+                number_raw = raw.get("number") or raw.get("contract_number")
+                number     = normalize_contract_number(number_raw)
+                contract   = None
+
+                if number:
+                    contract = (
+                        Contract.get_or_none(Contract.ContractNumber == number)
+                        or Contract.get_or_none(Contract.ContractNumber == f"№ {number}")
+                        or Contract.get_or_none(Contract.ContractNumber == f"№{number}")
+                    )
+                    if contract:
+                        matched_by_number += 1
+
+                # ── Запасной: ищем по RegistryNumber закупки ──────────
                 if contract is None:
-                    errors.append(f"Строка {i}: контракт {reg} не найден, пропущено")
+                    reg = normalize_reg(raw.get("reg_number"))
+                    if reg:
+                        purchase = (
+                            Purchase.get_or_none(Purchase.RegistryNumber == reg)
+                            or Purchase.get_or_none(Purchase.RegistryNumber == f"№{reg}")
+                            or Purchase.get_or_none(Purchase.RegistryNumber.contains(reg))
+                        )
+                        if purchase:
+                            contract = Contract.get_or_none(Contract.purchase == purchase)
+                            if contract:
+                                matched_by_reg += 1
+
+                if contract is None:
+                    errors.append(
+                        f"Строка {i}: контракт не найден "
+                        f"(number={number_raw!r}, reg={raw.get('reg_number')!r}), пропущено"
+                    )
                     continue
 
                 # ── Уникальность: contract + version ──────────────────
@@ -564,6 +645,10 @@ def insert_contract_versions(filepath: str, user: str, role: str) -> tuple[int, 
 
                 if existing is None:
                     mapped["contract"] = contract
+                    # Убираем поля которых нет в модели ContractVersion
+                    mapped.pop("reg_number",       None)
+                    mapped.pop("number",           None)
+                    mapped.pop("contract_number",  None)
                     ContractVersion.create(**mapped)
                     inserted += 1
                 else:
@@ -587,5 +672,8 @@ def insert_contract_versions(filepath: str, user: str, role: str) -> tuple[int, 
             if i % 500 == 0:
                 print(f"  Обработано: {i}/{len(lines)}", end="\r")
 
-    print(f"\nЗагружено версий: {inserted}")
+    print(f"\nЗагружено версий : {inserted}")
+    print(f"Найдено по ContractNumber : {matched_by_number}")
+    print(f"Найдено по RegistryNumber : {matched_by_reg}")
+    print(f"Ошибок              : {len(errors)}")
     return inserted, errors

@@ -426,7 +426,7 @@ class ContractVersion(BaseModel):
     # ── Связь с актуальным контрактом ─────────
     contract    = ForeignKeyField(Contract, on_delete='CASCADE',
                                   backref='versions', verbose_name="Контракт")
-    reg_number  = CharField(max_length=512, verbose_name="Реестровый номер")  # денормализован для поиска
+    reg_number  = CharField(max_length=512, verbose_name="Реестровый номер",null=True)  # денормализован для поиска
     contract_url = TextField(verbose_name="Ссылка на контракт")
 
     # ── Плоские поля — зеркало Contract ───────
