@@ -1,6 +1,6 @@
 
 from PySide6.QtWidgets import *
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QPixmap, QTransform
 from PySide6 import QtCore
 from PySide6 import QtWidgets
 from smtuIdle.UI.PurchaseFormular import PurchasesWidget
@@ -9,7 +9,7 @@ from smtuIdle.statisticWidget import StatisticWidget
 from smtuIdle.CurrencyWindow import CurrencyWidget
 from smtuIdle.UI.AdminPanel import DebugWidget
 from smtuIdle.HelpPanel import HelpPanel
-from smtuIdle.UI.ContractFormular import ContractFormularWidget
+from smtuIdle.UI.ContractFormular import ContractWidget
 from smtuIdle.UI.AllDbScroller import PurchasesWidgetAll
 from smtuIdle.ChangeLogWindow import ChangeLogWindow
 from smtuIdle.statisticWidgetContract import StatisticWidgetContract
@@ -17,6 +17,10 @@ from smtuIdle.parserV3 import count_total_records
 from smtuIdle.parserV3 import export_to_excel_all
 from smtuIdle.BD.models import *
 from peewee import JOIN
+from smtuIdle.UI.CustomerFormular import CustomerWidget
+from smtuIdle.UI.SupplierFormular import SupplierWidget
+from smtuIdle.UI.VesselFormular import VesselWidget
+from smtuIdle.UI.ContractVersionFormular import ContractVersionWidget
 
 
 # from ResultWindow import ResultWindow
@@ -28,17 +32,72 @@ class Ui_MainWindow(QMainWindow):
         super(Ui_MainWindow, self, ).__init__()
         self.auth_window = None  
         self.username = username
-        self.widgets = [] 
-        self.setupUi()
-        # Кнопка создается после setupUi и сразу добавляется в layout главного окна
-        self.backButton = QPushButton("← Назад")
-        self.backButton.setFixedWidth(120)
-        self.backButton.setEnabled(False)  # Сначала выключена, так как истории еще нет
-        self.backButton.clicked.connect(self.go_back)
-
-        # Вставляем кнопку в самое начало верхнего меню (index 0)
-        self.topLayout.insertWidget(0, self.backButton)
+        self.widgets = []
+        # Два стека для истории
         self.page_history = []
+        self.forward_history = []
+        self.setupUi()
+
+        # Общий стиль для круглых кнопок
+
+        circle_btn_style = """
+                    QPushButton {
+                        background-color: transparent;
+                        border-radius: 15px;
+                        border: none;
+                    }
+                    QPushButton:hover {
+                        background-color: #E8EAED;
+                    }
+                    QPushButton:pressed {
+                        background-color: #DADCE0;
+                    }
+                    QPushButton:disabled {
+                        background-color: transparent;
+                        /* Если иконка не меняет цвет сама, мы просто делаем кнопку полупрозрачной */
+                    }
+                """
+
+        # Загружаем картинку стрелки
+        arrow_pixmap = QPixmap("../Pics/arrow.svg")
+
+        # Создаем иконку для кнопки НАЗАД (оригинальная картинка)
+        back_icon = QIcon(arrow_pixmap)
+
+        # Создаем иконку для кнопки ВПЕРЕД (отраженная/повернутая картинка)
+        # Можно использовать поворот: arrow_pixmap.transformed(QTransform().rotate(180))
+        # Или горизонтальное отражение (что обычно лучше для стрелок):
+        forward_pixmap = arrow_pixmap.transformed(QTransform().scale(-1, 1))
+        forward_icon = QIcon(forward_pixmap)
+
+        # Кнопка НАЗАД (убираем текст, ставим иконку)
+        self.backButton = QPushButton()
+        self.backButton.setIcon(back_icon)
+        # Опционально: если иконка маленькая, можно увеличить размер самой иконки внутри кнопки
+        self.backButton.setIconSize(QtCore.QSize(20, 20))
+        self.backButton.setFixedSize(30, 30)
+        self.backButton.setStyleSheet(circle_btn_style)
+        self.backButton.setEnabled(False)
+        self.backButton.clicked.connect(self.go_back)
+        self.backButton.setFocusPolicy(QtCore.Qt.NoFocus)
+
+        # Кнопка ВПЕРЕД
+        self.forwardButton = QPushButton()
+        self.forwardButton.setIcon(forward_icon)
+        self.forwardButton.setIconSize(QtCore.QSize(20, 20))
+        self.forwardButton.setFixedSize(30, 30)
+        self.forwardButton.setStyleSheet(circle_btn_style)
+        self.forwardButton.setEnabled(False)
+        self.forwardButton.clicked.connect(self.go_forward)
+        self.forwardButton.setFocusPolicy(QtCore.Qt.NoFocus)
+
+        # Размещаем кнопки...
+        self.navLayout = QHBoxLayout()
+        self.navLayout.addWidget(self.backButton)
+        self.navLayout.addWidget(self.forwardButton)
+        self.navLayout.setSpacing(5)
+
+        self.topLayout.insertLayout(0, self.navLayout)
     def setupUi(self):
 
         style = QStyleFactory.create('Fusion')
@@ -302,6 +361,21 @@ class Ui_MainWindow(QMainWindow):
         self.label10 = QtWidgets.QLabel(self.page10)
         self.stackedWidget.addWidget(self.page10)
 
+        # --- ДОБАВИТЬ СЮДА НОВЫЕ СТРАНИЦЫ ---
+        self.page11 = QtWidgets.QWidget()  # Страница для Customer (Заказчик)
+        self.stackedWidget.addWidget(self.page11)
+
+        self.page12 = QtWidgets.QWidget()  # Страница для Supplier (Исполнитель)
+        self.stackedWidget.addWidget(self.page12)
+
+        self.page13 = QtWidgets.QWidget()  # Страница для Vessel (Судно)
+        self.stackedWidget.addWidget(self.page13)
+
+        self.page14 = QtWidgets.QWidget()  # Страница для ContractVersion (Версия контракта)
+        self.stackedWidget.addWidget(self.page14)
+
+
+
         #Загрузка виджета изминений бд
         self.ChangeWindow = ChangeLogWindow(self.users_roles[0])
         self.ChangeWindow.setParent(self)
@@ -320,7 +394,7 @@ class Ui_MainWindow(QMainWindow):
         layout.addWidget(self.purchaseViewer)
         self.add_child_widget(self.purchaseViewer)
 
-        self.contractFormular = ContractFormularWidget(self,self.users_roles[0],self.username,self.ChangeWindow)
+        self.contractFormular = ContractWidget(self,self.users_roles[0],self.username,self.ChangeWindow)
         self.contractFormular.setParent(self)
         layout = QVBoxLayout(self.page8)
         layout.addWidget(self.contractFormular)
@@ -357,7 +431,30 @@ class Ui_MainWindow(QMainWindow):
         layout = QVBoxLayout(self.page7)
         layout.addWidget(self.helper)
 
+        # 1. Заказчики
+        self.customerFormular = CustomerWidget(self, self.users_roles[0], self.username, self.ChangeWindow)
+        self.customerFormular.setParent(self)
+        layout11 = QVBoxLayout(self.page11)
+        layout11.addWidget(self.customerFormular)
 
+        # 2. Исполнители (Поставщики)
+        self.supplierFormular = SupplierWidget(self, self.users_roles[0], self.username, self.ChangeWindow)
+        self.supplierFormular.setParent(self)
+        layout12 = QVBoxLayout(self.page12)
+        layout12.addWidget(self.supplierFormular)
+
+        # 3. Суда
+        self.vesselFormular = VesselWidget(self, self.users_roles[0], self.username, self.ChangeWindow)
+        self.vesselFormular.setParent(self)
+        layout13 = QVBoxLayout(self.page13)
+        layout13.addWidget(self.vesselFormular)
+
+        # 4. Версии контрактов
+        self.contractVersionFormular = ContractVersionWidget(self, self.users_roles[0], self.username,
+                                                             self.ChangeWindow)
+        self.contractVersionFormular.setParent(self)
+        layout14 = QVBoxLayout(self.page14)
+        layout14.addWidget(self.contractVersionFormular)
         self.purchaseViewerall.window = self
         self.horizontalLayout.addWidget(self.stackedWidget)
 
@@ -381,6 +478,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton7.clicked.connect(lambda: self.navigate_to_page(7))
         self.pushButton8.clicked.connect(lambda: self.navigate_to_page(8))
         self.pushButton9.clicked.connect(lambda: self.navigate_to_page(9))
+
         self.pushButton5.clicked.connect(self.export_to_excel_all)
 
 
@@ -404,10 +502,43 @@ class Ui_MainWindow(QMainWindow):
     def navigate_to_page(self, index):
         current_index = self.stackedWidget.currentIndex()
         if current_index != index:
+            # Сохраняем текущую страницу в историю НАЗАД
             self.page_history.append(current_index)
+
+            # При НОВОМ переходе история ВПЕРЕД сбрасывается
+            self.forward_history.clear()
+            self.forwardButton.setEnabled(False)
+
             self.stackedWidget.setCurrentIndex(index)
-            # ОБЯЗАТЕЛЬНО включаем кнопку здесь:
             self.backButton.setEnabled(True)
+
+    def go_back(self):
+        if self.page_history:
+            # Текущую страницу кладем в историю ВПЕРЕД
+            current_index = self.stackedWidget.currentIndex()
+            self.forward_history.append(current_index)
+            self.forwardButton.setEnabled(True)
+
+            # Достаем последнюю из НАЗАД и переходим
+            prev_index = self.page_history.pop()
+            self.stackedWidget.setCurrentIndex(prev_index)
+
+        if not self.page_history:
+            self.backButton.setEnabled(False)
+
+    def go_forward(self):
+        if self.forward_history:
+            # Текущую страницу возвращаем обратно в историю НАЗАД
+            current_index = self.stackedWidget.currentIndex()
+            self.page_history.append(current_index)
+            self.backButton.setEnabled(True)
+
+            # Достаем из ВПЕРЕД и переходим
+            next_index = self.forward_history.pop()
+            self.stackedWidget.setCurrentIndex(next_index)
+
+        if not self.forward_history:
+            self.forwardButton.setEnabled(False)
 
     def navigate_back(self):
         if self.page_history:
@@ -416,15 +547,7 @@ class Ui_MainWindow(QMainWindow):
         else:
             self.stackedWidget.setCurrentIndex(0)
 
-    def go_back(self):
-        if self.page_history:
-            prev_index = self.page_history.pop()
-            self.stackedWidget.setCurrentIndex(prev_index)
-        else:
-            self.stackedWidget.setCurrentIndex(0)
 
-        if not self.page_history:
-            self.backButton.setEnabled(False)
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "БАЗА ДАННЫХ ЦЕН И ЭКОНОМИЧЕСКИХ ПОКАЗАТЕЛЕЙ ВЫПОЛНЕНИЯ ЗАКЛЮЧЕННЫХ ГОСУДАРСТВЕННЫХ КОНТРАКТОВ НА СТРОИТЕЛЬСТВО СУДОВ"))
@@ -561,11 +684,11 @@ class Ui_MainWindow(QMainWindow):
         self.Statistic.update_data()
         self.loadCsvContract.update_data()
         self.ChangeWindow.populate_table()
-    # def closeEvent(self, event):
-    #     # Вызываем вашу функцию записи лога при закрытии окна
-    #     self.write_logout_log()
-    #     # Затем закрываем окно
-    #     event.accept()
+        # --- ДОБАВИТЬ ЭТО ---
+        self.customerFormular.reload_data()
+        self.supplierFormular.reload_data()
+        self.vesselFormular.reload_data()
+        self.contractVersionFormular.reload_data()
     def write_logout_log(self):
         # Запись лога выхода пользователя при закрытии приложения
         try:

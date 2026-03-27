@@ -1,543 +1,509 @@
-from PySide6.QtWidgets import *
-from peewee import SqliteDatabase
-from smtuIdle.BD.models import Purchase, Contract, FinalDetermination
-from PySide6.QtCore import *
-from PySide6.QtGui import QColor
 import json
-from PySide6.QtGui import QFont,QDesktopServices
-from smtuIdle.insertPanel import InsertWidgetPanel
-from smtuIdle.insertPanelContract import InsertPanelContract
-
-from smtuIdle.InsertWidgetNMCK import InsertWidgetNMCK
-from smtuIdle.InsertWidgetCEIA import InsertWidgetCEIA
-from smtuIdle.parserV3 import delete_records_by_id
-from PySide6.QtWidgets import QSizePolicy
 import os
 import subprocess
+from locale import format_string, setlocale, LC_ALL
 from openpyxl import Workbook
-from  locale import format_string,setlocale,LC_ALL
-setlocale(LC_ALL, 'ru_RU.UTF-8')
-# Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
+
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
+    QMessageBox, QFileDialog, QSizePolicy, QTreeWidget, QTreeWidgetItem, QStyleFactory
+)
+from PySide6.QtCore import Qt, Signal, QUrl
+from PySide6.QtGui import QColor, QFont, QDesktopServices
+
+# ВАЖНО: Убедитесь, что вы импортировали модель Contract из вашего файла моделей
+from smtuIdle.BD.models import Contract
+from smtuIdle.BD.models import Contract, Supplier, Vessel, ContractVersion
+# Установка локали для форматирования чисел (если нужна)
+try:
+    setlocale(LC_ALL, 'ru_RU.UTF-8')
+except:
+    pass
 
 
+class ContractWidget(QWidget):
+    closingSignal = Signal()
 
-# Создаем соединение с базой данных
-db = SqliteDatabase('database.db')
-cursor = db.cursor()
-
-
-
-class ContractFormularWidget(QWidget):
-    def __init__(self,main_window,role, user, changer):
+    def __init__(self, mainwindow, role, user, changer):
         super().__init__()
-        self.main_win = main_window
-        self.selected_text = None
+        self.main_win = mainwindow
         self.role = role
-        self.symbol = ' ₽'
         self.user = user
         self.changer = changer
-        # Создаем таблицу для отображения данных
-        self.table = QTableWidget(self)
-        self.table.setColumnCount(2)
-        # self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents) # Устанавливаем первой колонке режим изменения размера по содержимому
-        self.table.horizontalHeader().setStretchLastSection(True) # Растягиваем вторую колонку на оставшееся пространство
-        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.table.setColumnWidth(0, 500)
-        self.table.setWordWrap(True) # Разрешаем перенос текста в ячейках
-        self.table.setShowGrid(True)
-        self.table.verticalHeader().setVisible(False)
-        self.table.horizontalHeader().setVisible(False)
-        self.current_position =0
-        # self.BackButton = QPushButton("Назад", self)
-        # self.BackButton.clicked.connect(self.go_back)
-        # self.deleteButton = QPushButton("Удалить запись", self)
-        # self.deleteButton.setFixedWidth(200)
-        # self.deleteButton.clicked.connect(self.remove_button_clicked)
-        # self.addButtonContract = QPushButton("Добавить обоснование НМЦК", self)
-        # self.BackButton.hide()
-        # self.addButtonContract.setMaximumWidth(400)
-        
-        # self.addButtonTKP = QPushButton("Добавить результаты закупки", self)
-        # self.addButtonTKP.setMaximumWidth(400)
-        # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
-        self.addButtonCurrency= QPushButton("Экспорт в Еxcel Формуляра Контрактов", self)
-        self.addButtonCurrency.setMaximumWidth(300)
-        self.label_form = QLabel() 
-        self.label_form.setText("Редактирование Формуляра")
+        self.symbol = "₽"
 
-         # Устанавливаем обработчики событий для кнопок
-        # self.addButtonContract.clicked.connect(self.add_button_nmck_clicked)
-        # self.addButtonTKP.clicked.connect(self.add_button_contract_clicked)
-        # self.addButtonCIA.clicked.connect(self.add_button_cia_clicked)
+        self.current_position = 0
+        self.contracts_list = []
 
-        self.addButtonCurrency.clicked.connect(self.show_current_purchase_to_excel)
-        
-         # Создаем метку
-        self.label = QLabel("", self)
-        # Устанавливаем обработчики событий для кнопок
+        # --- Создание дерева ---
+        self.tree = QTreeWidget(self)
+        self.tree.setColumnCount(2)
+        self.tree.setHeaderHidden(True)
+        self.tree.setWordWrap(True)
+        self.tree.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tree.setColumnWidth(0, 400)
 
+        # Настройка сетки и стилей
 
-        button_layout = QHBoxLayout()
+        self.tree.setStyleSheet("""
+          
+            QTreeWidget::item {
+                border-bottom: 1px solid #e0e0e0;
+                border-right: 1px solid #e0e0e0;
+                padding: 4px;
+            }
+        """)
+        self.tree.setStyle(QStyleFactory.create('windows'))
+        self.tree.itemClicked.connect(self.open_file)
+
+        # --- Заголовок ---
+        self.label_form = QLabel("")
+        font_title = QFont()
+        font_title.setPointSize(16)
+        font_title.setBold(True)
+        self.label_form.setFont(font_title)
+        self.label_form.setAlignment(Qt.AlignHCenter)
+
+        # --- Кнопки управления ---
+        self.BackButton = QPushButton("Назад", self)
+        self.BackButton.clicked.connect(self.go_back)
+        self.BackButton.hide()
+
+        self.exportButton = QPushButton("Экспорт в Excel", self)
+        self.exportButton.setMaximumWidth(300)
+        self.exportButton.clicked.connect(self.export_to_excel)
+
+        # --- Сборка макетов ---
         vertical_labels = QVBoxLayout()
         vertical_labels.addWidget(self.label_form)
-        self.butlayout = QHBoxLayout()
-        vertical_labels.addLayout(self.butlayout)
-        # self.butlayout.addWidget(self.addButtonContract )
-        # self.butlayout.addWidget(self.addButtonTKP )
-        self.butlayout.setAlignment(Qt.AlignLeft)
-        button_layout.addWidget(self.label)
-        self.label.setAlignment(Qt.AlignHCenter)
-        # Создаем горизонтальный макет и добавляем элементы
+
         button_layout2 = QHBoxLayout()
+        button_layout2.addWidget(self.exportButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        
-        # button_layout2.addWidget(self.addButtonTKP)
-        # button_layout2.addWidget(self.addButtonContract, alignment=Qt.AlignLeft)
-        # button_layout2.addWidget(self.addButtonTKP,alignment=Qt.AlignLeft)
-        # button_layout2.addWidget(self.addButtonCIA)
-        # Создаем слой для центрирования
-       # Создаем слой для центрирования
-                
-        # Добавляем первую кнопку
-        button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignmentFlag.AlignCenter)
-        button_layout.addStretch()
-        # button_layout2.addWidget(self.deleteButton)
-        # button_layout2.setAlignment(Qt.AlignCenter)
-   
-
- 
-       # Создаем горизонтальный макет и добавляем элементы
         layout = QVBoxLayout(self)
-
-        # Создаем горизонтальный макет для минимальной и максимальной цены
-        self.table.itemClicked.connect(self.open_file)
-        # Добавляем таблицу и остальные элементы в макет
-        layout.addLayout( vertical_labels)
-        layout.addWidget(self.table)
-        layout.addLayout(button_layout)
+        layout.addLayout(vertical_labels)
+        layout.addWidget(self.tree)
         layout.addLayout(button_layout2)
-        
-        # Получаем данные из базы данных и отображаем первую запись
+
         self.reload_data()
-        # self.purchases = Purchase.select()
-        # self.purchases = (Purchase
-        #         .select()
-        #         .join(Contract, JOIN.LEFT_OUTER)
-        #           # Уточните условия, если нужно
-        #         )
-        # combined_list = (Purchase
-        #         .select()
-        #         .join(Contract, JOIN.LEFT_OUTER)
-        #           # Уточните условия, если нужно
-        #         .execute())
-   
-        # self.purchases_list = list(self.purchases)
-        # self.purchases_list = list(self.purchases)
-        # self.show_current_purchase()
 
-        if self.role == "Гость":
-            self.addButtonCurrency.hide()
-            self.label_form.hide()
+    def go_back(self):
+        if hasattr(self.main_win, 'navigate_back'):
+            self.main_win.navigate_back()
         else:
-            self.addButtonCurrency.show()
-            self.label_form.show()
-        # if self.role == "Гость" or self.role == "Пользователь":
-        #     self.addButtonContract.hide()
-        #     self.deleteButton.hide()
-        # else:
-        #     self.addButtonCurrency.show()
-        #     self.deleteButton.show()
-    def remove_button_clicked(self):
-        # reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
-        #                              QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        # if reply == QMessageBox.Yes:
-        reply = QMessageBox()
-        reply.setWindowTitle("Удаление")
-        reply.setText('Вы точно хотите удалить текущую запись?')
-        
-        reply.addButton("Нет", QMessageBox.NoRole)
-        reply.addButton("Да", QMessageBox.YesRole)
-        result = reply.exec()
-        if result == 1:
-            if self.current_purchase.Id:
-                success = delete_records_by_id([self.current_purchase.Id],user=self.user, role= self.role)
-                if success:
-                    self.main_win.updatePurchaseLabel()
-                    
-                    QMessageBox.information(self, "Успех", "Вы успешно удалили запись!")
-                    self.reload_data()
-                else:
-                    QMessageBox.information(self,"Ошибка", "Ошибка при удалении записей")
-                    
-                  
+            self.main_win.stackedWidget.setCurrentIndex(0)
+
+    def reload_data(self):
+        self.contracts = Contract.select()
+        self.contracts_list = list(self.contracts)
+        self.show_current_contract()
+
+    def reload_data_id(self, contract_id):
+        self.contracts = Contract.select().where(Contract.Id == contract_id)
+        self.contracts_list = list(self.contracts)
+        self.show_current_contract()
+
+    def add_section_to_table(self, section_text, expanded=False):
+        self.current_parent = QTreeWidgetItem(self.tree)
+        self.current_parent.setText(0, section_text)
+        self.current_parent.setFirstColumnSpanned(True)
+        self.current_parent.setExpanded(expanded)
+
+        font = QFont()
+        font.setPointSize(11)
+        font.setBold(True)
+        self.current_parent.setFont(0, font)
+        self.current_parent.setBackground(0, QColor(230, 230, 230))
+
+    def add_row_to_table(self, label_text, value_text):
+        if value_text is None or str(value_text).strip() in ("", "None", "-"):
+            value_text = "Нет данных"
         else:
-            pass
+            value_text = str(value_text)
 
-    def _render_json_section(self, data, prefix: str = ""):
-        """
-        Рекурсивно рендерит dict/list из JSON-поля в строки таблицы.
-        Останавливается на глубине 3 уровня чтобы не перегружать таблицу.
-        """
-        if isinstance(data, dict):
-            for key, value in data.items():
-                label = f"{prefix}{key}" if not prefix else f"  {prefix}{key}"
-                if isinstance(value, (dict, list)):
-                    self.add_section_to_table(label)
-                    self._render_json_section(value)
-                else:
-                    self.add_row_to_table(label, str(value) if value is not None else "—")
-        elif isinstance(data, list):
-            for idx, item in enumerate(data):
-                if isinstance(item, dict):
-                    self._render_json_section(item, prefix=f"{prefix}")
-                else:
-                    self.add_row_to_table(f"{prefix}[{idx}]", str(item) if item is not None else "—")
-    def show_current_purchase(self):
-        self.table.setRowCount(0)
+        if hasattr(self, 'current_parent') and self.current_parent:
+            item = QTreeWidgetItem(self.current_parent)
+        else:
+            item = QTreeWidgetItem(self.tree)
 
-        if not self.purchases_list:
-            self.label.setText("Нет записей")
+        item.setText(0, str(label_text))
+        item.setText(1, value_text)
+
+        font = QFont()
+        font.setPointSize(10)
+        item.setFont(0, font)
+        item.setFont(1, font)
+
+        # Подсветка файлов/ссылок
+        link_fields = ['Протоколы (выписка)', 'Договор', 'Реестровый номер договора']
+        if label_text in link_fields and value_text != "Нет данных":
+            item.setForeground(1, Qt.blue)
+            font_link = QFont()
+            font_link.setPointSize(10)
+            font_link.setUnderline(True)
+            item.setFont(1, font_link)
+
+            # Если это реестровый номер, вшиваем ссылку на ЕИС
+            # (если контракт 223/44 ФЗ, можно адаптировать ссылку под нужный формат)
+            if label_text == 'Реестровый номер договора':
+                link = f"https://zakupki.gov.ru/epz/contract/search/results.html?searchString={value_text}"
+                item.setData(1, Qt.UserRole, link)
+
+    def add_json_to_tree(self, parent_item, json_data, parent_key=""):
+        key_translations = {
+            "title": "Заголовок",
+            "items": "Элементы",
+            "hrefs": "Ссылки",
+            "all_hrefs": "Все ссылки",
+            "header": "Название группы",
+            "kind": "Тип",
+            "kv": "Значение",
+            "type": "Тип документа",
+            "sign_link": "Ссылка на подпись",
+            "sign_url": "Ссылка на подпись",
+            "table_standalone": "Отдельная таблица",
+            "url": "Ссылка",
+            "parsed_table": "Табличные данные",
+            "rows": "Строки таблицы",
+            "headers": "Заголовки колонок",
+            "doc_name": "Название документа",
+            "files": "Файлы",
+            "links": "Связанные ссылки",
+            "text": "Текст"
+        }
+
+        if not json_data:
             return
 
-        current_purchase = self.purchases_list[self.current_position]
-        self.current_purchase = current_purchase
+        if isinstance(json_data, dict):
+            for key, value in json_data.items():
+                if key == "null" or key is None:
+                    key = "Параметр"
 
-        # ── Описание закупки ──────────────────────────────────
-        self.add_section_to_table("Описание закупки")
-        self.add_row_to_table("№ПП", str(current_purchase.Id))
-        self.add_row_to_table("Реестровый номер", current_purchase.RegistryNumber or "Нет данных")
-        self.add_row_to_table("Наименование закупки", current_purchase.PurchaseName or "Нет данных")
-
-        self.contracts = Contract.select().where(Contract.purchase == current_purchase)
-
-        for contract in self.contracts:
-
-            # ── Определение победителя ────────────────────────
-            self.add_section_to_table("Определение победителя")
-            self.add_row_to_table("Общее количество заявок", str(contract.TotalApplications or "—"))
-            self.add_row_to_table("Допущено заявок", str(contract.AdmittedApplications or "—"))
-            self.add_row_to_table("Отклонено заявок", str(contract.RejectedApplications or "—"))
-
-            # PriceProposal
-            price_proposal = self._parse_json_field(contract.PriceProposal)
-            if isinstance(price_proposal, dict):
-                for key, value in price_proposal.items():
-                    try:
-                        self.add_row_to_table(key, format_string("%.0f", float(value), grouping=True) + self.symbol)
-                    except (ValueError, TypeError):
-                        self.add_row_to_table(key, str(value))
-            elif isinstance(price_proposal, list):
-                for idx, item in enumerate(price_proposal):
-                    if isinstance(item, dict):
-                        for key, value in item.items():
-                            try:
-                                self.add_row_to_table(key,
-                                                      format_string("%.0f", float(value), grouping=True) + self.symbol)
-                            except (ValueError, TypeError):
-                                self.add_row_to_table(key, str(value))
-                    else:
-                        self.add_row_to_table(f"Ценовое предложение {idx + 1}", str(item))
-
-            # Applicant
-            applicant = self._parse_json_field(contract.Applicant)
-            if isinstance(applicant, dict):
-                for key, value in applicant.items():
-                    self.add_row_to_table(key, str(value))
-            elif isinstance(applicant, list):
-                for idx, item in enumerate(applicant):
-                    if isinstance(item, dict):
-                        for key, value in item.items():
-                            self.add_row_to_table(key, str(value))
-                    else:
-                        self.add_row_to_table(f"Заявитель {idx + 1}", str(item))
-
-            # Applicant_satatus
-            applicant_status = self._parse_json_field(contract.Applicant_satatus)
-            if isinstance(applicant_status, dict):
-                for key, value in applicant_status.items():
-                    self.add_row_to_table(key, str(value))
-            elif isinstance(applicant_status, list):
-                for idx, item in enumerate(applicant_status):
-                    if isinstance(item, dict):
-                        for key, value in item.items():
-                            self.add_row_to_table(key, str(value))
-                    else:
-                        self.add_row_to_table(f"Статус заявителя {idx + 1}", str(item))
-
-            # ── Заключение контракта ──────────────────────────
-            self.add_section_to_table("Заключение контракта")
-            self.add_row_to_table("Победитель-исполнитель", contract.WinnerExecutor or "—")
-            self.add_row_to_table("Заказчик по контракту", contract.ContractingAuthority or "—")
-            self.add_row_to_table("Идентификатор договора", contract.ContractIdentifier or "—")
-            self.add_row_to_table("Реестровый номер договора", contract.RegistryNumber or "—")
-            self.add_row_to_table("№ договора", contract.ContractNumber or "—")
-            self.add_row_to_table("Дата начала/подписания", str(contract.StartDate) if contract.StartDate else "—")
-            self.add_row_to_table("Дата окончания/исполнения", str(contract.EndDate) if contract.EndDate else "—")
-            self.add_row_to_table("Цена договора, руб.",
-                                  format_string("%.0f", contract.ContractPrice,
-                                                grouping=True) + self.symbol if contract.ContractPrice else "—")
-            self.add_row_to_table("Размер авансирования, руб.",
-                                  format_string("%.0f", contract.AdvancePayment,
-                                                grouping=True) + self.symbol if contract.AdvancePayment else "—")
-            self.add_row_to_table("Снижение НМЦК, руб.",
-                                  format_string("%.0f", contract.ReductionNMC,
-                                                grouping=True) + self.symbol if contract.ReductionNMC else "—")
-            self.add_row_to_table("Снижение НМЦК, %",
-                                  format_string("%.2f",
-                                                contract.ReductionNMCPercent) + " %" if contract.ReductionNMCPercent else "—")
-            self.add_row_to_table("Протоколы поставщика (выписка)", contract.SupplierProtocol or "—")
-            self.add_row_to_table("Договор", contract.ContractFile or "—")
-
-            # ── Общая информация (JSON) ───────────────────────
-            common_info = self._parse_json_field(contract.common_info_json)
-            if common_info:
-                self.add_section_to_table("Общая информация")
-                self._render_json_section(common_info)
-
-            # ── Платежи и объекты закупки (JSON) ─────────────
-            payment = self._parse_json_field(contract.payment_targets_json)
-            if payment:
-                self.add_section_to_table("Платежи и объекты закупки")
-                self._render_json_section(payment)
-
-            # ── Исполнение контракта (JSON) ───────────────────
-            process = self._parse_json_field(contract.process_info_json)
-            if process:
-                self.add_section_to_table("Исполнение (расторжение) контракта")
-                self._render_json_section(process)
-
-            # ── Вложения (JSON) ───────────────────────────────
-            documents = self._parse_json_field(contract.documents_json)
-            if documents:
-                self.add_section_to_table("Вложения")
-                self._render_json_section(documents)
-
-            # ── Журнал версий (JSON) ──────────────────────────
-            journal = self._parse_json_field(contract.journal_versions_json)
-            if journal:
-                self.add_section_to_table("Журнал версий")
-                self._render_json_section(journal)
-
-            # ── Журнал событий (JSON) ─────────────────────────
-            event_log = self._parse_json_field(contract.event_log_json)
-            if event_log:
-                self.add_section_to_table("Журнал событий")
-                self._render_json_section(event_log)
-
-        # ── Итоговое определение НМЦК ─────────────────────────
-        self.finalDetermination = FinalDetermination.select().where(
-            FinalDetermination.purchase == current_purchase
-        )
-        for det in self.finalDetermination:
-            self.add_section_to_table("Итоговое определение НМЦК с использованием нескольких методов")
-            self.add_row_to_table("Способ направления запросов", str(det.RequestMethod or "—"))
-            self.add_row_to_table("Способ использования общедоступной информации",
-                                  str(det.PublicInformationMethod or "—"))
-            self.add_row_to_table("НМЦК, полученная различными способами", str(det.NMCObtainedMethods or "—"))
-            self.add_row_to_table("НМЦК на основе затратного метода, руб.", str(det.CostMethodNMC or "—"))
-            self.add_row_to_table("Цена сравнимой продукции", str(det.ComparablePrice or "—"))
-            self.add_row_to_table("НМЦК с применением двух методов", str(det.NMCMethodsTwo or "—"))
-            self.add_section_to_table("Итоговое определение ЦКЕИ")
-            self.add_row_to_table("ЦКЕИ на основе метода сопоставимых рыночных цен",
-                                  str(det.CEIComparablePrices or "—"))
-            self.add_row_to_table("ЦКЕИ на основе затратного метода", str(det.CEICostMethod or "—"))
-            self.add_row_to_table("ЦКЕИ с применением двух методов", str(det.CEIMethodsTwo or "—"))
-
-    def _parse_json_field(self, raw, fallback=None):
-        """
-        Безопасный парсинг JSON-поля.
-        Возвращает dict, list или fallback если поле пустое/None/невалидное.
-        """
-        if not raw or raw in ("[]", "{}", "Нет данных", "None"):
-            return fallback if fallback is not None else {}
-        try:
-            return json.loads(raw)
-        except (json.JSONDecodeError, TypeError):
-            return fallback if fallback is not None else {}
-    def add_row_to_table(self, label_text, value_text):
-        row_position = self.table.rowCount()
-        self.table.insertRow(row_position)
-
-        label_item = QTableWidgetItem()
-        label_item.setText(label_text)
-        label_item.setFlags(label_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEditable)
-        label_font = QFont()
-        label_font.setPointSize(10)
-        label_item.setFont(label_font)
-
-        value_item = QTableWidgetItem()
-        value_item.setText(value_text)
-        value_item.setFlags(value_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEditable)
-        value_font = QFont()
-        value_font.setPointSize(10)
-        value_item.setFont(value_font)
-        if label_text == "файл НМЦК" or label_text == "файл протокола" or label_text == "Извещение о закупке" or label_text == "Файл расчета" or label_text == "Файл итогового определения НМЦК с использованием нескольких методов" or label_text == "Договор":
-            if value_text != "Нет данных":
-                # Установка цвета фона только для нужных ячеек
-                label_item.setBackground(QColor(200, 255, 200))  # Светло-зеленый
-                value_item.setBackground(QColor(200, 255, 200))  # Светло-зеленый
-        if label_text == 'Реестровый номер':
-            value_item.setData(Qt.UserRole, f'https://zakupki.gov.ru/epz/order/extendedsearch/results.html?searchString={self.purchases_list[self.current_position].RegistryNumber}&morphology=on&search-filter=Дате+размещения&pageNumber=1&sortDirection=false&recordsPerPage=_10&showLotsInfoHidden=false&sortBy=UPDATE_DATE&fz44=on&fz223=on&af=on&ca=on&pc=on&pa=on&currencyIdGeneral=-1')
-            value_item.setForeground(Qt.blue)  # Голубой цвет текста
-        
-        self.table.setItem(row_position, 0, label_item)
-        self.table.setItem(row_position, 1, value_item)
-        
-
-        # # Adjust row height
-        self.table.resizeRowsToContents()
-        max_height = 100
-        for row in range(self.table.rowCount()):
-            self.table.setRowHeight(row, min(max_height, self.table.rowHeight(row)))
-        # max_height = 40  # Установите желаемую максимальную высоту здесь
-        # self.table.setRowHeight(row_position, min(max_height, self.table.rowHeight(row_position)))
-
-    def add_section_to_table(self, section_text):
-        row_position = self.table.rowCount()
-        self.table.insertRow(row_position)
-
-        section_item = QTableWidgetItem(section_text)
-        section_item.setFlags(section_item.flags() & ~Qt.ItemIsEditable)  # Заголовок не редактируемый
-        # section_item.setBackground(QColor(200, 200, 200))  # Цвет фона заголовка
-        section_item.setTextAlignment(Qt.AlignCenter)
-
-        self.table.setItem(row_position, 0, section_item)
-        self.table.setSpan(row_position, 0, 1, 2)  # Занимаем два столбца
-
-
-    def add_button_nmck_clicked(self):
-        
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-     
-            self.insert_cont = InsertWidgetPanel(purchase_id,self,self.role,self.user,self.changer)
-            # self.insert_cont.setParent(self)
-            self.insert_cont.show()
-
-    def add_button_contract_clicked(self):
-        
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-     
-            self.insert_cont = InsertPanelContract(purchase_id,self,self.role,self.user,self.changer)
-            # self.insert_cont.setParent(self)
-            self.insert_cont.show()
-    
-    def open_file(self, item):
-        column = item.column()
-
-      
-        if column == 1:  # Проверяем, что кликнули по значению (колонка с путем к файлу)
-            file_path = item.text()
-            if os.path.isfile(file_path):
-                # subprocess.Popen(['start', 'excel', file_path], shell=True)  # Открываем файл
-                if file_path.lower().endswith(('.docx', '.doc')):
-                    subprocess.Popen(['start', 'winword', file_path], shell=True)
-                elif file_path.lower().endswith('.pdf'):
-                    subprocess.Popen(['start', 'winword', file_path], shell=True)
-                elif file_path.lower().endswith(('.xlsx', '.xls','.csv')):
-                    subprocess.Popen(['start', 'excel', file_path], shell=True)
-                    print('here3')
+                if key in key_translations:
+                    display_key = key_translations[key]
                 else:
-                    self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
-            if "№" in item.text():
-                print("Текст содержит символ '№'")
-                url = item.data(Qt.UserRole)
-                QDesktopServices.openUrl(QUrl(url))
-                
+                    display_key = str(key).replace("_", " ").capitalize()
+
+                if isinstance(value, (dict, list)):
+                    child = QTreeWidgetItem(parent_item)
+                    child.setText(0, display_key)
+                    font = QFont()
+                    font.setBold(True)
+                    child.setFont(0, font)
+                    self.add_json_to_tree(child, value, key)
+                else:
+                    if key == "text":
+                        parent_item.setText(1, str(value))
+                    elif key in ("url", "sign_url", "sign_link"):
+                        child = QTreeWidgetItem(parent_item)
+                        child.setText(0, display_key)
+                        child.setText(1, str(value))
+                        child.setForeground(1, Qt.blue)
+                        font_link = QFont()
+                        font_link.setUnderline(True)
+                        child.setFont(1, font_link)
+                        child.setData(1, Qt.UserRole, str(value))
+                    elif key in ("all_hrefs", "hrefs"):
+                        pass
+                    else:
+                        child = QTreeWidgetItem(parent_item)
+                        child.setText(0, display_key)
+                        child.setText(1, str(value) if value is not None else "Нет данных")
+
+        elif isinstance(json_data, list):
+            for idx, item in enumerate(json_data):
+                if isinstance(item, (dict, list)):
+                    child_name = f"Запись {idx + 1}"
+                    if parent_key == "headers":
+                        child_name = f"Колонка {idx + 1}"
+                    elif parent_key in ("all_hrefs", "hrefs"):
+                        child_name = f"Ссылка {idx + 1}"
+
+                    child = QTreeWidgetItem(parent_item)
+                    child.setText(0, child_name)
+
+                    if parent_key in ("all_hrefs", "hrefs"):
+                        child.setText(1, str(item))
+                        child.setForeground(1, Qt.blue)
+                        font_link = QFont()
+                        font_link.setUnderline(True)
+                        child.setFont(1, font_link)
+                        child.setData(1, Qt.UserRole, str(item))
+                    else:
+                        self.add_json_to_tree(child, item, parent_key)
+                else:
+                    if parent_key == "headers":
+                        child = QTreeWidgetItem(parent_item)
+                        child.setText(0, f"Колонка {idx + 1}")
+                        child.setText(1, str(item) if item is not None else "Нет данных")
+                    else:
+                        child = QTreeWidgetItem(parent_item)
+                        child.setText(0, f"Элемент {idx + 1}")
+                        child.setText(1, str(item) if item is not None else "Нет данных")
+        else:
+            parent_item.setText(1, str(json_data))
+
+    def show_current_contract(self):
+        self.tree.clear()
+        self.current_parent = None
+
+        if len(self.contracts_list) != 0:
+            c = self.contracts_list[self.current_position]
+            self.current_contract = c
+
+            # Заголовок
+            title_text = f"№ {c.ContractNumber}" if c.ContractNumber else f"ID {c.Id}"
+            self.label_form.setText(f"Карточка контракта {title_text}")
+            self.label_form.show()
+
+            # --- 1. Основные реквизиты (развернуто) ---
+            self.add_section_to_table('Общие сведения', expanded=True)
+            self.add_row_to_table('ID в БД', c.Id)
+            self.add_row_to_table('№ договора', c.ContractNumber)
+            self.add_row_to_table('Реестровый номер договора', c.RegistryNumber)
+            self.add_row_to_table('Идентификатор договора', c.ContractIdentifier)
+            self.add_row_to_table('Заказчик по контракту', c.ContractingAuthority)
+            self.add_row_to_table('Победитель-исполнитель', c.WinnerExecutor)
+            self.add_row_to_table('Дата начала', c.StartDate)
+            self.add_row_to_table('Дата окончания', c.EndDate)
+
+            # --- 2. Финансы (развернуто) ---
+            self.add_section_to_table('Финансовая информация', expanded=True)
+
+            price = f"{format_string('%.2f', c.ContractPrice, grouping=True)} {self.symbol}" if c.ContractPrice is not None else None
+            advance = f"{format_string('%.2f', c.AdvancePayment, grouping=True)} {self.symbol}" if c.AdvancePayment is not None else None
+            reduction = f"{format_string('%.2f', c.ReductionNMC, grouping=True)} {self.symbol}" if c.ReductionNMC is not None else None
+            reduction_pct = f"{format_string('%.2f', c.ReductionNMCPercent)} %" if c.ReductionNMCPercent is not None else None
+
+            self.add_row_to_table('Цена договора', price)
+            self.add_row_to_table('Размер авансирования', advance)
+            self.add_row_to_table('Снижение НМЦК (руб.)', reduction)
+            self.add_row_to_table('Снижение НМЦК (%)', reduction_pct)
+
+            # --- 3. Данные по заявкам (свернуто) ---
+            self.add_section_to_table('Данные по заявкам', expanded=False)
+            self.add_row_to_table('Всего заявок', c.TotalApplications)
+            self.add_row_to_table('Допущено', c.AdmittedApplications)
+            self.add_row_to_table('Отклонено', c.RejectedApplications)
+
+            # Парсинг простых массивов/списков из текстовых полей, если они есть
+            for label, field_data in [
+                ("Ценовое предложение", c.PriceProposal),
+                ("Заявитель", c.Applicant),
+                ("Статус заявителя", c.Applicant_satatus)
+            ]:
+                if field_data and field_data != "[]":
+                    try:
+                        parsed = json.loads(field_data)
+                        self.add_json_to_tree(self.current_parent, parsed, label)
+                    except json.JSONDecodeError:
+                        self.add_row_to_table(label, field_data)
+
+            # --- 4. Документы (свернуто) ---
+            self.add_section_to_table('Прикрепленные документы', expanded=False)
+            self.add_row_to_table('Протоколы (выписка)', c.SupplierProtocol)
+            self.add_row_to_table('Договор', c.ContractFile)
+
+            # --- 5. JSON Данные ---
+            json_fields = [
+                ("Общая информация (детали)", c.common_info_json),
+                ("Платежи и объекты закупки", c.payment_targets_json),
+                ("Исполнение (расторжение)", c.process_info_json),
+                ("Вложения", c.documents_json),
+                ("Журнал версий", c.journal_versions_json),
+                ("Журнал событий", c.event_log_json)
+            ]
+
+            for section_name, json_string in json_fields:
+                self.add_section_to_table(section_name, expanded=False)
+
+                if json_string and str(json_string).strip() not in ("", "None", "-", "[]", "{}"):
+                    try:
+                        parsed_json = json.loads(json_string)
+                        self.add_json_to_tree(self.current_parent, parsed_json)
+                    except json.JSONDecodeError:
+                        self.add_row_to_table("Данные", str(json_string))
+                else:
+                    self.add_row_to_table("Данные", "Нет данных")
+                # =========================================================
+                # СВЯЗАННЫЕ ДАННЫЕ (ПОСТАВЩИКИ, СУДА, ВЕРСИИ)
+                # =========================================================
+            self.add_section_to_table('Связанные документы', expanded=True)
+            links_parent = self.current_parent
+
+            # 1. ПОСТАВЩИКИ (Исполнители)
+            suppliers = Supplier.select().where(Supplier.contract == c)
+            if suppliers.exists():
+                for sup in suppliers:
+                    sup_name = sup.organization if sup.organization else f"ID {sup.id}"
+                    sup_node = QTreeWidgetItem(links_parent)
+                    sup_node.setText(0, f"Поставщик: {sup_name}")
+                    sup_node.setFirstColumnSpanned(True)
+                    font_c = QFont()
+                    font_c.setBold(True)
+                    sup_node.setFont(0, font_c)
+                    sup_node.setBackground(0, QColor(240, 240, 240))
+
+                    link_item = QTreeWidgetItem(sup_node)
+                    link_item.setText(0, 'Перейти в карточку поставщика')
+                    link_item.setText(1, f"ID: {sup.id}")
+                    link_item.setData(1, Qt.UserRole, f"GOTO_SUPPLIER:{sup.id}")
+                    link_item.setForeground(1, Qt.blue)
+                    font_link = QFont()
+                    font_link.setUnderline(True)
+                    link_item.setFont(1, font_link)
+
+                    QTreeWidgetItem(sup_node, ['ИНН', str(sup.inn)])
+                    QTreeWidgetItem(sup_node, ['КПП', str(sup.kpp)])
+
+            # 2. ОБЪЕКТ ЗАКУПКИ (СУДА)
+            vessels = Vessel.select().where(Vessel.contract == c)
+            if vessels.exists():
+                for ves in vessels:
+                    v_name = f"Проект {ves.ship_project}" if ves.ship_project else f"ID {ves.id}"
+                    ves_node = QTreeWidgetItem(links_parent)
+                    ves_node.setText(0, f"Судно: {v_name}")
+                    ves_node.setFirstColumnSpanned(True)
+                    ves_node.setFont(0, font_c)
+                    ves_node.setBackground(0, QColor(240, 240, 240))
+
+                    link_item = QTreeWidgetItem(ves_node)
+                    link_item.setText(0, 'Перейти в карточку судна')
+                    link_item.setText(1, f"ID: {ves.id}")
+                    link_item.setData(1, Qt.UserRole, f"GOTO_VESSEL:{ves.id}")
+                    link_item.setForeground(1, Qt.blue)
+                    link_item.setFont(1, font_link)
+
+                    QTreeWidgetItem(ves_node, ['ИМО', str(ves.imo_number)])
+                    QTreeWidgetItem(ves_node, ['Тип', str(ves.ship_type)])
+
+            # 3. ВЕРСИИ КОНТРАКТА (Список)
+            versions = ContractVersion.select().where(ContractVersion.contract == c).order_by(
+                ContractVersion.version.desc())
+            if versions.exists():
+                # Создаем одну главную папку для всех версий
+                ver_node = QTreeWidgetItem(links_parent)
+                ver_node.setText(0, f"Версии контракта (Всего: {versions.count()})")
+                ver_node.setFirstColumnSpanned(True)
+                ver_node.setFont(0, font_c)
+                ver_node.setBackground(0, QColor(240, 240, 240))
+                # Можно раскрыть по умолчанию, если их немного, или оставить свернутыми, если их 100.
+                # Сделаем свернутым по умолчанию, чтобы не засорять экран
+                ver_node.setExpanded(False)
+
+                for ver in versions:
+                    # Создаем строку-ссылку для каждой версии внутри папки ver_node
+                    ver_title = f"Версия {ver.version}" if ver.version else f"Версия ID {ver.id}"
+                    date_info = f" (обновлено {ver.date_updated_in_registry})" if ver.date_updated_in_registry else ""
+
+                    link_item = QTreeWidgetItem(ver_node)
+                    link_item.setText(0, f"{ver_title}{date_info}")
+                    link_item.setText(1, "Перейти в версию")
+                    link_item.setData(1, Qt.UserRole, f"GOTO_VERSION:{ver.id}")
+                    link_item.setForeground(1, Qt.blue)
+                    link_item.setFont(1, font_link)
+        else:
+            self.label_form.setText("Нет данных")
+            self.label_form.show()
+
+    def open_file(self, item, column):
+        if column == 1:
+            filepath = item.text(1)
+
+            if filepath == "Нет данных":
+                return
+
+            if os.path.isfile(filepath):
+                if filepath.lower().endswith(('.docx', '.doc')):
+                    subprocess.Popen(['start', 'winword', filepath], shell=True)
+                elif filepath.lower().endswith('.pdf'):
+                    QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
+                elif filepath.lower().endswith(('.xlsx', '.xls', '.csv')):
+                    subprocess.Popen(['start', 'excel', filepath], shell=True)
             else:
-                pass
-            #    self.show_warning("Неизвестный формат файла", "Невозможно определить программу для открытия.")
+                url = item.data(1, Qt.UserRole)
+                if url:
+                    QDesktopServices.openUrl(QUrl(url))
+                elif 'http' in filepath or 'zakupki' in filepath:
+                    QDesktopServices.openUrl(QUrl(filepath))
+                elif 'download' in filepath:
+                    url_for = item.text(1)
+                    QDesktopServices.openUrl(QUrl(url_for))
 
+    def open_file(self, item, column):
+        if column == 1:
+            filepath = item.text(1)
+            if not filepath:
+                return
 
-    def add_button_tkp_clicked(self):
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-            self.tkp_shower = InsertWidgetNMCK(purchase_id,self)
-            self.tkp_shower.show()
-    
-    def add_button_cia_clicked(self):
-        if len(self.purchases_list) != 0:
-            self.current_purchase = self.purchases_list[self.current_position]
-            purchase_id = self.current_purchase.Id
-            self.cia_shower = InsertWidgetCEIA(purchase_id,self)
-            self.cia_shower.show()
-    def go_back(self):
-        if self.window:
-            self.main_win.stackedWidget.setCurrentIndex(0)
-     
+            url_or_cmd = item.data(1, Qt.UserRole)
 
-    # def file_exit(self):
-    #     if len(self.purchases_list) != 0:
-    #         self.current_purchase = self.purchases_list[self.current_position]
-    #         purchase_id = self.current_purchase.Id
-    #         self.curr_shower = InsertWidgetCurrency(purchase_id)
-    #         self.curr_shower.show()
-    # def update_currency(self):
-    #     if len(self.purchases_list) != 0:
-    #         self.current_purchase = self.purchases_list[self.current_position]
-    #         purchase_id = self.current_purchase.Id
-    #         self.curr_shower = InsertWidgetCurrency(purchase_id)
-    #         self.curr_shower.show()
-    
-        
-    def reload_data(self):
-        self.purchases = Purchase.select()
-        self.purchases_list = list(self.purchases)
-        self.update()
-        self.show_current_purchase()
+            # --- 1. ПРОВЕРКА НА ВНУТРЕННИЕ ПЕРЕХОДЫ ---
+            if url_or_cmd and isinstance(url_or_cmd, str) and url_or_cmd.startswith("GOTO_"):
+                command, record_id = url_or_cmd.split(":")
+                record_id = int(record_id)
 
-    def reload_data_id(self,id):
-        self.purchases = Purchase.select().where(Purchase.Id == id)
-        self.purchases_list = list(self.purchases)
-        self.update()
-        self.show_current_purchase()
-        
+                # Сохраняем историю для кнопки Назад
+                if hasattr(self.main_win, 'history'):
+                    self.main_win.history.append(self.main_win.stackedWidget.currentIndex())
 
-    def show_warning(self, title, text):
-        warning = QMessageBox.warning(self, title, text, QMessageBox.Ok)
-    def show_current_purchase_to_excel(self):
+                # Переходы
+                if command == "GOTO_SUPPLIER":
+                    self.main_win.supplierFormular.reload_data_id(record_id)
+                    self.main_win.navigate_to_page(12)  # Замените на реальный индекс поставщика в MainWindow
+
+                elif command == "GOTO_VESSEL":
+                    self.main_win.vesselFormular.reload_data_id(record_id)
+                    self.main_win.navigate_to_page(13)  # Замените на реальный индекс судна
+
+                elif command == "GOTO_VERSION":
+                    self.main_win.contractVersionFormular.reload_data_id(record_id)
+                    self.main_win.navigate_to_page(14)  # Замените на реальный индекс версии контракта
+
+                return  # Прерываем, так как это не файл и не http ссылка
+            # ----------------------------------------
+
+            # --- 2. СТАНДАРТНОЕ ОТКРЫТИЕ ФАЙЛОВ И ССЫЛОК ---
+            if os.path.isfile(filepath):
+                if filepath.lower().endswith(('.docx', '.doc')):
+                    subprocess.Popen(['start', 'winword', filepath], shell=True)
+                elif filepath.lower().endswith('.pdf'):
+                    QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
+                elif filepath.lower().endswith(('.xlsx', '.xls', '.csv')):
+                    subprocess.Popen(['start', 'excel', filepath], shell=True)
+            else:
+                if url_or_cmd and ('http' in url_or_cmd or 'zakupki' in url_or_cmd):
+                    QDesktopServices.openUrl(QUrl(url_or_cmd))
+                elif 'http' in filepath or 'zakupki' in filepath:
+                    QDesktopServices.openUrl(QUrl(filepath))
+                elif 'download' in filepath:
+                    url_for = item.text(1)
+                    QDesktopServices.openUrl(QUrl(url_for))
+    def export_to_excel(self):
         wb = Workbook()
         ws = wb.active
-        
-        for row in range(self.table.rowCount()):
-            item = self.table.item(row, 0)
-            if item is not None:
-                item_text = item.text()
-                if item_text.startswith("Описание закупки") or \
-                item_text.startswith("Определение НМЦК и ЦКЕИ") or \
-                item_text.startswith("Определение победителя") or \
-                item_text.startswith("Заключение контракта") or \
-                item_text.startswith("1.Определение НМЦК методом сопоставимых рыночных цен") or \
-                item_text.startswith("2.Определение НМЦК методом сопоставимых рыночных цен (анализа рынка) при использовании общедоступной информации") or \
-                item_text.startswith("3.Определение НМЦК затратным методом") or \
-                item_text.startswith("4.Итоговое определение НМЦК с использованием нескольких методов"):
-                    ws.append([item_text])  # Добавляем заголовок раздела
-                else:
-                    label_item = self.table.item(row, 0)
-                    value_item = self.table.item(row, 1)
-                    if label_item is not None and value_item is not None:
-                        label_text = label_item.text()
-                        value_text = value_item.text()
-                        if label_text and value_text:  # Проверка на пустую строку
-                            ws.append([label_text, value_text])
-        
+
+        root = self.tree.invisibleRootItem()
+        for i in range(root.childCount()):
+            parent_item = root.child(i)
+            ws.append([parent_item.text(0)])
+
+            for j in range(parent_item.childCount()):
+                child_item = parent_item.child(j)
+                ws.append([child_item.text(0), child_item.text(1)])
+
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
-        self.purchases = Purchase.select()
-        if file_dialog.exec_():
-            selected_file = file_dialog.selectedFiles()[0]
-            selected_file = selected_file if selected_file else None
-            if selected_file:
-                wb.save(f'{selected_file}\формуляр контракта {self.current_purchase.RegistryNumber}.xlsx')
-                QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
-       
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec())
+        if file_dialog.exec():
+            selected_file = file_dialog.selectedFiles()[0]
+            if selected_file and hasattr(self, 'current_contract'):
+                safe_name = str(self.current_contract.ContractNumber) if self.current_contract.ContractNumber else str(
+                    self.current_contract.Id)
+                # Очищаем спецсимволы, чтобы Excel не ругался на имя файла
+                safe_name = "".join(x for x in safe_name if x.isalnum() or x in "._- ")
+
+                save_path = f"{selected_file}/Contract_{safe_name}.xlsx"
+                wb.save(save_path)
+                QMessageBox.information(self, "Успех", f"Данные успешно выгружены в {save_path}")

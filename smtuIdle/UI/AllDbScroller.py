@@ -1267,7 +1267,7 @@ class PurchasesWidgetAll(QWidget):
         self.window.purchaseViewer.reload_data_id(selected_id)
 
     def handle_cell_click_contract(self, row, column):
-        selected_id = self.tablecont.item(row, 0).text()
+        selected_id = self.table_cont.item(row, 0).text()
 
         # Используем единую функцию маршрутизации из MainWindow (окно 8 - контракты)
         self.window.navigate_to_page(8)

@@ -381,7 +381,7 @@ class Vessel(BaseModel):
     shipyard_ogrn          = CharField(null=True, max_length=50,  verbose_name="ОГРН верфи")
 
     # ── Связь с закупкой (FK, опционально) ────
-    purchase  = ForeignKeyField(Purchase,  null=True, on_delete='SET NULL', backref='vessels', verbose_name="Закупка")
+    contract  = ForeignKeyField(Contract,  null=True, on_delete='SET NULL', backref='vessels', verbose_name="Контракт")
 
     class Meta:
         table_name = 'vessel'
