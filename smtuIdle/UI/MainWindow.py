@@ -132,7 +132,7 @@ class Ui_MainWindow(QMainWindow):
             latest_changed_time = latest_record.chenged_time.strftime('%d.%m.%Y %H:%M') 
         
         else:
-            latest_changed_time = "17.05.2024"
+            latest_changed_time = "01.01.2026"
         self.formatted_date = current_date.strftime("%d-%m-%Y")
         
         user = User.get(User.username == self.username)

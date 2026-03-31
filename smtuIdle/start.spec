@@ -1,4 +1,4 @@
-# smtu.spec
+# pyinstaller start.spec --clean
 from PyInstaller.utils.hooks import collect_submodules, collect_all
 import sys
 

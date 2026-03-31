@@ -169,7 +169,26 @@ class ContractWidget(QWidget):
             "doc_name": "Название документа",
             "files": "Файлы",
             "links": "Связанные ссылки",
-            "text": "Текст"
+            "text": "Текст",
+
+            # Новые ключи из вашего запроса
+            "totals summary": "Итоговая сводка",
+            "section title": "Заголовок раздела",
+            "Table": "Таблица",
+            "Nested": "Вложенные данные",
+            "Meta": "Метаданные",
+            "Actions": "Действия",
+            "Href": "Ссылка",
+            "Print link": "Ссылка на печать",
+            "Rows by index": "Строки по порядку",
+            "table": "Таблица",
+            "name": "Название",
+            "quantitu": "Количество",
+            # Исправлено с quantitu -> quantity (или оставлено как есть, если в JSON именно так)
+            "price": "Цена",
+            "sum": "Сумма",
+            "ktru": "КТРУ",
+            "raw_sum_text": "Текстовая сумма"
         }
 
         if not json_data:
@@ -177,13 +196,16 @@ class ContractWidget(QWidget):
 
         if isinstance(json_data, dict):
             for key, value in json_data.items():
+                # Если ключ пустой или null, используем заглушку
                 if key == "null" or key is None:
-                    key = "Параметр"
-
-                if key in key_translations:
-                    display_key = key_translations[key]
+                    display_key = "Параметр"
                 else:
-                    display_key = str(key).replace("_", " ").capitalize()
+                    # Проверка на наличие перевода
+                    if key in key_translations:
+                        display_key = key_translations[key]
+                    else:
+                        # Если нет перевода, форматируем как есть (snake_case -> Title Case)
+                        display_key = str(key).replace("_", " ").capitalize()
 
                 if isinstance(value, (dict, list)):
                     child = QTreeWidgetItem(parent_item)
@@ -193,6 +215,7 @@ class ContractWidget(QWidget):
                     child.setFont(0, font)
                     self.add_json_to_tree(child, value, key)
                 else:
+                    # Логика отображения значений (скаляров)
                     if key == "text":
                         parent_item.setText(1, str(value))
                     elif key in ("url", "sign_url", "sign_link"):
@@ -205,7 +228,7 @@ class ContractWidget(QWidget):
                         child.setFont(1, font_link)
                         child.setData(1, Qt.UserRole, str(value))
                     elif key in ("all_hrefs", "hrefs"):
-                        pass
+                        pass  # Обработка списков ссылок ниже в else if isinstance(json_data, list)
                     else:
                         child = QTreeWidgetItem(parent_item)
                         child.setText(0, display_key)
@@ -214,11 +237,20 @@ class ContractWidget(QWidget):
         elif isinstance(json_data, list):
             for idx, item in enumerate(json_data):
                 if isinstance(item, (dict, list)):
+                    # Определение имени для вложенных объектов
                     child_name = f"Запись {idx + 1}"
+
+                    # Специфичные имена для контекста (например, заголовки или ссылки)
                     if parent_key == "headers":
                         child_name = f"Колонка {idx + 1}"
                     elif parent_key in ("all_hrefs", "hrefs"):
                         child_name = f"Ссылка {idx + 1}"
+
+                    # Если родительский ключ совпадает с новыми полями, можно дать более точное имя
+                    if parent_key == "totals summary":
+                        child_name = f"Пункт сводки {idx + 1}"
+                    elif parent_key in ("rows", "Rows by index"):
+                        child_name = f"Строка {idx + 1}"
 
                     child = QTreeWidgetItem(parent_item)
                     child.setText(0, child_name)
@@ -233,10 +265,21 @@ class ContractWidget(QWidget):
                     else:
                         self.add_json_to_tree(child, item, parent_key)
                 else:
+                    # Если в списке простые значения (например, массив строк или чисел)
                     if parent_key == "headers":
                         child = QTreeWidgetItem(parent_item)
                         child.setText(0, f"Колонка {idx + 1}")
                         child.setText(1, str(item) if item is not None else "Нет данных")
+                    elif parent_key in ("all_hrefs", "hrefs"):
+                        # Обработка списка ссылок вложенных объектов (если вдруг это не dict внутри list)
+                        child = QTreeWidgetItem(parent_item)
+                        child.setText(0, f"Ссылка {idx + 1}")
+                        child.setText(1, str(item))
+                        child.setForeground(1, Qt.blue)
+                        font_link = QFont()
+                        font_link.setUnderline(True)
+                        child.setFont(1, font_link)
+                        child.setData(1, Qt.UserRole, str(item))
                     else:
                         child = QTreeWidgetItem(parent_item)
                         child.setText(0, f"Элемент {idx + 1}")
