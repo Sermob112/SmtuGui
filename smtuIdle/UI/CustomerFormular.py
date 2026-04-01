@@ -50,10 +50,10 @@ class CustomerWidget(QWidget):
         # --- Заголовок ---
         self.label_form = QLabel("")
         font_title = QFont()
-        font_title.setPointSize(16)
+        font_title.setPointSize(10)
         font_title.setBold(True)
         self.label_form.setFont(font_title)
-        self.label_form.setAlignment(Qt.AlignHCenter)
+
 
         # --- Кнопки управления ---
         self.BackButton = QPushButton("Назад", self)
@@ -128,7 +128,7 @@ class CustomerWidget(QWidget):
         # Делаем URL кликабельными
         link_fields = [
             'Сайт организации', 'Ссылка на закупки',
-            'Ссылка на контракты', 'Карточка аккаунта', 'Доп. информация (url)'
+            'Ссылка на контракты', 'Формуляр аккаунта', 'Доп. информация (url)'
         ]
 
         if label_text in link_fields and value_text != "Нет данных":
@@ -245,9 +245,9 @@ class CustomerWidget(QWidget):
 
             # Заголовок
             if current_customer.name:
-                self.label_form.setText(f"Заказчик: {current_customer.name}")
+                self.label_form.setText(f"Формуляр заказчика: {current_customer.name}")
             else:
-                self.label_form.setText("Карточка заказчика")
+                self.label_form.setText("Формуляр заказчика")
             self.label_form.show()
 
             # --- 1. Основные реквизиты (развернуто) ---
@@ -273,7 +273,7 @@ class CustomerWidget(QWidget):
             self.add_row_to_table('Сайт организации', current_customer.organization_url)
             self.add_row_to_table('Ссылка на закупки', current_customer.purchases_url)
             self.add_row_to_table('Ссылка на контракты', current_customer.contracts_url)
-            self.add_row_to_table('Карточка аккаунта', current_customer.account_card_url)
+            self.add_row_to_table('Формуляр аккаунта', current_customer.account_card_url)
             self.add_row_to_table('Доп. информация (url)', current_customer.additional_info_url)
 
             # --- 4. JSON Данные ---

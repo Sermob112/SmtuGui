@@ -59,10 +59,10 @@ class ContractWidget(QWidget):
         # --- Заголовок ---
         self.label_form = QLabel("")
         font_title = QFont()
-        font_title.setPointSize(16)
+        font_title.setPointSize(10)
         font_title.setBold(True)
         self.label_form.setFont(font_title)
-        self.label_form.setAlignment(Qt.AlignHCenter)
+
 
         # --- Кнопки управления ---
         self.BackButton = QPushButton("Назад", self)
@@ -297,7 +297,7 @@ class ContractWidget(QWidget):
 
             # Заголовок
             title_text = f"№ {c.ContractNumber}" if c.ContractNumber else f"ID {c.Id}"
-            self.label_form.setText(f"Карточка контракта {title_text}")
+            self.label_form.setText(f"Формуляр контракта {title_text}")
             self.label_form.show()
 
             # --- 1. Основные реквизиты (развернуто) ---

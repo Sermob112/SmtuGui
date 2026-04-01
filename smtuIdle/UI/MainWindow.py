@@ -1,3 +1,5 @@
+import os
+import sys
 
 from PySide6.QtWidgets import *
 from PySide6.QtGui import QIcon, QPixmap, QTransform
@@ -26,7 +28,14 @@ from smtuIdle.UI.ContractVersionFormular import ContractVersionWidget
 # from ResultWindow import ResultWindow
 # from Viewer import MyWindow
 # from Module_start import AuthManager
+if getattr(sys, 'frozen', False):
+    # Запущен как .exe (PyInstaller)
+    BASE_DIR = sys._MEIPASS
+else:
+    # Запущен как обычный .py скрипт
+    BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
+PICS_DIR = os.path.join(BASE_DIR, 'Pics')
 class Ui_MainWindow(QMainWindow):
     def __init__(self,username):
         super(Ui_MainWindow, self, ).__init__()
@@ -59,14 +68,11 @@ class Ui_MainWindow(QMainWindow):
                 """
 
         # Загружаем картинку стрелки
-        arrow_pixmap = QPixmap("../Pics/arrow.svg")
-
-        # Создаем иконку для кнопки НАЗАД (оригинальная картинка)
+        arrow_path = os.path.join(PICS_DIR, 'arrow.svg')
+        arrow_pixmap = QPixmap(arrow_path)
         back_icon = QIcon(arrow_pixmap)
 
-        # Создаем иконку для кнопки ВПЕРЕД (отраженная/повернутая картинка)
-        # Можно использовать поворот: arrow_pixmap.transformed(QTransform().rotate(180))
-        # Или горизонтальное отражение (что обычно лучше для стрелок):
+        # Создаем иконку для кнопки НАЗАД (оригинальная картинка)
         forward_pixmap = arrow_pixmap.transformed(QTransform().scale(-1, 1))
         forward_icon = QIcon(forward_pixmap)
 
@@ -132,7 +138,7 @@ class Ui_MainWindow(QMainWindow):
             latest_changed_time = latest_record.chenged_time.strftime('%d.%m.%Y %H:%M') 
         
         else:
-            latest_changed_time = "01.01.2026"
+            latest_changed_time = "01.04.2026"
         self.formatted_date = current_date.strftime("%d-%m-%Y")
         
         user = User.get(User.username == self.username)

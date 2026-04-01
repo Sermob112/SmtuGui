@@ -63,10 +63,10 @@ class PurchasesWidget(QWidget):
         # Настраиваем заголовок формы (Номер закупки)
         self.label_form = QLabel("")
         font_title = QFont()
-        font_title.setPointSize(16)
+        font_title.setPointSize(10)
         font_title.setBold(True)
         self.label_form.setFont(font_title)
-        self.label_form.setAlignment(Qt.AlignHCenter)
+
         self.current_position =0
         self.BackButton = QPushButton("Назад", self)
         self.BackButton.clicked.connect(self.go_back)
@@ -82,8 +82,7 @@ class PurchasesWidget(QWidget):
         # self.addButtonCIA = QPushButton("Добавить ЦКЕИ", self)
         self.addButtonCurrency= QPushButton("Экспорт в Еxcel Формуляра Закупок", self)
         self.addButtonCurrency.setMaximumWidth(300)
-        self.label_form = QLabel() 
-        self.label_form.setText("Редактирование Формуляра")
+
 
          # Устанавливаем обработчики событий для кнопок
         self.addButtonContract.clicked.connect(self.add_button_nmck_clicked)
@@ -185,9 +184,9 @@ class PurchasesWidget(QWidget):
             self.current_purchase = current_purchase
 
             if current_purchase.RegistryNumber:
-                self.label_form.setText(f"Карточка закупки № {current_purchase.RegistryNumber}")
+                self.label_form.setText(f"Формуляр закупки № {current_purchase.RegistryNumber}")
             else:
-                self.label_form.setText("Карточка закупки")
+                self.label_form.setText("Формуляр закупки")
             self.label_form.show()
 
             self.add_section_to_table('Общие сведения', expanded=True)
@@ -490,6 +489,7 @@ class PurchasesWidget(QWidget):
 
         font = QFont()
         font.setPointSize(10)
+
         item.setFont(0, font)
         item.setFont(1, font)
 
