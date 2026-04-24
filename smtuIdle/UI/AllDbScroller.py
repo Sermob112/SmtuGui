@@ -147,7 +147,7 @@ class PurchasesWidgetAll(QWidget):
         unique_purchase_CustomerName = Purchase.select(Purchase.CustomerName).distinct().order_by(fn.Lower(Purchase.CustomerName))
         self.sort_by_putch_CustomerName = QComboBox()
         self.sort_by_putch_CustomerName.addItem("Фильтрация по заказчикам")
-        self.sort_by_putch_CustomerName.setFixedWidth(250)
+        self.sort_by_putch_CustomerName.setFixedWidth(500)
         for order in unique_purchase_CustomerName:
             self.sort_by_putch_CustomerName.addItem(str(order.CustomerName))
 
@@ -198,7 +198,7 @@ class PurchasesWidgetAll(QWidget):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Поиск по Реестровому номеру, заказчику, наименованию объекта или организации")
         self.unique_values_query = self.findUnic()
-        self.search_input.setFixedWidth(300)
+        self.search_input.setFixedWidth(600)
         completer = QCompleter(self.unique_values_query )
         # self.search_input.textChanged.connect(completer.filter)
         completer.setFilterMode(Qt.MatchContains)

@@ -73,6 +73,6 @@ exe = EXE(
     debug=False,
     strip=False,
     upx=True,
-    console=True,             # True пока отлаживаете!
+    console=False,             # True пока отлаживаете!
     icon='C:\\Users\\Sergey\\Desktop\\work\\Иконки\\BD.ico',
 )
