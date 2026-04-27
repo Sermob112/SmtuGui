@@ -153,19 +153,18 @@ def insert_in_table_full(csv_file_path):
     print("Start")
     errors = []
     updated_rows = 0
-    inserted_rows = 0
+    skipped_rows = 0
 
     try:
         with open(csv_file_path, 'r', encoding='windows-1251') as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=';')
-            next(csv_reader)  # Пропустить заголовок
+            next(csv_reader)
 
             for row in csv_reader:
                 max_length = 512
 
-                # ── Парсинг полей ──────────────────────────────
                 purchase_order      = row[2][:max_length] if row[2] else 'Нет данных'
-                registry_number = row[0].lstrip('№').strip()[:max_length] if row[0] else 'Нет данных'
+                registry_number     = row[0].lstrip('№').strip()[:max_length] if row[0] else 'Нет данных'
                 procurement_method  = row[3][:max_length] if row[3] else 'Нет данных'
                 purchase_name       = row[4][:max_length] if row[4] else 'Нет данных'
                 auction_subject     = row[7][:max_length] if row[7] else 'Нет данных'
@@ -207,25 +206,6 @@ def insert_in_table_full(csv_file_path):
                     except (ValueError, TypeError):
                         return None
 
-                placement_date        = parse_date(row[1])
-                application_end_date  = parse_date(row[1])
-                auction_date_val      = parse_date(row[1])
-
-                try:
-                    application_start_date = parse_date(row[10])
-                except IndexError:
-                    application_start_date = None
-
-                # ── TKP JSON ──────────────────────────────────
-                tkp_data_dict = {}
-                for i in range(10):
-                    try:
-                        val = int(row[13 + i])
-                        tkp_data_dict[f"ТКП №{1 + i}"] = val
-                    except (ValueError, IndexError):
-                        pass
-                tkp_data_json = json.dumps(tkp_data_dict, ensure_ascii=False)
-
                 def safe_int(val, default=0):
                     try:
                         return int(val) if val else default
@@ -238,23 +218,36 @@ def insert_in_table_full(csv_file_path):
                     except ValueError:
                         return default
 
-                query_count             = safe_int(row[11])
-                response_count          = safe_int(row[12])
-                average_price           = safe_float(row[23])
-                min_price               = safe_float(row[24])
-                max_price               = safe_float(row[25])
-                standard_deviation      = safe_float(row[26])
-                coefficient_of_variation = safe_float(row[27])
-                nmck_market             = safe_float(row[29])
-                financing_limit         = safe_float(row[30])
+                placement_date         = parse_date(row[1])
+                application_end_date   = parse_date(row[1])
+                auction_date_val       = parse_date(row[1])
+                application_start_date = parse_date(row[10])
 
-                # ── Contract поля ────────────────────────────
+                tkp_data_dict = {}
+                for i in range(10):
+                    try:
+                        val = int(row[13 + i])
+                        tkp_data_dict[f"ТКП №{1 + i}"] = val
+                    except (ValueError, IndexError):
+                        pass
+                tkp_data_json = json.dumps(tkp_data_dict, ensure_ascii=False)
+
+                query_count              = safe_int(row[11])
+                response_count           = safe_int(row[12])
+                average_price            = safe_float(row[23])
+                min_price                = safe_float(row[24])
+                max_price                = safe_float(row[25])
+                standard_deviation       = safe_float(row[26])
+                coefficient_of_variation = safe_float(row[27])
+                nmck_market              = safe_float(row[29])
+                financing_limit          = safe_float(row[30])
+
                 total_applications    = row[32] if row[32] else 0
                 admitted_applications = row[33] if row[33] else 0
                 rejected_applications = row[34] if row[34] else 0
 
-                price_proposal_dict  = {}
-                applicant_dict       = {}
+                price_proposal_dict   = {}
+                applicant_dict        = {}
                 applicant_status_dict = {}
                 k = 1
                 for i in range(0, 17, 3):
@@ -279,7 +272,7 @@ def insert_in_table_full(csv_file_path):
                 contracting_authority = row[53] if row[53] else ''
                 winner_executor       = row[54] if row[54] else ''
                 contract_identifier   = row[55] if row[55] else ''
-                contract_reg_number = row[56].lstrip('№').strip() if row[56] else ''
+                contract_reg_number   = row[56].lstrip('№').strip() if row[56] else ''
                 contract_number       = row[57] if row[57] else ''
                 contract_price        = safe_float(row[58])
                 start_date            = parse_date(row[59])
@@ -288,7 +281,14 @@ def insert_in_table_full(csv_file_path):
                 reduction_nmc_percent = safe_float(row[62])
                 reduction_nmc         = safe_float(row[68])
 
-                # ── Purchase: update or create ────────────────
+                # ── Только UPDATE, без INSERT ─────────────────
+                try:
+                    existing_purchase = Purchase.get(Purchase.RegistryNumber == registry_number)
+                except Purchase.DoesNotExist:
+                    print(f"[SKIP] Закупка не найдена в БД: {registry_number}")
+                    skipped_rows += 1
+                    continue  # ← пропускаем строку, ничего не создаём
+
                 purchase_data = dict(
                     PurchaseOrder=purchase_order,
                     ProcurementMethod=procurement_method,
@@ -331,84 +331,46 @@ def insert_in_table_full(csv_file_path):
                     isChanged=True,
                 )
 
-                try:
-                    existing_purchase = Purchase.get(Purchase.RegistryNumber == registry_number)
-                    # Обновляем существующую запись
-                    (Purchase
-                     .update(purchase_data)
-                     .where(Purchase.RegistryNumber == registry_number)
-                     .execute())
-                    purchase_id = existing_purchase.Id
+                Purchase.update(purchase_data).where(Purchase.RegistryNumber == registry_number).execute()
 
-                    # Обновляем связанный контракт
-                    contract_data = dict(
-                        TotalApplications=total_applications,
-                        AdmittedApplications=admitted_applications,
-                        RejectedApplications=rejected_applications,
-                        PriceProposal=price_proposal_json,
-                        Applicant=applicant_json,
-                        Applicant_satatus=applicant_status_json,
-                        ContractingAuthority=contracting_authority,
-                        WinnerExecutor=winner_executor,
-                        ContractIdentifier=contract_identifier,
-                        RegistryNumber=contract_reg_number,
-                        ContractNumber=contract_number,
-                        ContractPrice=contract_price,
-                        StartDate=start_date,
-                        EndDate=end_date,
-                        AdvancePayment=advance_payment,
-                        ReductionNMCPercent=reduction_nmc_percent,
-                        ReductionNMC=reduction_nmc,
-                        ContractFile='Нет данных',
-                        SupplierProtocol='Нет данных',
-                    )
+                contract_data = dict(
+                    TotalApplications=total_applications,
+                    AdmittedApplications=admitted_applications,
+                    RejectedApplications=rejected_applications,
+                    PriceProposal=price_proposal_json,
+                    Applicant=applicant_json,
+                    Applicant_satatus=applicant_status_json,
+                    ContractingAuthority=contracting_authority,
+                    WinnerExecutor=winner_executor,
+                    ContractIdentifier=contract_identifier,
+                    RegistryNumber=contract_reg_number,
+                    ContractNumber=contract_number,
+                    ContractPrice=contract_price,
+                    StartDate=start_date,
+                    EndDate=end_date,
+                    AdvancePayment=advance_payment,
+                    ReductionNMCPercent=reduction_nmc_percent,
+                    ReductionNMC=reduction_nmc,
+                    ContractFile='Нет данных',
+                    SupplierProtocol='Нет данных',
+                )
 
-                    updated_contract = (Contract
-                                        .update(contract_data)
-                                        .where(Contract.purchase == existing_purchase.Id)
-                                        .execute())
+                updated_contract = (Contract
+                                    .update(contract_data)
+                                    .where(Contract.purchase == existing_purchase.Id)
+                                    .execute())
 
-                    if updated_contract == 0:
-                        # Контракт ещё не существует — создаём
-                        Contract.create(purchase_id=existing_purchase.Id, **contract_data)
+                if updated_contract == 0:
+                    print(f"[SKIP CONTRACT] Контракт не найден для закупки: {registry_number}")
 
-                    updated_rows += 1
-
-                except Purchase.DoesNotExist:
-                    # Записи нет — создаём Purchase + Contract
-                    new_purchase = Purchase.create(
-                        RegistryNumber=registry_number,
-                        **purchase_data
-                    )
-                    Contract.create(
-                        purchase_id=new_purchase.Id,
-                        TotalApplications=total_applications,
-                        AdmittedApplications=admitted_applications,
-                        RejectedApplications=rejected_applications,
-                        PriceProposal=price_proposal_json,
-                        Applicant=applicant_json,
-                        Applicant_satatus=applicant_status_json,
-                        ContractingAuthority=contracting_authority,
-                        WinnerExecutor=winner_executor,
-                        ContractIdentifier=contract_identifier,
-                        RegistryNumber=contract_reg_number,
-                        ContractNumber=contract_number,
-                        ContractPrice=contract_price,
-                        StartDate=start_date,
-                        EndDate=end_date,
-                        AdvancePayment=advance_payment,
-                        ReductionNMCPercent=reduction_nmc_percent,
-                        ReductionNMC=reduction_nmc,
-                        ContractFile='Нет данных',
-                        SupplierProtocol='Нет данных',
-                    )
-                    inserted_rows += 1
+                updated_rows += 1
 
     except Exception as e:
         print("Ошибка при обработке файла:", e)
         errors.append(str(e))
-    print("End")
-    return updated_rows, inserted_rows, errors
+
+    print(f"End: обновлено {updated_rows}, пропущено {skipped_rows}")
+    return updated_rows, skipped_rows, errors
 
 def insert_in_table_for_users(csv_file_path):
     errors = []
@@ -663,85 +625,56 @@ def export_to_excel(data, output_excel_path, filters):
 
 def export_to_excel_contract(data, output_excel_path, filters):
     try:
-        # Создайте DataFrame из данных
-        filter_df = pd.DataFrame([filters],columns=[
-    "filter_criteria",  "start_date", "end_date", "min_price", "max_price"
-])
-        
+        filter_df = pd.DataFrame([filters], columns=[
+            "filter_criteria", "start_date", "end_date", "min_price", "max_price"
+        ])
         filter_column_translation = {
-    "filter_criteria": "Критерии Фильтра",
-    "start_date": "Дата Начала",
-    "end_date": "Дата Окончания",
-    "min_price": "Минимальная Цена",
-    "max_price": "Максимальная Цена"
-}
-        # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
+            "filter_criteria": "Критерии фильтра",
+            "start_date":      "Дата начала",
+            "end_date":        "Дата окончания",
+            "min_price":       "Минимальная цена",
+            "max_price":       "Максимальная цена",
+        }
         filter_df.fillna('', inplace=True)
-        # selected_data = [tuple[:69] for tuple in data]
-       
-        selected_columns = [ "Purchase.Id",
-"Contract.RegistryNumber",
-"Purchase.RegistryNumber",
-"Contract.ContractNumber",
-"Contract.StartDate",
-"Contract.ContractPrice",
-"Contract.ContractingAuthority",
-"Contract.WinnerExecutor",
-"Purchase.PurchaseName",
-"Contract.TotalApplications",
-"Contract.AdmittedApplications",
-"Contract.RejectedApplications",
-"Contract.PriceProposal",
-"Contract.Applicant",
-"Contract.Applicant_satatus",
-"Contract.ContractIdentifier",
-"Contract.EndDate",
-"Contract.AdvancePayment",
-"Contract.ReductionNMC",
-"Contract.ReductionNMCPercent",
-"Contract.SupplierProtocol",
-"Contract.ContractFile"]
-        selected_data = [[t[selected_columns.index(col)] for col in selected_columns] for t in data]
-        # print(selected_data[0])
-        # Создайте DataFrame с данными
-        data_df = pd.DataFrame(selected_data, columns=selected_columns)
-
-        # Создайте словарь для перевода названий столбцов
-        column_translation = {
-            "Purchase.Id":"Номер",
-"Contract.RegistryNumber": "Реестровый Номер",
-"Purchase.RegistryNumber": "Реестровый Номер закупки",
-"Contract.ContractNumber": "№ договора",
-"Contract.StartDate": "Дата начала/подписания",
-"Contract.ContractPrice": "Цена договора, руб.",
-"Contract.ContractingAuthority": "Заказчик по контракту",
-"Contract.WinnerExecutor": "Победитель-исполнитель контракта",
-"Purchase.PurchaseName": "Название Закупки",
-"Contract.TotalApplications": "Общее количество заявок",
-"Contract.AdmittedApplications": "Общее количество допущенных заявок",
-"Contract.RejectedApplications": "Общее количество отклоненных заявок",
-"Contract.PriceProposal": "Ценовое предложение",
-"Contract.Applicant": "Заявитель",
-"Contract.Applicant_satatus": "Статус заявителя",
-"Contract.ContractIdentifier": "Идентификатор договора",
-"Contract.EndDate": "Дата окончания/исполнения",
-"Contract.AdvancePayment": "Размер авансирования, руб./(%)",
-"Contract.ReductionNMC": "Снижение НМЦК, руб.",
-"Contract.ReductionNMCPercent": "Снижение НМЦК, %",
-"Contract.SupplierProtocol": "Протоколы определения поставщика (выписка)",
-"Contract.ContractFile": "Договор"
-
-    }
-
         filter_df.rename(columns=filter_column_translation, inplace=True)
 
-        data_df.rename(columns=column_translation, inplace=True)
+        rows = []
+        for t in data:
+            rows.append({
+                "Номер закупки":                                t.get("purchase_id", ''),
+                "Реестровый номер контракта":                   t.get("RegistryNumber", ''),
+                "№ договора":                                   t.get("ContractNumber", ''),
+                "Дата начала / подписания":                     t.get("StartDate", ''),
+                "Дата окончания / исполнения":                  t.get("EndDate", ''),
+                "Цена договора, руб.":                          t.get("ContractPrice", ''),
+                "Заказчик по контракту":                        t.get("ContractingAuthority", ''),
+                "Победитель-исполнитель контракта":             t.get("WinnerExecutor", ''),
+                "Общее кол-во заявок":                          t.get("TotalApplications", ''),
+                "Допущенных заявок":                            t.get("AdmittedApplications", ''),
+                "Отклонённых заявок":                           t.get("RejectedApplications", ''),
+                "Ценовое предложение":                          t.get("PriceProposal", ''),
+                "Заявитель":                                    t.get("Applicant", ''),
+                "Статус заявителя":                             t.get("Applicant_satatus", ''),
+                "Идентификатор договора":                       t.get("ContractIdentifier", ''),
+                "Размер авансирования, руб. (%)":               t.get("AdvancePayment", ''),
+                "Снижение НМЦК, руб.":                          t.get("ReductionNMC", ''),
+                "Снижение НМЦК, %":                             t.get("ReductionNMCPercent", ''),
+                "Протоколы определения поставщика (выписка)":   t.get("SupplierProtocol", ''),
+                "Договор":                                      t.get("ContractFile", ''),
+            })
+
+        data_df = pd.DataFrame(rows)
+        data_df.fillna('', inplace=True)
+
         with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
             filter_df.to_excel(writer, index=False)
             data_df.to_excel(writer, startrow=2, header=True, index=False)
+
         return True
+
     except Exception as e:
         print("Ошибка при экспорте данных в Excel:", e)
+        return False
 
 
 def export_to_excel_all(data, output_excel_path):

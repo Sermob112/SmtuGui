@@ -346,14 +346,14 @@ class PurchasesWidget(QWidget):
 
             # JSON ПОЛЯ ЗАКУПКИ
             json_fields = [
-                ("Общая информация", current_purchase.common_info_json),
-                ("Документы", current_purchase.documents_json),
-                ("Журнал событий", current_purchase.event_log_json),
-                ("Результаты поставщика", current_purchase.supplier_result_json),
-                ("Список лотов", current_purchase.lots_json),
-                ("Протоколы", current_purchase.protocols_json),
-                ("Сведения о договорах", current_purchase.contracts_info_json),
-                ("Изменения", current_purchase.changes_json)
+                ("Общая информация по закупке", current_purchase.common_info_json),
+                ("Документы закупки", current_purchase.documents_json),
+                ("Журнал событий закупки", current_purchase.event_log_json),
+                ("Результаты поставщика закупки", current_purchase.supplier_result_json),
+                ("Список лотов закупки", current_purchase.lots_json),
+                ("Протоколы закупки", current_purchase.protocols_json),
+                ("Сведения о договорах закупки", current_purchase.contracts_info_json),
+                ("Изменения закупки", current_purchase.changes_json),
             ]
             for section_name, json_string in json_fields:
                 self.add_section_to_table(section_name, expanded=False)
@@ -396,10 +396,20 @@ class PurchasesWidget(QWidget):
                     QTreeWidgetItem(customer_node, ['КПП', str(customer.kpp)])
 
             # 2. КОНТРАКТЫ И ИХ СУДА (по RegistryNumber)
-            if current_purchase.RegistryNumber:
-                contracts = Contract.select().where(Contract.RegistryNumber == current_purchase.RegistryNumber)
-                if contracts.exists():
-                    for contract in contracts:
+            contracts = None
+
+            # Сначала ищем по прямой связи FK (purchase_id)
+            fk_contracts = Contract.select().where(Contract.purchase == current_purchase.Id)
+            if fk_contracts.exists():
+                contracts = fk_contracts
+            # Если не нашли — fallback по RegistryNumber
+            elif current_purchase.RegistryNumber:
+                rn_contracts = Contract.select().where(Contract.RegistryNumber == current_purchase.RegistryNumber)
+                if rn_contracts.exists():
+                    contracts = rn_contracts
+
+            if contracts is not None:
+                for contract in contracts:
                         # Ветка для контракта
                         c_title = f'Контракт № {contract.ContractNumber}' if contract.ContractNumber else f'Контракт ID {contract.Id}'
                         contract_node = QTreeWidgetItem(links_parent)
@@ -510,7 +520,6 @@ class PurchasesWidget(QWidget):
                 item.setData(1, Qt.UserRole, link)
 
     def add_json_to_tree(self, parent_item, json_data, parent_key=""):
-        # Словарь для перевода ключей парсера на человеческий язык
         key_translations = {
             "title": "Заголовок",
             "items": "Элементы",
@@ -530,8 +539,61 @@ class PurchasesWidget(QWidget):
             "doc_name": "Название документа",
             "files": "Файлы",
             "links": "Связанные ссылки",
-            "text": "Текст"
+            "text": "Текст",
+            "table": "Таблица",
+            "Totals summary": "Общая сумма",
+            "Rows by index": "Строк по индексу",
+            "Nested": "Вложения"
         }
+
+        # Словарь перевода значений
+        value_translations = {
+            "kv": "Значение",
+            "title": "Заголовок",
+            "header": "Название группы",
+            "kind": "Тип",
+            "type": "Тип документа",
+            "url": "Ссылка",
+            "text": "Текст",
+            "items": "Элементы",
+            "files": "Файлы",
+            "links": "Связанные ссылки",
+            "doc_name": "Название документа",
+            "rows": "Строки таблицы",
+            "headers": "Заголовки колонок",
+            "parsed_table": "Табличные данные",
+            "table_standalone": "Отдельная таблица",
+            "sign_link": "Ссылка на подпись",
+            "sign_url": "Ссылка на подпись",
+            "all_hrefs": "Все ссылки",
+            "hrefs": "Ссылки",
+            # Добавляй сюда типовые строковые значения из твоих данных
+            "true": "Да",
+            "false": "Нет",
+            "null": "Нет данных",
+            "None": "Нет данных",
+            "table": "Таблица",
+            "Totals summary": "Общая сумма",
+            "Rows by index": "Строк по индексу",
+            "Nested": "Вложения"
+        }
+
+        def translate_key(key):
+            if key in key_translations:
+                return key_translations[key]
+            return str(key).replace("_", " ").capitalize()
+
+        def translate_value(value):
+            if value is None:
+                return "Нет данных"
+            str_val = str(value)
+            # Точное совпадение со словарём
+            if str_val in value_translations:
+                return value_translations[str_val]
+            # Lowercase совпадение (для "True"/"False" и т.п.)
+            if str_val.lower() in value_translations:
+                return value_translations[str_val.lower()]
+            return str_val
 
         if not json_data:
             return
@@ -541,13 +603,7 @@ class PurchasesWidget(QWidget):
                 if key == "null" or key is None:
                     key = "Параметр"
 
-                # ПЕРЕВОДИМ ИЛИ ФОРМАТИРУЕМ КЛЮЧ
-                if key in key_translations:
-                    display_key = key_translations[key]
-                else:
-                    # Если ключа нет в словаре: заменяем "_" на пробел и делаем первую букву заглавной
-                    # Например: "some_field_name" -> "Some field name"
-                    display_key = str(key).replace("_", " ").capitalize()
+                display_key = translate_key(key)
 
                 if isinstance(value, (dict, list)):
                     child = QTreeWidgetItem(parent_item)
@@ -558,11 +614,11 @@ class PurchasesWidget(QWidget):
                     self.add_json_to_tree(child, value, key)
                 else:
                     if key == "text":
-                        parent_item.setText(1, str(value))
+                        parent_item.setText(1, translate_value(value))
                     elif key in ("url", "sign_url", "sign_link"):
                         child = QTreeWidgetItem(parent_item)
                         child.setText(0, display_key)
-                        child.setText(1, str(value))
+                        child.setText(1, str(value))  # URL не переводим
                         child.setForeground(1, Qt.blue)
                         font_link = QFont()
                         font_link.setUnderline(True)
@@ -573,8 +629,7 @@ class PurchasesWidget(QWidget):
                     else:
                         child = QTreeWidgetItem(parent_item)
                         child.setText(0, display_key)
-                        child.setText(1, str(value) if value is not None else "Нет данных")
-
+                        child.setText(1, translate_value(value))  # ← перевод значения
 
         elif isinstance(json_data, list):
             for idx, item in enumerate(json_data):
@@ -589,7 +644,7 @@ class PurchasesWidget(QWidget):
                     child.setText(0, child_name)
 
                     if parent_key in ("all_hrefs", "hrefs"):
-                        child.setText(1, str(item))
+                        child.setText(1, str(item))  # URL не переводим
                         child.setForeground(1, Qt.blue)
                         font_link = QFont()
                         font_link.setUnderline(True)
@@ -601,13 +656,13 @@ class PurchasesWidget(QWidget):
                     if parent_key == "headers":
                         child = QTreeWidgetItem(parent_item)
                         child.setText(0, f"Колонка {idx + 1}")
-                        child.setText(1, str(item) if item is not None else "Нет данных")
+                        child.setText(1, translate_value(item))  # ← перевод значения
                     else:
                         child = QTreeWidgetItem(parent_item)
                         child.setText(0, f"Элемент {idx + 1}")
-                        child.setText(1, str(item) if item is not None else "Нет данных")
+                        child.setText(1, translate_value(item))  # ← перевод значения
         else:
-            parent_item.setText(1, str(json_data))
+            parent_item.setText(1, translate_value(json_data))  # ← перевод корневого значения
 
     def add_section_to_table(self, section_text, expanded=False):
         # Создаем родительскую ветку (Группу)

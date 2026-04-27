@@ -350,12 +350,12 @@ class ContractWidget(QWidget):
 
             # --- 5. JSON Данные ---
             json_fields = [
-                ("Общая информация (детали)", c.common_info_json),
-                ("Платежи и объекты закупки", c.payment_targets_json),
-                ("Исполнение (расторжение)", c.process_info_json),
-                ("Вложения", c.documents_json),
-                ("Журнал версий", c.journal_versions_json),
-                ("Журнал событий", c.event_log_json)
+                ("Общая информация контракта", c.common_info_json),
+                ("Платежи и объекты закупки контракта", c.payment_targets_json),
+                ("Исполнение (расторжение) контракта", c.process_info_json),
+                ("Вложения контракта", c.documents_json),
+                ("Журнал версий контракта", c.journal_versions_json),
+                ("Журнал событий контракта", c.event_log_json),
             ]
 
             for section_name, json_string in json_fields:

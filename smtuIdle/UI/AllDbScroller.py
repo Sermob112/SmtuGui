@@ -14,11 +14,7 @@ from peewee import fn
 from locale import format_string
 import locale
 locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
-# Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 
-
-
-# Создаем соединение с базой данных
 db = SqliteDatabase('database.db')
 cursor = db.cursor()
 
@@ -91,12 +87,15 @@ class PurchasesWidgetAll(QWidget):
         layout = QVBoxLayout(tab)
         # Создаем таблицу для отображения данных
         self.table = QTableWidget(self)
-        self.table.setColumnCount(9)
+        self.table.setColumnCount(10)
+
+        self.table.setColumnWidth(9, 120)
+        self.table.horizontalHeader().setSectionResizeMode(9, QHeaderView.Fixed)
 
         # Устанавливаем заголовки колонок
         column_headers = ["№ПП", "Закон", "Реестровый номер", "Дата размещения",
                           "Наименование закупки", "Предмет аукциона", "НМЦК",
-                          "Валюта", "Наименование заказчика"]
+                          "Валюта", "Наименование заказчика","Ссылка на контракт"]
         self.table.resizeColumnsToContents()
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.table.setHorizontalHeaderLabels(column_headers)
@@ -167,7 +166,7 @@ class PurchasesWidgetAll(QWidget):
         self.max_price_label = QLabel("Максимальная цена (в рублях)")
         self.max_price_input = QLineEdit()
         self.max_price_input.setFixedWidth(100)
-        self.toExcel = QPushButton("Экспорт в Excel", self)
+        self.toExcel = QPushButton("Экспорт в Excel данных по закупке", self)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
         self.toExcel.setFixedWidth(400)
 
@@ -206,11 +205,7 @@ class PurchasesWidgetAll(QWidget):
 
         completer.activated.connect(self.handleActivated)
         self.search_input.setCompleter(completer)
-        # Устанавливаем автозавершение для поля ввода
-        # self.search_input.setCompleter(completer)
-        # Создаем кнопки для навигации
-       
-    
+
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.label)
         icon_path = "../Pics/icons8-фильтр-ios-17-32.png"
@@ -491,7 +486,7 @@ class PurchasesWidgetAll(QWidget):
         self.reset_filters_button_contract.setFixedWidth(200)
         self.reset_filters_button_contract.clicked.connect(self.resetFiltersContract)
 
-        self.toExcel_contract = QPushButton("Экспорт в Excel")
+        self.toExcel_contract = QPushButton("Экспорт в Excel данных по контракту")
         self.toExcel_contract.setFixedWidth(400)
         self.toExcel_contract.clicked.connect(self.export_to_excel_clicked_contract)
 
@@ -864,11 +859,6 @@ class PurchasesWidgetAll(QWidget):
                 item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
                 self.table_vessel.setItem(i, col, item)
 
-
-
-
-
-
     def toggle_menu_contract(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_contract.setVisible(not self.menu_frame_contract.isVisible())
@@ -944,8 +934,34 @@ class PurchasesWidgetAll(QWidget):
                                               current_purchase.CustomerName
                                              ]):
                     item = QTableWidgetItem(str(value))
-                    
-                   
+
+                    contract = (Contract
+                                .select()
+                                .where(Contract.purchase == current_purchase.Id)
+                                .first())
+                    if contract is None and current_purchase.RegistryNumber:
+                        contract = (Contract
+                                    .select()
+                                    .where(Contract.RegistryNumber == current_purchase.RegistryNumber)
+                                    .first())
+
+                    if contract:
+                        contract_item = QTableWidgetItem("📄 Контракт")
+                        contract_item.setFlags(contract_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                        contract_item.setTextAlignment(Qt.AlignCenter)
+                        contract_item.setForeground(Qt.blue)
+                        font_link = QFont()
+                        font_link.setUnderline(True)
+                        contract_item.setFont(font_link)
+                        # Сохраняем ID контракта в UserRole для клика
+                        contract_item.setData(Qt.UserRole, contract.Id)
+                        self.table.setItem(current_position, 9, contract_item)
+                    else:
+                        empty_item = QTableWidgetItem("—")
+                        empty_item.setFlags(empty_item.flags() & ~Qt.ItemIsEnabled)
+                        empty_item.setTextAlignment(Qt.AlignCenter)
+                        empty_item.setForeground(Qt.gray)
+                        self.table.setItem(current_position, 9, empty_item)
                     item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                     item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
                     # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
@@ -1098,16 +1114,7 @@ class PurchasesWidgetAll(QWidget):
             elif sender == self.sort_by_putch_winner:
                 self.sort_by_putch_winner.setStyleSheet("background-color: #ccffcc;")
                 self.FilterCollapseContract.setStyleSheet("background-color: #ccffcc;")
-            # elif sender == self.sort_options:
-            #     self.sort_options.setStyleSheet("background-color: #ccffcc;")
-            #     self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
-            # elif sender == self.sort_by_putch_CustomerName:
-            #     self.sort_by_putch_CustomerName.setStyleSheet("background-color: #ccffcc;")
-            #     self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
-            # elif sender == self.sort_by_putch_ProcurementMethod:
-            #     self.sort_by_putch_ProcurementMethod.setStyleSheet("background-color: #ccffcc;")
-            #     self.FilterCollapse.setStyleSheet("background-color: #ccffcc;")
-        
+
     
     def apply_filter(self):
         self.current_position = 0
@@ -1262,7 +1269,15 @@ class PurchasesWidgetAll(QWidget):
 
         # Используем единую функцию маршрутизации из MainWindow (окно 2 - закупки)
         self.window.navigate_to_page(2)
-
+        if column == 9:
+            item = self.table.item(row, 9)
+            if item:
+                contract_id = item.data(Qt.UserRole)
+                if contract_id:
+                    # Переходим на вкладку контрактов и открываем нужный
+                    self.mainwindow.tabWidget.setCurrentIndex(1)  # вкладка контрактов
+                    self.window.contractFormular.reloaddataid(contract_id)
+                return
         # Обновляем данные
         self.window.purchaseViewer.reload_data_id(selected_id)
 
@@ -1499,13 +1514,7 @@ class PurchasesWidgetAll(QWidget):
                     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
                 )     
                 
-                # query = (
-                #     self.purchases
-                #     .select(Purchase, Contract, FinalDetermination, CurrencyRate)
-                #     .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-                #     .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
-                #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
-                # )     
+
                 records, data, user = self.main_window.return_variabels()
                 # cleaned_filename = data.sub(r'[\\/*?:"<>| ]', '_', data)
                 self.data = list(query.tuples())
@@ -1533,9 +1542,7 @@ class PurchasesWidgetAll(QWidget):
         'min_price': min_price,
         'max_price': max_price,
         
-    }   
-    
-         
+    }
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
 
@@ -1543,20 +1550,10 @@ class PurchasesWidgetAll(QWidget):
             selected_file = file_dialog.selectedFiles()[0]
             selected_file = selected_file if selected_file else None
             if selected_file:
-                # query1 = self.purchases
-                # query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-                 
-                
-                # query = (
-                #     self.purchases
-                #     .select(Purchase, Contract, FinalDetermination, CurrencyRate)
-                #     .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-                #     .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
-                #     .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
-                # )     
+
                 records, data, user = self.main_window.return_variabels()
                 # cleaned_filename = data.sub(r'[\\/*?:"<>| ]', '_', data)
-                self.data = list(self.contracts.tuples())
+                self.data = list(self.contracts.dicts())
                 # print(self.data[0])
                 if export_to_excel_contract(self.data ,f'{selected_file}/Отфильтрованные данные_контракты__{data}_{records}_{user}.xlsx',filters=filters ) == True:
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
