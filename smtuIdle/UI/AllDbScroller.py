@@ -946,18 +946,13 @@ class PurchasesWidgetAll(QWidget):
                                     .first())
 
                     if contract:
-                        contract_item = QTableWidgetItem("📄 Контракт")
+                        contract_item = QTableWidgetItem("✅")
                         contract_item.setFlags(contract_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                         contract_item.setTextAlignment(Qt.AlignCenter)
-                        contract_item.setForeground(Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        contract_item.setFont(font_link)
-                        # Сохраняем ID контракта в UserRole для клика
                         contract_item.setData(Qt.UserRole, contract.Id)
                         self.table.setItem(current_position, 9, contract_item)
                     else:
-                        empty_item = QTableWidgetItem("—")
+                        empty_item = QTableWidgetItem("❌")
                         empty_item.setFlags(empty_item.flags() & ~Qt.ItemIsEnabled)
                         empty_item.setTextAlignment(Qt.AlignCenter)
                         empty_item.setForeground(Qt.gray)
@@ -1275,7 +1270,7 @@ class PurchasesWidgetAll(QWidget):
                 contract_id = item.data(Qt.UserRole)
                 if contract_id:
                     # Переходим на вкладку контрактов и открываем нужный
-                    self.mainwindow.tabWidget.setCurrentIndex(1)  # вкладка контрактов
+                    self.main_window.navigate_to_page(8)  # вкладка контрактов
                     self.window.contractFormular.reloaddataid(contract_id)
                 return
         # Обновляем данные
