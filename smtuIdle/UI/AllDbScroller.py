@@ -850,15 +850,26 @@ class PurchasesWidgetAll(QWidget):
         self.label_vessel.setText(f"Всего записей: {len(rows)}")
         for i, v in enumerate(rows):
             self.table_vessel.insertRow(i)
+
+            # Безопасно получаем contract_sum, если вы его не приджойнили в запросе,
+            # чтобы программа не вылетала с ошибкой AttributeError.
+            contract_sum_val = getattr(v, 'contract_sum', 'Нет данных')
+
             for col, val in enumerate([
-                v.id, v.ship_project, v.ship_type_rmrs, v.ship_class,
-                v.year_built, v.country_built, v.shipyard_name,
-                v.deadweight, v.purchase_registry_number, v.contract_sum
+                v.id,
+                v.ship_project,
+                v.ship_type_rmrs,
+                v.ship_class,
+                v.year_built,
+                v.country_built,
+                v.shipyard_name,
+                v.deadweight,
+                v.registry_number,  # Исправлено: убрано слово 'purchase_'
+                contract_sum_val  # Безопасный вывод суммы
             ]):
                 item = QTableWidgetItem(str(val) if val is not None else "")
                 item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
                 self.table_vessel.setItem(i, col, item)
-
     def toggle_menu_contract(self):
         # Изменяем видимость содержимого при нажатии на кнопку
         self.menu_frame_contract.setVisible(not self.menu_frame_contract.isVisible())

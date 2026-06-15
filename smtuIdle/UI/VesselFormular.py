@@ -157,8 +157,8 @@ class VesselWidget(QWidget):
             self.add_row_to_table('Проект судна', v.ship_project)
             self.add_row_to_table('Реестровый номер', v.registry_number)
             self.add_row_to_table('Строительный номер', v.build_number)
-            if v.purchase_id:
-                self.add_row_to_table('ID Закупки', v.purchase_id)
+            # if v.purchase_id:
+            #     self.add_row_to_table('ID Закупки', v.purchase_id)
 
             # --- 2. Классификация ---
             self.add_section_to_table('Классификация РМРС / РКО', expanded=True)
