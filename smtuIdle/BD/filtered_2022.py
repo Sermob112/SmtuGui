@@ -5,7 +5,7 @@ import sys
 # ─── Настройки ────────────────────────────────────────────────────────────────
 SOURCE_DB = r"C:\Users\Sergey\Desktop\Work\SmtuGui\smtuIdle\database.db"
 TARGET_DB = r"C:\Users\Sergey\Desktop\Work\SmtuGui\smtuIdle\filtered_2022.db"
-DATE_FROM = "2023-04-15"
+DATE_FROM = "2025-01-01"
 # ──────────────────────────────────────────────────────────────────────────────
 
 CHUNK = 900

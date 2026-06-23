@@ -139,8 +139,8 @@ class CsvLoaderWidget(QWidget):
     def populate_table(self, table):
         # Добавляем данные в таблицу
         data = [
-             ('В БД НМЦК и ЦК всего размещено Закупок:', str(self.all_count)),
-            ('В БД НМЦК и ЦК добавлено Закупок:', str(self.inserted_rows_count))
+             ('В БД ЦиЭПК всего размещено Закупок:', str(self.all_count)),
+            ('В БД ЦиЭПК добавлено Закупок:', str(self.inserted_rows_count))
           
           
         ]

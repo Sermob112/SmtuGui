@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import *
-from playhouse.shortcuts import model_to_dict
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon
 import os, sys
@@ -16,7 +15,7 @@ class HelpPanel(QWidget):
         padding-left: 10px;
     }
 """
-        self.QwordFinder = QPushButton("Руководство БД НМЦК")
+        self.QwordFinder = QPushButton("Руководство БД ЦиЭПК")
         self.QwordFinder.setIcon(QIcon("Pics/right-arrow.png"))
         self.QwordFinder.setMaximumWidth(300)
         self.QwordFinder.clicked.connect(self.toggle_menu)
@@ -57,7 +56,7 @@ class HelpPanel(QWidget):
         #меню по ключевому слову
         self.menu_content2 = QWidget()
         menu_layout2 = QVBoxLayout()
-        self.Qword2 = QLabel("Структура БД НМЦК")
+        self.Qword2 = QLabel("Структура БД ЦиЭПК")
         
         menu_layout2.addWidget(self.Qword2)
         self.files = os.listdir("HelpFiles")

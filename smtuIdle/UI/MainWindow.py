@@ -563,7 +563,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton2.setText(_translate("MainWindow", "Просмотр формуляра закупки"))
         self.pushButton3.setText(_translate("MainWindow", "Статистический анализ закупок"))
         self.pushButton4.setText(_translate("MainWindow", "Валюта"))
-        self.pushButton5.setText(_translate("MainWindow", "Экспорт БД НМЦК в Excel"))
+        self.pushButton5.setText(_translate("MainWindow", "Экспорт БД ЦиЭПК в Excel"))
         self.pushButton5_1.setText(_translate("MainWindow", "Панель изменений"))
         self.pushButton6.setText(_translate("MainWindow", "Администрирование"))
         self.pushButton7.setText(_translate("MainWindow", "Файлы руководства"))
