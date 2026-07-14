@@ -2,6 +2,8 @@
 analyze_purchases_peewee.py
 Анализ закупок на основе Peewee-моделей (SQLite).
 Полный аналог analyze_purchases.py, адаптированный под ORM.
+Во всех сводных таблицах добавлена конверсия (доля, %) по каждому закону
+и общая сумма/итог по всем законам.
 """
 
 import re
@@ -13,7 +15,7 @@ from smtuIdle.BD.models import *
 
 
 
-db_path = r"C:\Users\Sergey\Desktop\Work\SmtuGui\smtuIdle\database.db"
+db_path = r"C:\\Users\\Sergey\\Desktop\\Work\\SmtuGui\\smtuIdle\\database.db"
 
     # 2. ПЕРЕИНИЦИАЛИЗИРУЕМ импортированную базу правильным путем!
 db.init(db_path)
@@ -97,7 +99,7 @@ def clean_price_value(value):
 def clean_okpd2(code):
     if not code:
         return None
-    m = re.match(r"^([\d.]+)", str(code).strip())
+    m = re.match(r"^([\\d.]+)", str(code).strip())
     return m.group(1).strip(".") if m else str(code).strip()
 
 
@@ -159,7 +161,7 @@ def _iter_223_table_rows(raw_json):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def print_summary(df: pd.DataFrame, column_name: str, title: str, limit=None):
-    print(f"\n{'=' * 60}")
+    print(f"\\n{'=' * 60}")
     print(f"СВОДНАЯ ТАБЛИЦА: {title}")
     print(f"{'=' * 60}")
     if df is None or df.empty:
@@ -179,7 +181,7 @@ def print_summary(df: pd.DataFrame, column_name: str, title: str, limit=None):
 
 def print_summary_with_sum(df: pd.DataFrame, group_col: str, value_col: str,
                            title: str, limit=None):
-    print(f"\n{'=' * 80}")
+    print(f"\\n{'=' * 80}")
     print(f"СВОДНАЯ ТАБЛИЦА: {title}")
     print(f"{'=' * 80}")
     if df is None or df.empty:
@@ -192,20 +194,45 @@ def print_summary_with_sum(df: pd.DataFrame, group_col: str, value_col: str,
     )
     if limit:
         grouped = grouped.head(limit)
-    print(f"{'Категория':<50} {'Кол-во':>8} {'Сумма, руб':>20}")
-    print("-" * 80)
+    total_cnt = grouped["count"].sum()
+    total_sum = grouped["sum"].sum()
+    print(f"{'Категория':<50} {'Кол-во':>8} {'Доля,%':>8} {'Сумма, руб':>20} {'Доля,%':>8}")
+    print("-" * 100)
     for idx, row in grouped.iterrows():
         s = str(idx).strip()
         short = (s[:50] + "...") if len(s) > 50 else s
-        print(f"{short:<50} {int(row['count']):>8} {fmt_nonzero(row['sum']):>20}")
-    print("-" * 80)
+        cnt_pct = _pct(row["count"], total_cnt)
+        sum_pct = _pct(row["sum"], total_sum)
+        print(f"{short:<50} {int(row['count']):>8} {cnt_pct:>8} {fmt_nonzero(row['sum']):>20} {sum_pct:>8}")
+    print("-" * 100)
     if limit and len(grouped) >= limit:
         print(f"{'... и еще строк ...':<50}")
-    print(f"{'ИТОГО':<50} {int(grouped['count'].sum()):>8} {fmt_num(grouped['sum'].sum()):>20}")
+    print(f"{'ИТОГО':<50} {int(grouped['count'].sum()):>8} {'100.0%':>8} {fmt_num(grouped['sum'].sum()):>20} {'100.0%':>8}")
 
 
-def build_count_sum_pivots(df: pd.DataFrame, row_col: str, row_order=None):
-    grouped = df.groupby([row_col, "law"])["price"].agg(["count", "sum"])
+def _pct(value, total):
+    """Доля value от total в процентах, строкой вида '12.3%'. Безопасна при total==0."""
+    try:
+        if total == 0 or pd.isna(total):
+            return "0.0%"
+        return f"{(value / total) * 100:.1f}%"
+    except Exception:
+        return "0.0%"
+
+
+def build_count_sum_pivots(df: pd.DataFrame, row_col: str, value_col: str = "price",
+                           row_order=None, limit=None):
+    """
+    Строит сводные таблицы кол-во/сумма по (row_col × law) с итогами.
+    Универсальна для любой группирующей колонки:
+      - если row_order задан — строки идут в этом порядке (для упорядоченных категорий,
+        например ценовых диапазонов или способов закупки);
+      - если row_order не задан — строки сортируются по убыванию общего количества,
+        с возможностью обрезать топ-N через limit (например, топ заказчиков).
+    Возвращает пару DataFrame (p_cnt, p_sum) с колонками 44-ФЗ / 223-ФЗ / Всего
+    и строкой "Общий итог".
+    """
+    grouped = df.groupby([row_col, "law"])[value_col].agg(["count", "sum"])
     p_cnt = grouped["count"].unstack(fill_value=0)
     p_sum = grouped["sum"].unstack(fill_value=0)
 
@@ -221,6 +248,14 @@ def build_count_sum_pivots(df: pd.DataFrame, row_col: str, row_order=None):
     if row_order:
         p_cnt = p_cnt.reindex(row_order).fillna(0).astype(int)
         p_sum = p_sum.reindex(row_order).fillna(0)
+    else:
+        order_idx = p_cnt.sum(axis=1).sort_values(ascending=False).index
+        p_cnt = p_cnt.reindex(order_idx)
+        p_sum = p_sum.reindex(order_idx)
+        if limit:
+            keep = p_cnt.head(limit).index
+            p_cnt = p_cnt.loc[keep]
+            p_sum = p_sum.loc[keep]
 
     p_cnt["Всего"] = p_cnt.sum(axis=1)
     p_sum["Всего"] = p_sum.sum(axis=1)
@@ -232,37 +267,41 @@ def build_count_sum_pivots(df: pd.DataFrame, row_col: str, row_order=None):
 
 def print_count_sum_table(title: str, p_cnt: pd.DataFrame, p_sum: pd.DataFrame,
                           row_label_width=45):
+    """
+    Печатает сводную таблицу кол-во/сумма по законам.
+    В каждой ячейке — абсолютное значение и доля (конверсия) относительно
+    ОБЩЕГО ИТОГА по соответствующему закону/итогу (столбец "Всего").
+    """
     W = row_label_width
-    print(f"\n{'=' * 120}")
+    total_cnt = p_cnt.loc["Общий итог"]
+    total_sum = p_sum.loc["Общий итог"]
+
+    print(f"\\n{'=' * 140}")
     print(title)
-    print(f"{'=' * 120}")
-    print(f"{'':^{W}} {'Показатель':<15} {'44-ФЗ':>15} {'223-ФЗ':>15} {'Всего':>15}")
-    print("-" * 120)
+    print(f"{'=' * 140}")
+    print(f"{'':^{W}} {'Показатель':<15} {'44-ФЗ':>22} {'223-ФЗ':>22} {'Всего':>22}")
+    print("-" * 140)
 
     data_rows = [r for r in p_cnt.index if r != "Общий итог"]
     all_rows = data_rows + ["Общий итог"]
-    for i, row in enumerate(all_rows):
+    for row in all_rows:
         if row == "Общий итог":
-            print("-" * 120)
-        c44  = int(p_cnt.loc[row, "44-ФЗ"])
-        c223 = int(p_cnt.loc[row, "223-ФЗ"])
-        ctot = int(p_cnt.loc[row, "Всего"])
-        print(
-            f"{str(row):<{W}} {'кол-во':<15} "
-            f"{(str(c44) if c44 else '-'):>15} "
-            f"{(str(c223) if c223 else '-'):>15} "
-            f"{(str(ctot) if ctot else '-'):>15}"
-        )
-        s44  = p_sum.loc[row, "44-ФЗ"]
-        s223 = p_sum.loc[row, "223-ФЗ"]
-        stot = p_sum.loc[row, "Всего"]
-        print(
-            f"{'':^{W}} {'сумма, руб':<15} "
-            f"{fmt_nonzero(s44):>15} "
-            f"{fmt_nonzero(s223):>15} "
-            f"{fmt_nonzero(stot):>15}"
-        )
-    print("-" * 120)
+            print("-" * 140)
+
+        c44, c223, ctot = p_cnt.loc[row, "44-ФЗ"], p_cnt.loc[row, "223-ФЗ"], p_cnt.loc[row, "Всего"]
+        s44, s223, stot = p_sum.loc[row, "44-ФЗ"], p_sum.loc[row, "223-ФЗ"], p_sum.loc[row, "Всего"]
+
+        c44_s  = f"{int(c44):>6} ({_pct(c44, total_cnt['44-ФЗ'])})" if c44 else "-"
+        c223_s = f"{int(c223):>6} ({_pct(c223, total_cnt['223-ФЗ'])})" if c223 else "-"
+        ctot_s = f"{int(ctot):>6} ({_pct(ctot, total_cnt['Всего'])})" if ctot else "-"
+        print(f"{str(row):<{W}} {'кол-во':<15} {c44_s:>22} {c223_s:>22} {ctot_s:>22}")
+
+        s44_s  = f"{fmt_nonzero(s44):>12} ({_pct(s44, total_sum['44-ФЗ'])})" if s44 else "-"
+        s223_s = f"{fmt_nonzero(s223):>12} ({_pct(s223, total_sum['223-ФЗ'])})" if s223 else "-"
+        stot_s = f"{fmt_nonzero(stot):>12} ({_pct(stot, total_sum['Всего'])})" if stot else "-"
+        print(f"{'':^{W}} {'сумма, руб':<15} {s44_s:>22} {s223_s:>22} {stot_s:>22}")
+
+    print("-" * 140)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  Загрузка данных через Peewee (вся БД, без фильтра по дате)
@@ -330,7 +369,6 @@ def _load_contracts(min_price: float = 20_000_000) -> pd.DataFrame:
     Вся БД без ограничения по дате.
     """
     db.connect(reuse_if_open=True)
-    # JOIN вручную через подзапрос: выбираем reg_number закупок с нужной ценой
     eligible = (
         Purchase
         .select(Purchase.RegistryNumber)
@@ -357,7 +395,6 @@ def _load_contracts(min_price: float = 20_000_000) -> pd.DataFrame:
 
     df = pd.DataFrame(rows)
 
-    # Подтягиваем поля Purchase по RegistryNumber
     db.connect(reuse_if_open=True)
     purchases_map = {
         p.RegistryNumber: {"law": p.PurchaseOrder, "customer_name": p.CustomerName}
@@ -378,6 +415,7 @@ def _load_suppliers(min_price: float = 100_000_000) -> pd.DataFrame:
     """
     Загружает поставщиков через цепочку:
     Supplier -> Contract.RegistryNumber -> Purchase.RegistryNumber (фильтр по цене).
+    Также подтягивает law и цену контракта для расчёта конверсии по законам.
     """
     db.connect(reuse_if_open=True)
     eligible = {
@@ -385,38 +423,54 @@ def _load_suppliers(min_price: float = 100_000_000) -> pd.DataFrame:
         for r in Purchase.select(Purchase.RegistryNumber)
         .where(Purchase.InitialMaxContractPrice >= min_price)
     }
-    eligible_contracts = {
-        r.Id
-        for r in Contract.select(Contract.Id)
+    purchases_law = {
+        r.RegistryNumber: r.PurchaseOrder
+        for r in Purchase.select(Purchase.RegistryNumber, Purchase.PurchaseOrder)
+        .where(Purchase.RegistryNumber.in_(eligible))
+    }
+    contracts_info = {
+        r.Id: {"RegistryNumber": r.RegistryNumber, "ContractPrice": r.ContractPrice}
+        for r in Contract.select(Contract.Id, Contract.RegistryNumber, Contract.ContractPrice)
         .where(Contract.RegistryNumber.in_(eligible))
     }
     query = (
         Supplier
-        .select(Supplier.organization)
-        .where(Supplier.contract_id.in_(eligible_contracts))
-        .namedtuples()
+        .select(Supplier.organization, Supplier.contract_id)
+        .where(Supplier.contract_id.in_(set(contracts_info.keys())))
+        .dicts()
     )
     rows = list(query)
     db.close()
-    return pd.DataFrame(rows)
+
+    if not rows:
+        return pd.DataFrame()
+
+    df = pd.DataFrame(rows)
+    # Peewee может назвать колонку FK-идентификатора либо "contract_id",
+    # либо именем самого FK-поля (например "contract") — нормализуем.
+    id_col = "contract_id" if "contract_id" in df.columns else "contract"
+    if id_col not in df.columns:
+        raise KeyError(
+            f"Не найдена колонка с id контракта среди {list(df.columns)}. "
+            "Проверьте имя FK-поля в модели Supplier."
+        )
+
+    df["law"] = df[id_col].map(
+        lambda cid: purchases_law.get(contracts_info.get(cid, {}).get("RegistryNumber"))
+    )
+    df["price"] = df[id_col].map(
+        lambda cid: pd.to_numeric(contracts_info.get(cid, {}).get("ContractPrice"), errors="coerce")
+    ).fillna(0)
+    return df
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  Извлечение ОКПД2 из JSON-полей закупки
 # ─────────────────────────────────────────────────────────────────────────────
 
 def extract_okpd2_items(row: dict) -> list:
-    """
-    44-ФЗ: парсит common_info_json
-      информация_об_объекте_закупки -> items -> kind==table -> table -> rows
-      Ключи: КОД ПОЗИЦИИ, СТОИМОСТЬ, ₽
-
-    223-ФЗ: парсит lots_json
-      {любой ключ} -> items -> parsed_table -> rows
-      Ключи: КЛАССИФИКАЦИЯ ПО ОКПД2, СВЕДЕНИЯ О ЦЕНЕ ДОГОВОРА
-    """
     law        = str(row.get("law", ""))
     reg_number = str(row.get("reg_number", ""))
-    object_name = str(row.get("object_name", "")).replace("\n", " ").strip()
+    object_name = str(row.get("object_name", "")).replace("\\n", " ").strip()
     items = []
 
     if "44" in law:
@@ -441,7 +495,7 @@ def extract_okpd2_items(row: dict) -> list:
                 if okpd_raw:
                     cost_val = 0
                     if price_raw:
-                        params = re.findall(r"([\d\s]+,\d{2})", str(price_raw))
+                        params = re.findall(r"([\\d\\s]+,\\d{2})", str(price_raw))
                         if params:
                             cost_val = clean_price_value(params[-1]) or 0
                     items.append({
@@ -462,13 +516,6 @@ def extract_okpd2_items(row: dict) -> list:
 
 
 def extract_item_names(row: dict) -> list:
-    """
-    Извлекает НАИМЕНОВАНИЕ ТОВАРА (44-ФЗ) и НАИМЕНОВАНИЕ ЛОТА (223-ФЗ).
-    44-ФЗ: common_info_json -> информация_об_объекте_закупки -> items -> table -> rows
-           ключ НАИМЕНОВАНИЕ ТОВАРА, РАБОТЫ, УСЛУГИ ПО ОКПД2, КТРУ
-    223-ФЗ: lots_json -> {ключ} -> items -> parsed_table -> rows
-           ключ НАИМЕНОВАНИЕ ТОВАРА (РАБОТЫ, УСЛУГИ)
-    """
     law = str(row.get("law", ""))
     items = []
 
@@ -481,6 +528,7 @@ def extract_item_names(row: dict) -> list:
                     items.append({
                         "name": str(name).strip(),
                         "cost": clean_price_value(cost) or 0,
+                        "law": "44-ФЗ",
                     })
         except Exception:
             pass
@@ -493,10 +541,10 @@ def extract_item_names(row: dict) -> list:
                 if name:
                     cost_val = 0
                     if cost:
-                        params = re.findall(r"([\d\s]+,\d{2})", str(cost))
+                        params = re.findall(r"([\\d\\s]+,\\d{2})", str(cost))
                         if params:
                             cost_val = clean_price_value(params[-1]) or 0
-                    items.append({"name": str(name).strip(), "cost": cost_val})
+                    items.append({"name": str(name).strip(), "cost": cost_val, "law": "223-ФЗ"})
         except Exception:
             pass
 
@@ -504,10 +552,6 @@ def extract_item_names(row: dict) -> list:
 
 
 def extract_contract_items_new(json_data) -> list:
-    """
-    Извлекает КТРУ и цену из payment_targets_json контракта.
-    Структура: объекты_закупки -> items -> kind==table -> table -> rows
-    """
     data = _parse_json(json_data)
     if not isinstance(data, dict):
         return []
@@ -520,7 +564,7 @@ def extract_contract_items_new(json_data) -> list:
                     price = row.get("price")
                     if ktru or price is not None:
                         items.append({
-                            "ktru":  str(ktru).replace("\n", " ").strip() if ktru else None,
+                            "ktru":  str(ktru).replace("\\n", " ").strip() if ktru else None,
                             "price": price,
                         })
     except Exception:
@@ -533,77 +577,47 @@ def extract_contract_items_new(json_data) -> list:
 
 def analyze_purchases():
     """Основной блок: таблицы 2–9 (вся БД, от 100 млн)."""
-    print("\n>>> Загрузка данных закупок (вся БД, от 100 млн)...")
+    print("\\n>>> Загрузка данных закупок (вся БД, от 100 млн)...")
     df = _load_purchases()
     if df.empty:
         print("Нет данных.")
         return
     print(f"✓ Загружено {len(df)} закупок")
 
-    # ── Стандартные сводные ───────────────────────────────────────────────
-    print_summary(df, "law",           "ЗАКУПКИ: ЗАКОНЫ")
-    print_summary(df, "status",        "ЗАКУПКИ: СТАТУС (таблица 8)")
-    print_summary(df, "customer_name", "ЗАКУПКИ: ЗАКАЗЧИКИ (ТОП-20)", limit=20)
-    print_summary(df.sort_values("price_category_simple"),
-                  "price_category_simple", "ЗАКУПКИ: БЮДЖЕТ (НМЦК)")
+    # ── Стандартные сводные (с конверсией по закону) ───────────────────────
+    p_cnt_law, p_sum_law = build_count_sum_pivots(df, "law")
+    print_count_sum_table("ЗАКУПКИ: ЗАКОНЫ (кол-во и сумма)", p_cnt_law, p_sum_law, row_label_width=20)
 
-    # ── Таблица 2: диапазоны × закон (кол-во) ────────────────────────────
+    p_cnt_status, p_sum_status = build_count_sum_pivots(df, "status")
+    print_count_sum_table("ЗАКУПКИ: СТАТУС (таблица 8)", p_cnt_status, p_sum_status)
+
+    p_cnt_cust, p_sum_cust = build_count_sum_pivots(df, "customer_name", limit=20)
+    print_count_sum_table("ЗАКУПКИ: ЗАКАЗЧИКИ (ТОП-20)", p_cnt_cust, p_sum_cust, row_label_width=50)
+
+    p_cnt_budget, p_sum_budget = build_count_sum_pivots(df, "price_category_simple", row_order=PRICE_ORDER)
+    print_count_sum_table("ЗАКУПКИ: БЮДЖЕТ (НМЦК)", p_cnt_budget, p_sum_budget)
+
+    # ── Таблица 2: диапазоны × закон (кол-во + сумма + конверсия) ─────────
     price_cats = [c for c in PRICE_ORDER if c != "Нет цены"]
     df["price_category_tab2"] = pd.Categorical(
         df["price"].apply(categorize_price), categories=price_cats, ordered=True
     )
-    pivot_ranges = pd.crosstab(df["price_category_tab2"], df["law"]).reindex(price_cats)
-    pivot_ranges["Общий итог"] = pivot_ranges.sum(axis=1)
-    pivot_ranges.loc["Всего закупок"] = pivot_ranges.sum()
-    print(f"\n{'=' * 80}")
-    print("Таблица 2. Распределение по диапазонам НМЦК (кол-во)")
-    print(f"{'=' * 80}")
-    print(pivot_ranges)
+    p_cnt2, p_sum2 = build_count_sum_pivots(df, "price_category_tab2", row_order=price_cats)
+    print_count_sum_table("Таблица 2. Распределение по диапазонам НМЦК (кол-во и сумма)", p_cnt2, p_sum2)
 
     # ── Таблица 3: способ × закон (кол-во + сумма) ───────────────────────
-    p_cnt, p_sum = build_count_sum_pivots(df, "placing_way_cat", PLACING_WAY_ORDER)
+    p_cnt, p_sum = build_count_sum_pivots(df, "placing_way_cat", row_order=PLACING_WAY_ORDER)
     print_count_sum_table(
         "Таблица 3. Закупки по способу определения поставщика (кол-во и сумма)",
         p_cnt, p_sum,
     )
 
     # ── Таблица 4: диапазоны (ед. + сумма) по законам ────────────────────
-    print(f"\n{'=' * 90}")
-    print("Таблица 4. Диапазоны НМЦК (ед. и сумма) по законам")
-    print(f"{'=' * 90}")
-    grouped4 = df.groupby(["category", "law"])["price"].agg(["count", "sum"])
-    unstacked4 = grouped4.unstack(fill_value=0)
-    for metric in ["count", "sum"]:
-        for law in LAWS:
-            if (metric, law) not in unstacked4.columns:
-                unstacked4[(metric, law)] = 0
-    unstacked4[("count", "Общий итог")] = (
-        unstacked4[("count", "44-ФЗ")] + unstacked4[("count", "223-ФЗ")]
+    p_cnt4, p_sum4 = build_count_sum_pivots(df, "category")
+    print_count_sum_table(
+        "Таблица 4. Диапазоны НМЦК (ед. и сумма) по законам",
+        p_cnt4, p_sum4,
     )
-    unstacked4[("sum", "Общий итог")] = (
-        unstacked4[("sum", "44-ФЗ")] + unstacked4[("sum", "223-ФЗ")]
-    )
-    final_rows4 = []
-    for cat in sorted(df["category"].unique()):
-        if cat in ("Без цены", "Нет цены"):
-            continue
-        if cat not in unstacked4.index:
-            continue
-        r = unstacked4.loc[cat]
-        final_rows4 += [
-            {"Диапазон": f"{_strip_prefix(cat)}, ед.",
-             "44-ФЗ": int(r[("count", "44-ФЗ")]),
-             "223-ФЗ": int(r[("count", "223-ФЗ")]),
-             "Общий итог": int(r[("count", "Общий итог")])},
-            {"Диапазон": "сумма НМЦК, руб.",
-             "44-ФЗ": r[("sum", "44-ФЗ")],
-             "223-ФЗ": r[("sum", "223-ФЗ")],
-             "Общий итог": r[("sum", "Общий итог")]},
-        ]
-    df4 = pd.DataFrame(final_rows4)
-    for c in ["44-ФЗ", "223-ФЗ", "Общий итог"]:
-        df4[c] = df4[c].apply(fmt_nonzero)
-    print(df4.to_string(index=False, justify="right"))
 
     # ── Таблица 7: статусы (кол-во + сумма) ──────────────────────────────
     p_cnt7, p_sum7 = build_count_sum_pivots(df, "status")
@@ -620,7 +634,7 @@ def analyze_purchases():
     )
 
     # ── ОКПД2 с привязкой к номеру закупки ───────────────────────────────
-    print("\n... Извлечение позиций ОКПД2 из JSON ...")
+    print("\\n... Извлечение позиций ОКПД2 из JSON ...")
     items_list = []
     for _, row in df.iterrows():
         items_list.extend(extract_okpd2_items(row.to_dict()))
@@ -630,7 +644,7 @@ def analyze_purchases():
         df_has = items_df[items_df["code"] != "Нет ОКПД2"]
         df_no  = items_df[items_df["code"] == "Нет ОКПД2"]
 
-        print(f"\n{'=' * 130}")
+        print(f"\\n{'=' * 130}")
         print(f"ЗАКУПКИ БЕЗ УКАЗАНИЯ ОКПД2 В JSON (Найдено: {len(df_no)})")
         print(f"{'=' * 130}")
         if not df_no.empty:
@@ -644,14 +658,15 @@ def analyze_purchases():
             print("У всех загруженных закупок успешно найден ОКПД2.")
 
         if not df_has.empty:
-            print_summary(df_has, "code", "ЗАКУПКИ: ТОП ПОЗИЦИЙ (ОКПД2)", limit=30)
+            p_cnt_okpd, p_sum_okpd = build_count_sum_pivots(df_has, "code", value_col="cost", limit=30)
+            print_count_sum_table("ЗАКУПКИ: ТОП ПОЗИЦИЙ (ОКПД2)", p_cnt_okpd, p_sum_okpd, row_label_width=30)
     else:
         print("Не удалось извлечь информацию о позициях.")
 
 
 def analyze_okpd2_usage():
-    """Таблица 10: коды ОКПД2 — ед. и сумма НМЦК по законам."""
-    print("\n>>> Анализ кодов ОКПД2 (вся БД, от 100 млн)...")
+    """Таблица 10: коды ОКПД2 — ед. и сумма НМЦК по законам (с конверсией)."""
+    print("\\n>>> Анализ кодов ОКПД2 (вся БД, от 100 млн)...")
     df = _load_purchases()
     if df.empty:
         return
@@ -666,50 +681,13 @@ def analyze_okpd2_usage():
         return
 
     items_df = pd.DataFrame(items_list)
-    grouped = items_df.groupby(["code", "law"])["cost"].agg(["count", "sum"])
-    unstacked = grouped.unstack(fill_value=0)
-
-    for metric in ["count", "sum"]:
-        for law in LAWS:
-            if (metric, law) not in unstacked.columns:
-                unstacked[(metric, law)] = 0
-
-    unstacked[("count", "Общий Итог")] = (
-        unstacked[("count", "44-ФЗ")] + unstacked[("count", "223-ФЗ")]
-    )
-    unstacked[("sum", "Общий Итог")] = (
-        unstacked[("sum", "44-ФЗ")] + unstacked[("sum", "223-ФЗ")]
-    )
-    unstacked = unstacked.sort_values(("count", "Общий Итог"), ascending=False).head(50)
-
-    rows = []
-    for code in unstacked.index:
-        r = unstacked.loc[code]
-        rows += [
-            {"Код ОКПД2": str(code)[:60], "Показатель": "количество закупок, ед.",
-             "44-ФЗ": int(r[("count", "44-ФЗ")]),
-             "223-ФЗ": int(r[("count", "223-ФЗ")]),
-             "Общий Итог": int(r[("count", "Общий Итог")])},
-            {"Код ОКПД2": "", "Показатель": "сумма НМЦК, руб.",
-             "44-ФЗ": r[("sum", "44-ФЗ")],
-             "223-ФЗ": r[("sum", "223-ФЗ")],
-             "Общий Итог": r[("sum", "Общий Итог")]},
-        ]
-
-    final_df = pd.DataFrame(rows)
-    for c in ["44-ФЗ", "223-ФЗ", "Общий Итог"]:
-        final_df[c] = final_df[c].apply(fmt_nonzero)
-
-    print(f"\n{'=' * 90}")
-    print("Таблица 10. Применение кодов ОКПД2 (ед. и сумма)")
-    print(f"{'=' * 90}")
-    print(final_df.to_string(index=False, justify="right"))
-    print(f"{'-' * 90}")
+    p_cnt, p_sum = build_count_sum_pivots(items_df, "code", value_col="cost", limit=50)
+    print_count_sum_table("Таблица 10. Применение кодов ОКПД2 (ед. и сумма)", p_cnt, p_sum, row_label_width=45)
 
 
 def analyze_item_names():
-    """Топ наименований товаров/работ/услуг из JSON-полей закупок."""
-    print("\n>>> Анализ наименований товаров (вся БД, от 100 млн)...")
+    """Топ наименований товаров/работ/услуг из JSON-полей закупок (с конверсией по закону)."""
+    print("\\n>>> Анализ наименований товаров (вся БД, от 100 млн)...")
     df = _load_purchases()
     if df.empty:
         return
@@ -724,39 +702,44 @@ def analyze_item_names():
         return
 
     items_df = pd.DataFrame(items_list)
-    print_summary_with_sum(items_df, "name", "cost",
-                           "ТОП НАИМЕНОВАНИЙ ТОВАРОВ/РАБОТ/УСЛУГ", limit=30)
+    p_cnt, p_sum = build_count_sum_pivots(items_df, "name", value_col="cost", limit=30)
+    print_count_sum_table("ТОП НАИМЕНОВАНИЙ ТОВАРОВ/РАБОТ/УСЛУГ", p_cnt, p_sum, row_label_width=50)
 
 
 def analyze_contracts():
-    """Анализ контрактов: статусы, заказчики, позиции ТКП."""
-    print("\n>>> Загрузка контрактов (вся БД, от 20 млн)...")
+    """Анализ контрактов: статусы, заказчики, позиции ТКП (с конверсией по закону)."""
+    print("\\n>>> Загрузка контрактов (вся БД, от 20 млн)...")
     df = _load_contracts(min_price=20_000_000)
     if df.empty:
         print("Контракты не найдены.")
         return
     print(f"✓ Загружено {len(df)} контрактов")
 
-    print_summary(df, "law",           "КОНТРАКТЫ: ЗАКОНЫ")
-    print_summary(df, "customer_name", "КОНТРАКТЫ: ЗАКАЗЧИКИ")
+    p_cnt_law, p_sum_law = build_count_sum_pivots(df, "law")
+    print_count_sum_table("КОНТРАКТЫ: ЗАКОНЫ (кол-во и сумма)", p_cnt_law, p_sum_law, row_label_width=20)
 
-    print("\n... Извлечение позиций из контрактов ...")
+    p_cnt_cust, p_sum_cust = build_count_sum_pivots(df, "customer_name", limit=30)
+    print_count_sum_table("КОНТРАКТЫ: ЗАКАЗЧИКИ", p_cnt_cust, p_sum_cust, row_label_width=50)
+
+    print("\\n... Извлечение позиций из контрактов ...")
     items_series = df["payment_targets_json"].apply(extract_contract_items_new)
     exploded = items_series.explode().dropna()
+    idx_map = exploded.index
     items_df = pd.DataFrame(exploded.tolist()) if not exploded.empty else pd.DataFrame()
 
     if not items_df.empty:
-        print_summary(items_df, "ktru", "КОНТРАКТЫ: ПОПУЛЯРНЫЕ ПОЗИЦИИ", limit=30)
-        items_df["price_float"] = pd.to_numeric(items_df["price"], errors="coerce")
+        items_df["law"] = df.loc[idx_map, "law"].values
+        items_df["price_float"] = pd.to_numeric(items_df["price"], errors="coerce").fillna(0)
+
+        p_cnt_ktru, p_sum_ktru = build_count_sum_pivots(items_df, "ktru", value_col="price_float", limit=30)
+        print_count_sum_table("КОНТРАКТЫ: ПОПУЛЯРНЫЕ ПОЗИЦИИ", p_cnt_ktru, p_sum_ktru, row_label_width=40)
+
         items_df["item_price_category"] = pd.Categorical(
             items_df["price_float"].apply(categorize_price),
             categories=PRICE_ORDER, ordered=True,
         )
-        print_summary(
-            items_df.sort_values("item_price_category"),
-            "item_price_category",
-            "КОНТРАКТЫ: СТОИМОСТЬ ПОЗИЦИЙ",
-        )
+        p_cnt_ipc, p_sum_ipc = build_count_sum_pivots(items_df, "item_price_category", value_col="price_float", row_order=PRICE_ORDER)
+        print_count_sum_table("КОНТРАКТЫ: СТОИМОСТЬ ПОЗИЦИЙ", p_cnt_ipc, p_sum_ipc)
     else:
         print("Товары в контрактах не найдены.")
 
@@ -768,10 +751,9 @@ def analyze_contract_status():
     Статус = Purchase.ProcurementStage (статус закупки).
     Наличие контракта определяется по Contract.RegistryNumber.
     """
-    print("\n>>> Анализ статусов контрактов (вся БД, от 100 млн)...")
+    print("\\n>>> Анализ статусов контрактов (вся БД, от 100 млн)...")
     db.connect(reuse_if_open=True)
 
-    # Загружаем все нужные закупки — явно включаем ProcurementStage
     purchases_qs = list(
         Purchase
         .select(
@@ -781,13 +763,12 @@ def analyze_contract_status():
             Purchase.InitialMaxContractPrice,
         )
         .where(Purchase.InitialMaxContractPrice >= float(100_000_000))
-        .dicts()          # dicts() надёжнее namedtuples() при частичном select
+        .dicts()
     )
 
-    # Загружаем контракты: только факт наличия + цена
     reg_numbers = {p["RegistryNumber"] for p in purchases_qs}
     contracts_by_reg = {}
-    if reg_numbers:  # guard: .in_(set()) вызывает Ellipsis-ошибку в Peewee
+    if reg_numbers:
         for c in (
             Contract
             .select(Contract.RegistryNumber, Contract.ContractPrice)
@@ -814,7 +795,7 @@ def analyze_contract_status():
     )
     print(f"✓ Загружено {len(df)} записей")
 
-    # Статус × закон
+    # Статус × закон (с конверсией)
     p_cnt, p_sum = build_count_sum_pivots(df, "contract_status")
     print_count_sum_table(
         "Таблица. Статус контракта/договора по законам (кол-во и сумма)",
@@ -824,7 +805,7 @@ def analyze_contract_status():
     # Статистика по контрактам
     df_with = df[df["contract_status"] != "Нет контракта"]
     if not df_with.empty:
-        print(f"\n{'=' * 120}")
+        print(f"\\n{'=' * 120}")
         print("Таблица. Общая статистика по сумме контрактов")
         print(f"{'=' * 120}")
         stats = df_with.groupby("law")["price"].agg(["count", "sum", "max", "min", "mean"])
@@ -845,7 +826,7 @@ def analyze_contract_status():
         print(stats_t.fillna(0))
         print("-" * 120)
 
-    # Конверсия
+    # Конверсия закупка → контракт (с долями по закону)
     df["conv_group"] = df["contract_status"].apply(
         lambda x: "Заключён контракт" if x != "Нет контракта" else "Без контракта"
     )
@@ -854,51 +835,36 @@ def analyze_contract_status():
         "Таблица. Конверсия: закупки с контрактом vs без контракта",
         p_cnt_c, p_sum_c, row_label_width=25,
     )
+
+
 def analyze_suppliers():
-    """Топ-30 поставщиков крупных контрактов."""
-    print("\n>>> Загрузка поставщиков (вся БД, от 100 млн)...")
+    """Топ-30 поставщиков крупных контрактов (с конверсией по закону)."""
+    print("\\n>>> Загрузка поставщиков (вся БД, от 100 млн)...")
     df = _load_suppliers()
     if df.empty:
         print("Поставщики не найдены.")
         return
     print(f"✓ Загружено {len(df)} записей поставщиков")
-    print_summary(df, "organization", "ПОСТАВЩИКИ КРУПНЫХ КОНТРАКТОВ", limit=30)
+    p_cnt, p_sum = build_count_sum_pivots(df, "organization", limit=30)
+    print_count_sum_table("ПОСТАВЩИКИ КРУПНЫХ КОНТРАКТОВ", p_cnt, p_sum, row_label_width=50)
 
 
 def analyze_purchases_by_year():
-    """Сводная по годам: кол-во и объём НМЦК."""
-    print("\n>>> Анализ закупок по годам (вся БД, от 100 млн)...")
+    """Сводная по годам: кол-во и объём НМЦК (с конверсией по закону)."""
+    print("\\n>>> Анализ закупок по годам (вся БД, от 100 млн)...")
     df = _load_purchases()
     if df.empty:
         return
 
-    print_summary(df, "year", "ЗАКУПКИ: КОЛИЧЕСТВО ПО ГОДАМ")
-
-    print(f"\n{'=' * 60}")
-    print("ЗАКУПКИ: ГОД × ЗАКОН")
-    print(f"{'=' * 60}")
-    pivot = pd.crosstab(df["year"], df["law"]).sort_index()
-    print(pivot)
-    print(f"{'-' * 60}")
-
-    print(f"\n{'=' * 60}")
-    print("ДЕНЬГИ: ГОД × ЗАКОН (СУММА)")
-    print(f"{'=' * 60}")
-    pivot_sum = pd.pivot_table(
-        df, values="price", index="year", columns="law",
-        aggfunc="sum", fill_value=0,
-    ).sort_index()
-    pd.options.display.float_format = "{:,.2f}".format
-    print(pivot_sum)
-    print(f"{'-' * 60}")
+    p_cnt, p_sum = build_count_sum_pivots(df, "year")
+    print_count_sum_table("ЗАКУПКИ ПО ГОДАМ: ГОД × ЗАКОН (кол-во и сумма)", p_cnt, p_sum, row_label_width=15)
 
 
 def analyze_vessels():
     """Анализ судовой базы: типы, верфи, годы постройки, ценовые диапазоны."""
-    print("\n>>> Загрузка данных по судам...")
+    print("\\n>>> Загрузка данных по судам...")
     db.connect(reuse_if_open=True)
 
-    # Загружаем суда с ценами контрактов через RegistryNumber
     vessels = list(
         Vessel
         .select(
@@ -915,16 +881,27 @@ def analyze_vessels():
             Vessel.hull_material,
             Vessel.contract,
         )
-        .namedtuples()
+        .dicts()
     )
 
-    contract_ids = {v.contract_id for v in vessels if v.contract_id}
+    def _get_contract_id(v):
+        return v.get("contract_id", v.get("contract"))
+
+    contract_ids = {_get_contract_id(v) for v in vessels if _get_contract_id(v)}
     prices_by_contract = {}
+    law_by_contract = {}
     if contract_ids:
-        for c in Contract.select(Contract.Id, Contract.ContractPrice).where(
+        for c in Contract.select(Contract.Id, Contract.ContractPrice, Contract.RegistryNumber).where(
             Contract.Id.in_(contract_ids)
         ).namedtuples():
             prices_by_contract[c.Id] = c.ContractPrice
+        reg_nums = {c.RegistryNumber for c in Contract.select(Contract.Id, Contract.RegistryNumber).where(Contract.Id.in_(contract_ids))}
+        purchase_laws = {
+            p.RegistryNumber: p.PurchaseOrder
+            for p in Purchase.select(Purchase.RegistryNumber, Purchase.PurchaseOrder).where(Purchase.RegistryNumber.in_(reg_nums))
+        }
+        for c in Contract.select(Contract.Id, Contract.RegistryNumber).where(Contract.Id.in_(contract_ids)):
+            law_by_contract[c.Id] = purchase_laws.get(c.RegistryNumber)
 
     db.close()
 
@@ -934,39 +911,53 @@ def analyze_vessels():
 
     rows = []
     for v in vessels:
+        cid = _get_contract_id(v)
         rows.append({
-            "ship_type_rmrs":   v.ship_type_rmrs,
-            "ship_type_rko":    v.ship_type_rko,
-            "ship_class":       v.ship_class,
-            "year_built":       v.year_built,
-            "country_built":    v.country_built,
-            "shipyard_name":    v.shipyard_name,
-            "federal_district": v.federal_district,
-            "hull_material":    v.hull_material,
-            "contract_price":   prices_by_contract.get(v.contract_id),
+            "ship_type_rmrs":   v.get("ship_type_rmrs"),
+            "ship_type_rko":    v.get("ship_type_rko"),
+            "ship_class":       v.get("ship_class"),
+            "year_built":       v.get("year_built"),
+            "country_built":    v.get("country_built"),
+            "shipyard_name":    v.get("shipyard_name"),
+            "federal_district": v.get("federal_district"),
+            "hull_material":    v.get("hull_material"),
+            "contract_price":   prices_by_contract.get(cid),
+            "law":              law_by_contract.get(cid),
         })
 
     df = pd.DataFrame(rows)
-    df["contract_price_num"] = pd.to_numeric(df["ContractPrice"], errors="coerce")
+    df["contract_price_num"] = pd.to_numeric(df["contract_price"], errors="coerce")
+    df["law"] = df["law"].fillna("Неизвестно")
     print(f"✓ Загружено {len(df)} записей о судах")
 
-    print_summary(df, "ship_type_rmrs",   "СУДА: ТИП (РМРС)", limit=20)
-    print_summary(df, "ship_class",       "СУДА: КЛАСС", limit=20)
-    print_summary(df, "shipyard_name",    "СУДА: ВЕРФИ ПОСТРОЙКИ", limit=20)
-    print_summary(df, "federal_district", "СУДА: ФЕДЕРАЛЬНЫЙ ОКРУГ")
-    print_summary(df, "hull_material",    "СУДА: МАТЕРИАЛ КОРПУСА")
+    p_cnt, p_sum = build_count_sum_pivots(df.assign(price=df["contract_price_num"].fillna(0)), "ship_type_rmrs", limit=20)
+    print_count_sum_table("СУДА: ТИП (РМРС)", p_cnt, p_sum, row_label_width=30)
+
+    p_cnt, p_sum = build_count_sum_pivots(df.assign(price=df["contract_price_num"].fillna(0)), "ship_class", limit=20)
+    print_count_sum_table("СУДА: КЛАСС", p_cnt, p_sum, row_label_width=30)
+
+    p_cnt, p_sum = build_count_sum_pivots(df.assign(price=df["contract_price_num"].fillna(0)), "shipyard_name", limit=20)
+    print_count_sum_table("СУДА: ВЕРФИ ПОСТРОЙКИ", p_cnt, p_sum, row_label_width=40)
+
+    p_cnt, p_sum = build_count_sum_pivots(df.assign(price=df["contract_price_num"].fillna(0)), "federal_district")
+    print_count_sum_table("СУДА: ФЕДЕРАЛЬНЫЙ ОКРУГ", p_cnt, p_sum, row_label_width=30)
+
+    p_cnt, p_sum = build_count_sum_pivots(df.assign(price=df["contract_price_num"].fillna(0)), "hull_material")
+    print_count_sum_table("СУДА: МАТЕРИАЛ КОРПУСА", p_cnt, p_sum, row_label_width=30)
 
     df_year = df.dropna(subset=["year_built"])
     if not df_year.empty:
-        print_summary(df_year, "year_built", "СУДА: ГОД ПОСТРОЙКИ")
+        p_cnt, p_sum = build_count_sum_pivots(df_year.assign(price=df_year["contract_price_num"].fillna(0)), "year_built")
+        print_count_sum_table("СУДА: ГОД ПОСТРОЙКИ", p_cnt, p_sum, row_label_width=15)
 
     df_price = df.dropna(subset=["contract_price_num"])
     if not df_price.empty:
         df_price = df_price.copy()
         df_price["price_cat"] = df_price["contract_price_num"].apply(categorize_price)
-        print_summary(df_price, "price_cat", "СУДА: ЦЕНОВЫЕ ДИАПАЗОНЫ КОНТРАКТА")
+        p_cnt, p_sum = build_count_sum_pivots(df_price.assign(price=df_price["contract_price_num"]), "price_cat", row_order=PRICE_ORDER)
+        print_count_sum_table("СУДА: ЦЕНОВЫЕ ДИАПАЗОНЫ КОНТРАКТА", p_cnt, p_sum)
 
-        print(f"\n{'=' * 80}")
+        print(f"\\n{'=' * 80}")
         print("СУДА: СТАТИСТИКА ЦЕН КОНТРАКТОВ")
         print(f"{'=' * 80}")
         for k, v in df_price["contract_price_num"].describe().items():
@@ -996,3 +987,4 @@ if __name__ == "__main__":
     analyze_suppliers()
     analyze_purchases_by_year()
     analyze_vessels()
+

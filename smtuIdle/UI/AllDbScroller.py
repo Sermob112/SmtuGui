@@ -121,7 +121,7 @@ class PurchasesWidgetAll(QWidget):
         self.sort_options = QComboBox()
         self.sort_options.addItems(["Сортировать по цене (возрастание)", "Сортировать по цене (убывание)",
                                     
-                                    "Сортировать по дате (возрастание)","Сортировать по дате (убывание)"])
+                                    "Сортировать по дате (от старых к новым)","Сортировать по дате (от новых к старым)"])
          # Устанавливаем обработчик событий для выпадающего меню
        
         self.sort_options.setFixedWidth(250)
@@ -438,8 +438,8 @@ class PurchasesWidgetAll(QWidget):
         self.sort_options_contract.addItems([
             "Сортировать по цене (возрастание)",
             "Сортировать по цене (убывание)",
-            "Сортировать по дате (возрастание)",
-            "Сортировать по дате (убывание)",
+            "Сортировать по дате (от старых к новым)",
+            "Сортировать по дате (от новых к старым)",
         ])
         self.sort_options_contract.setFixedWidth(250)
         self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item_contract)
@@ -1130,9 +1130,9 @@ class PurchasesWidgetAll(QWidget):
             order_by = Purchase.InitialMaxContractPrice
         elif  self.selected_option == "Сортировать по цене (убывание)":
             order_by = Purchase.InitialMaxContractPrice.desc()
-        elif  self.selected_option == "Сортировать по дате (убывание)":
+        elif  self.selected_option == "Сортировать по дате (от новых к старым)":
             order_by = Purchase.PlacementDate.desc()
-        elif  self.selected_option == "Сортировать по дате (возрастание)":
+        elif  self.selected_option == "Сортировать по дате (от старых к новым)":
             order_by = Purchase.PlacementDate
   
 
