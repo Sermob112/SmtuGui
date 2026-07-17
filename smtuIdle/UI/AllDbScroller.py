@@ -937,7 +937,7 @@ class PurchasesWidgetAll(QWidget):
             for current_position, current_purchase in enumerate(self.purchases_list):
                 # Добавляем новую строку для каждой записи
                 self.table.insertRow(current_position)
-                initial_price =  format_string("%.0f", current_purchase.InitialMaxContractPrice, grouping=True) + ' ₽'
+                initial_price =  format_string("%.0f", current_purchase.InitialMaxContractPrice, grouping=True)
                 # Добавляем данные в каждую ячейку для текущей записи
                 for col, value in enumerate([current_purchase.Id, current_purchase.PurchaseOrder, current_purchase.RegistryNumber,str(current_purchase.PlacementDate)
                                              , current_purchase.PurchaseName,current_purchase.AuctionSubject,
@@ -993,9 +993,9 @@ class PurchasesWidgetAll(QWidget):
             diff = price - nmck
             reduction = c.ReductionNMCPercent
 
-            price_str = format_string("%.0f", price, grouping=True) + " ₽" if price else "—"
-            nmck_str = format_string("%.0f", nmck, grouping=True) + " ₽" if nmck else "—"
-            diff_str = format_string("%.0f", diff, grouping=True) + " ₽" if (price and nmck) else "—"
+            price_str = format_string("%.0f", price, grouping=True) if price else "—"
+            nmck_str = format_string("%.0f", nmck, grouping=True)  if nmck else "—"
+            diff_str = format_string("%.0f", diff, grouping=True)  if (price and nmck) else "—"
             reduction_str = f"{reduction:.2f}%" if reduction is not None else "—"
 
             values = [

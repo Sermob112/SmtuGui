@@ -5,7 +5,10 @@ a = Analysis(
     ['start.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+      datas=[
+        ('HelpFiles', 'HelpFiles'),
+        ('Pics', 'Pics'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

@@ -13,51 +13,60 @@ from peewee import SqliteDatabase
 # port=5432
 # port = connection.settings_dict.get('PORT', '')
 # hostname = connection.settings_dict['HOST', '']
-db = SqliteDatabase('database.db')
+DB_PATH = r"C:\Users\Sergey\Desktop\Work\SmtuGui\smtuIdle\database.db"
+db = sqlite3.connect(DB_PATH)
 
 
 
 def connector():
     connection = sqlite3.connect('database.db')
     return connection
-def insert_in_table(csv_file_path, user,role):
+def insert_in_table(csv_file_path):
     errors = []
-    inserted_rows = 0 
+    inserted_rows = 0
+    connection = None
     try:
-        connection = connector()
         print("Успешное подключение к базе данных")
-        cursor = connection.cursor()
+        connection = db
+        cursor = db.cursor()
+
         with open(csv_file_path, 'r', encoding='windows-1251') as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter = ';')
-            next(csv_reader)  # Пропустите заголовок, если он есть
-       
+            csv_reader = csv.reader(csv_file, delimiter=';')
+            next(csv_reader)
+
             for row in csv_reader:
-               
-                # Обрезка слишком длинных строк
-                max_length = 512  # Максимальная длина для строк
+
+                max_length = 512
                 purchase_date = row[0][:max_length] if row[0] else 'Нет данных'
-                registry_number = row[1][:max_length] if row[1] else 'Нет данных'
+
+                # Убираем '№' из значения CSV, так как в БД номера хранятся без него
+                registry_number_raw = row[1][:max_length] if row[1] else 'Нет данных'
+                registry_number = registry_number_raw.replace('№', '').strip()
+
                 procurement_method = row[2][:max_length] if row[2] else 'Нет данных'
                 purchase_name = row[3][:max_length] if row[3] else 'Нет данных'
                 auction_subject = row[4][:max_length] if row[4] else 'Нет данных'
                 purchase_identification_code = row[5][:max_length] if row[5] else 'Нет данных'
-                
+
                 try:
                     lot_number = int(row[6])
                 except ValueError:
-                    lot_number = 0  # Если не удалось преобразовать в int, устанавливаем значение по умолчанию
-                
+                    lot_number = 0
+
                 lot_name = row[7][:max_length] if row[7] else 'Нет данных'
-                
+
                 try:
                     initial_max_contract_price = float(row[8])
                 except ValueError:
-                    initial_max_contract_price = 0.0  # Если не удалось преобразовать в float, устанавливаем значение по умолчанию
+                    initial_max_contract_price = 0.0
+
                 Currency = row[9][:max_length] if row[9] else 'Нет данных'
+
                 try:
                     InitialMaxContractPriceInCurrency = float(row[10])
                 except ValueError:
                     InitialMaxContractPriceInCurrency = 0
+
                 ContractCurrency = row[11][:max_length] if row[11] else 'Нет данных'
                 OKDPClassification = row[12][:max_length] if row[12] else 'Нет данных'
                 OKPDClassification = row[13][:max_length] if row[13] else 'Нет данных'
@@ -65,18 +74,22 @@ def insert_in_table(csv_file_path, user,role):
                 PositionCode = row[15][:max_length] if row[15] else 'Нет данных'
                 CustomerName = row[16][:max_length] if row[16] else 'Нет данных'
                 ProcurementOrganization = row[17][:max_length] if row[17] else 'Нет данных'
+
                 PlacementDate = row[18]
                 try:
                     placementDate = datetime.strptime(PlacementDate, '%d.%m.%Y').date()
                 except ValueError:
                     placementDate = None
+
                 UpdateDate = row[19]
                 try:
                     updateDate = datetime.strptime(UpdateDate, '%d.%m.%Y').date()
                 except ValueError:
-                    updateDate =None
+                    updateDate = None
+
                 ProcurementStage = row[20][:max_length] if row[20] else 'Нет данных'
                 ProcurementFeatures = row[21][:max_length] if row[21] else 'Нет данных'
+
                 ApplicationStartDate = row[22]
                 try:
                     applicationStartDate = datetime.strptime(ApplicationStartDate, '%d.%m.%Y').date()
@@ -94,59 +107,43 @@ def insert_in_table(csv_file_path, user,role):
                     AuctionDate = datetime.strptime(auctionDate, '%d.%m.%Y').date()
                 except ValueError:
                     AuctionDate = None
-                # Вставка данных в таблицу
-                inserted_rows += 1
-                
-                Purchase.create(
-                PurchaseOrder=purchase_date, 
-                RegistryNumber=registry_number, 
-                ProcurementMethod=procurement_method, 
-                PurchaseName=purchase_name,
-                AuctionSubject=auction_subject, 
-                PurchaseIdentificationCode=purchase_identification_code, 
-                LotNumber=lot_number, 
-                LotName=lot_name,
-                InitialMaxContractPrice=initial_max_contract_price,
-                Currency=Currency, 
-                InitialMaxContractPriceInCurrency=InitialMaxContractPriceInCurrency, 
-                ContractCurrency=ContractCurrency,
-                OKDPClassification=OKDPClassification,
-                OKPDClassification=OKPDClassification,
-                OKPD2Classification=OKPD2Classification,
-                PositionCode=PositionCode,
-                CustomerName=CustomerName,
-                ProcurementOrganization=ProcurementOrganization,
-                PlacementDate=placementDate,
-                UpdateDate=updateDate,
-                ProcurementStage=ProcurementStage,
-                ProcurementFeatures=ProcurementFeatures,
-                ApplicationStartDate=applicationStartDate, 
-                ApplicationEndDate=applicationEndDate,
-                AuctionDate=AuctionDate
-            )
-            
-            changed_date = ChangedDate(
-                RegistryNumber=registry_number,
-                username=user,
-                chenged_time=datetime.now(),
-                PurchaseName=purchase_name,
-                Role=role,
-                Type='Добавлены новая запись'
-            )
-            changed_date.save()
-            
-            
-        
-        
+
+                # Обновляем только те строки, где RegistryNumber совпадает
+                updated_count = (
+                    Purchase.update(
+                        ProcurementMethod=procurement_method,
+                        PurchaseName=purchase_name,
+                        AuctionSubject=auction_subject,
+                        PurchaseIdentificationCode=purchase_identification_code,
+                        LotNumber=lot_number,
+                        LotName=lot_name,
+                        Currency=Currency,
+                        ContractCurrency=ContractCurrency,
+                        OKDPClassification=OKDPClassification,
+                        OKPDClassification=OKPDClassification,
+                        OKPD2Classification=OKPD2Classification,
+                        PositionCode=PositionCode,
+                        CustomerName=CustomerName,
+                        ProcurementOrganization=ProcurementOrganization,
+                    )
+                    .where(Purchase.RegistryNumber == registry_number)
+                    .execute()
+                )
+
+                if updated_count > 0:
+                    inserted_rows += 1
+
         connection.commit()
-    
-    
+
     except Exception as e:
         print("Ошибка подключения или вставки данных:", e)
-        errors.append(str(e))  # Добавьте ошибку в список ошибок
+        errors.append(str(e))
 
     finally:
-        connection.close()
+        if connection is not None:
+            connection.close()
+        print("done")
+
     return inserted_rows, errors
 
 def insert_in_table_full(csv_file_path):
@@ -218,10 +215,10 @@ def insert_in_table_full(csv_file_path):
                     except ValueError:
                         return default
 
-                placement_date         = parse_date(row[1])
-                application_end_date   = parse_date(row[1])
-                auction_date_val       = parse_date(row[1])
-                application_start_date = parse_date(row[10])
+                # placement_date         = parse_date(row[1])
+                # application_end_date   = parse_date(row[1])
+                # auction_date_val       = parse_date(row[1])
+                # application_start_date = parse_date(row[10])
 
                 tkp_data_dict = {}
                 for i in range(10):
@@ -307,13 +304,13 @@ def insert_in_table_full(csv_file_path):
                     PositionCode='Нет данных',
                     CustomerName=customer_name,
                     ProcurementOrganization='Нет данных',
-                    PlacementDate=placement_date,
-                    UpdateDate=placement_date,
+                    # PlacementDate=placement_date,
+                    # UpdateDate=placement_date,
                     ProcurementStage='Нет данных',
                     ProcurementFeatures='Нет данных',
-                    ApplicationStartDate=application_start_date,
-                    ApplicationEndDate=application_end_date,
-                    AuctionDate=auction_date_val,
+                    # ApplicationStartDate=application_start_date,
+                    # ApplicationEndDate=application_end_date,
+                    # AuctionDate=auction_date_val,
                     TKPData=tkp_data_json,
                     QueryCount=query_count,
                     ResponseCount=response_count,

@@ -178,6 +178,7 @@ class DebugWidget(QWidget):
         if file_dialog.exec_():
             selected_file = file_dialog.selectedFiles()[0]
             insert_in_table_full(selected_file)
+            print("отработано")
     def delete_all_data(self):
         reply = QMessageBox.question(self, 'Подтверждение удаления', 'Вы точно хотите удалить выбранные записи?',
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
