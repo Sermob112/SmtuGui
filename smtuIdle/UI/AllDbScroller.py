@@ -161,10 +161,10 @@ class PurchasesWidgetAll(QWidget):
             self.sort_by_putch_ProcurementMethod.addItem(str(order.ProcurementMethod))
         # Создаем метки и поля для ввода минимальной и максимальной цены
         self.sort_by_putch_okpd2.currentIndexChanged.connect(self.highlight_current_item)
-        self.min_price_label = QLabel("Минимальная цена")
+        self.min_price_label = QLabel("Цена от (в рублях)")
         self.min_price_input = QLineEdit()
         self.min_price_input.setFixedWidth(100)
-        self.max_price_label = QLabel("Максимальная цена (в рублях)")
+        self.max_price_label = QLabel("Цена до (в рублях)")
         self.max_price_input = QLineEdit()
         self.max_price_input.setFixedWidth(100)
         self.toExcel = QPushButton("Экспорт в Excel данных по закупке", self)
@@ -389,17 +389,22 @@ class PurchasesWidgetAll(QWidget):
         layout = QVBoxLayout(tab)
 
         self.table_cont = QTableWidget(self)
-        self.table_cont.setColumnCount(13)
+        self.table_cont.setColumnCount(18)
         column_headers = [
             "№ПП",
-            "Рееестр. № договора",
-            "Рееестр. № закупки",
+            "Реестр. № договора",
+            "Реестр. № закупки",
             "Номер контракта",
-            "Дата начала",
-            "Дата окончания",
-            "Цена контракта",
+            "Дата начала до изм.",
+            "Дата начала действ.",
+            "Дата окончания до изм.",
+            "Дата окончания действ.",
+            "Разница сроков, мес.",
+            "Цена до изменения",
+            "Цена действующая",
+            "Разница с ценой до изменения",
             "НМЦК",
-            "Разница",
+            "Разница с НМЦК",
             "Снижение %",
             "Заказчик по контракту",
             "Исполнитель",
@@ -407,7 +412,7 @@ class PurchasesWidgetAll(QWidget):
         ]
         self.table_cont.setHorizontalHeaderLabels(column_headers)
         self.table_cont.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        for col in (10, 11, 12):
+        for col in (15, 16, 17):
             self.table_cont.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
             self.table_cont.setColumnWidth(col, 400)
         self.table_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -463,10 +468,10 @@ class PurchasesWidgetAll(QWidget):
         # ── Цена ──────────────────────────────────────────────
         self.min_price_input_contrac = QLineEdit()
         self.min_price_input_contrac.setFixedWidth(120)
-        self.min_price_input_contrac.setPlaceholderText("Мин. цена")
+        self.min_price_input_contrac.setPlaceholderText("Цена от (в рублях)")
         self.max_price_input_contrac = QLineEdit()
         self.max_price_input_contrac.setFixedWidth(120)
-        self.max_price_input_contrac.setPlaceholderText("Макс. цена")
+        self.max_price_input_contrac.setPlaceholderText("Цена до (в рублях)")
         self.min_price_input_contrac.textChanged.connect(self.highlight_input_contract)
         self.max_price_input_contrac.textChanged.connect(self.highlight_input_contract)
 
@@ -1014,31 +1019,65 @@ class PurchasesWidgetAll(QWidget):
         for i, c in enumerate(self.contracts_list):
             self.table_cont.insertRow(i)
 
-            # Цены
-            price = c.ContractPrice or 0.0
-            nmck = c.purchase.InitialMaxContractPrice or 0.0
-            diff = price - nmck
+            initial_version = self.get_initial_contract_version(c)
+
+            initial_price = self.parse_float_safe(initial_version.contract_price) if initial_version else None
+            current_price = c.ContractPrice if c.ContractPrice is not None else None
+
+            initial_start = self.parse_date_safe(initial_version.date_contract_signed) if initial_version else None
+            current_start = self.parse_date_safe(c.StartDate)
+
+            initial_end = self.parse_date_safe(initial_version.date_execution_due) if initial_version else None
+            current_end = self.parse_date_safe(c.EndDate)
+
+            months_diff = self.months_diff_safe(initial_end, current_end) if initial_end and current_end else None
+
+            nmck = c.purchase.InitialMaxContractPrice if c.purchase and c.purchase.InitialMaxContractPrice is not None else None
+
+            diff_initial = (
+                current_price - initial_price
+                if current_price is not None and initial_price is not None
+                else None
+            )
+
+            diff_nmck = (
+                current_price - nmck
+                if current_price is not None and nmck is not None
+                else None
+            )
+
             reduction = c.ReductionNMCPercent
 
-            price_str = format_string("%.0f", price, grouping=True) if price else "—"
-            nmck_str = format_string("%.0f", nmck, grouping=True)  if nmck else "—"
-            diff_str = format_string("%.0f", diff, grouping=True)  if (price and nmck) else "—"
+            initial_price_str = format_string("%.0f", initial_price,
+                                              grouping=True) if initial_price is not None else "—"
+            current_price_str = format_string("%.0f", current_price,
+                                              grouping=True) if current_price is not None else "—"
+            diff_initial_str = format_string("%.0f", diff_initial, grouping=True) if diff_initial is not None else "—"
+            nmck_str = format_string("%.0f", nmck, grouping=True) if nmck is not None else "—"
+            diff_nmck_str = format_string("%.0f", diff_nmck, grouping=True) if diff_nmck is not None else "—"
             reduction_str = f"{reduction:.2f}%" if reduction is not None else "—"
+
             executor_name = self.get_contract_executor(c)
+
             values = [
                 c.Id,
                 c.RegistryNumber or "—",
-                c.purchase.RegistryNumber or "—",
+                c.purchase.RegistryNumber if c.purchase else "—",
                 c.ContractNumber or "—",
-                str(c.StartDate) if c.StartDate else "—",
-                str(c.EndDate) if c.EndDate else "—",
-                price_str,
+                str(initial_start) if initial_start else "—",
+                str(current_start) if current_start else "—",
+                str(initial_end) if initial_end else "—",
+                str(current_end) if current_end else "—",
+                str(months_diff) if months_diff is not None else "—",
+                initial_price_str,
+                current_price_str,
+                diff_initial_str,
                 nmck_str,
-                diff_str,
+                diff_nmck_str,
                 reduction_str,
                 c.ContractingAuthority or "—",
                 executor_name,
-                c.purchase.PurchaseName or "—",
+                c.purchase.PurchaseName if c.purchase else "—",
             ]
 
             for col, val in enumerate(values):
@@ -1046,6 +1085,9 @@ class PurchasesWidgetAll(QWidget):
                 item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                 item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
                 self.table_cont.setItem(i, col, item)
+
+                if col in (9, 10, 11, 12, 13):
+                    item.setTextAlignment(Qt.AlignRight | Qt.AlignTop)
 
             self.table_cont.setRowHeight(i, self.table_cont.rowHeight(i) + 3)
     def highlight_apply_filter_button(self):
@@ -1644,6 +1686,87 @@ class PurchasesWidgetAll(QWidget):
         )
         self.contracts_list = list(self.contracts)
         self.show_all_contracts()
+
+    def parse_float_safe(self, value):
+        if value is None:
+            return None
+
+        s = str(value).strip()
+        if not s or s in ("Нет данных", "[]", "None", "null"):
+            return None
+
+        import re
+        s = re.sub(r"[^\d,.\-]", "", s)
+
+        if not s:
+            return None
+
+        if "," in s and "." in s:
+            s = s.replace(".", "").replace(",", ".")
+        elif "," in s:
+            s = s.replace(",", ".")
+
+        try:
+            return float(s)
+        except (ValueError, TypeError):
+            return None
+
+    def parse_date_safe(self, value):
+        if not value:
+            return None
+
+        if hasattr(value, "year"):
+            return value
+
+        for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S"):
+            try:
+                from datetime import datetime
+                return datetime.strptime(str(value), fmt).date()
+            except ValueError:
+                continue
+
+        try:
+            from datetime import datetime
+            return datetime.fromisoformat(str(value)).date()
+        except Exception:
+            return None
+
+    def months_diff_safe(self, start_date, end_date):
+        if not start_date or not end_date:
+            return None
+        return (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+
+    def get_first_contract_version(self, contract):
+        return (
+            ContractVersion
+            .select()
+            .where(ContractVersion.contract == contract)
+            .order_by(ContractVersion.id.asc())
+            .first()
+        )
+
+    def get_initial_contract_version(self, contract):
+        initial_version = (
+            ContractVersion
+            .select()
+            .where(
+                (ContractVersion.contract == contract) &
+                (ContractVersion.version.contains("Версия № 0"))
+            )
+            .order_by(ContractVersion.id.asc())
+            .first()
+        )
+
+        if initial_version:
+            return initial_version
+
+        return (
+            ContractVersion
+            .select()
+            .where(ContractVersion.contract == contract)
+            .order_by(ContractVersion.id.asc())
+            .first()
+        )
     def return_filters_variabels(self):
     
         # search_input = self.selected_text if self.selected_text is not None else ""
@@ -1655,14 +1778,15 @@ class PurchasesWidgetAll(QWidget):
         sort_by_putch_okpd2 = self.sort_by_putch_okpd2.currentText() if self.sort_by_putch_okpd2.currentText() != "Фильтровать по ОКПД2" else "-"
         return sort_by_putch_order,min_date,max_date,min_price,max_price,sort_by_putch_okpd2
 
-    def get_contract_executor(self, contract) -> str:
-        supplier_link = (
-            SupplierContract
-            .select(SupplierContract, Supplier)
-            .join(Supplier, on=(SupplierContract.supplier == Supplier.id))
+    def get_contract_executor(self, contract):
+        suppliers = (
+            Supplier
+            .select(Supplier.organization)
+            .join(SupplierContract, on=(SupplierContract.supplier == Supplier.id))
             .where(SupplierContract.contract == contract)
-            .first()
         )
+        names = [s.organization for s in suppliers if s.organization]
+        return ", ".join(names) if names else "—"
 
         if supplier_link and supplier_link.supplier:
             return supplier_link.supplier.organization or "—"

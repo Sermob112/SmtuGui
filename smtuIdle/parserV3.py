@@ -2,6 +2,8 @@
 import csv
 import sqlite3
 from datetime import datetime, date
+from pathlib import Path
+
 import pandas as pd
 from smtuIdle.BD.models import *
 from peewee import SqliteDatabase
@@ -13,9 +15,8 @@ from peewee import SqliteDatabase
 # port=5432
 # port = connection.settings_dict.get('PORT', '')
 # hostname = connection.settings_dict['HOST', '']
-DB_PATH = r"C:\Users\Sergey\Desktop\Work\SmtuGui\smtuIdle\database.db"
-db = sqlite3.connect(DB_PATH)
-
+BASE_DIR = Path(__file__).resolve().parent.parent
+DB_PATH = BASE_DIR / "database.db"
 
 
 def connector():

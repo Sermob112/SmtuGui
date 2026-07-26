@@ -10,7 +10,7 @@ from PySide6.QtCore import Qt, Signal, QUrl
 from PySide6.QtGui import QColor, QFont, QDesktopServices
 
 # ВАЖНО: Убедитесь, что вы импортировали модель Supplier из вашего файла моделей
-from smtuIdle.BD.models import Supplier
+from smtuIdle.BD.models import *
 
 
 class SupplierWidget(QWidget):
@@ -142,14 +142,12 @@ class SupplierWidget(QWidget):
             current_supplier = self.suppliers_list[self.current_position]
             self.current_supplier = current_supplier
 
-            # Заголовок
             if current_supplier.organization:
                 self.label_form.setText(f"Исполнитель: {current_supplier.organization}")
             else:
                 self.label_form.setText("Формуляр исполнителя")
             self.label_form.show()
 
-            # --- 1. Основные реквизиты (развернуто) ---
             self.add_section_to_table('Общие сведения', expanded=True)
             self.add_row_to_table('Идентификатор БД', current_supplier.id)
             self.add_row_to_table('Организация', current_supplier.organization)
@@ -157,9 +155,24 @@ class SupplierWidget(QWidget):
             self.add_row_to_table('КПП', current_supplier.kpp)
             self.add_row_to_table('Статус', current_supplier.status)
 
-            # Если нужно отобразить ID контракта, к которому привязан поставщик:
-            if current_supplier.contract_id:
-                self.add_row_to_table('ID Контракта', current_supplier.contract_id)
+            links = (
+                SupplierContract
+                .select(SupplierContract, Contract)
+                .join(Contract)
+                .where(SupplierContract.supplier == current_supplier)
+            )
+
+            if links.exists():
+                self.add_section_to_table('Связанные контракты', expanded=True)
+
+                for link in links:
+                    contract = link.contract
+                    reg_number = contract.RegistryNumber or "Без номера"
+                    contract_number = contract.ContractNumber or "Без №"
+                    self.add_row_to_table(
+                        f'Контракт ID {contract.id}',
+                        f'Реестровый № {reg_number}, договор {contract_number}'
+                    )
 
             # --- 2. Контактная информация (развернуто) ---
             self.add_section_to_table('Контактная информация', expanded=True)
