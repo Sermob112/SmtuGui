@@ -326,6 +326,7 @@ def _load_purchases(min_price: float = 100_000_000) -> pd.DataFrame:
             Purchase.PlacementDate,
             Purchase.common_info_json,
             Purchase.lots_json,
+            Purchase.OKPD2Classification,
         )
         .where(Purchase.InitialMaxContractPrice >= min_price)
         .namedtuples()
@@ -338,14 +339,15 @@ def _load_purchases(min_price: float = 100_000_000) -> pd.DataFrame:
 
     df = pd.DataFrame(rows)
     df = df.rename(columns={
-        "RegistryNumber":          "reg_number",
-        "PurchaseName":            "object_name",
-        "PurchaseOrder":           "law",
-        "ProcurementStage":        "status",
-        "ProcurementMethod":       "placing_way",
-        "CustomerName":            "customer_name",
+        "RegistryNumber": "reg_number",
+        "PurchaseName": "object_name",
+        "PurchaseOrder": "law",
+        "ProcurementStage": "status",
+        "ProcurementMethod": "placing_way",
+        "CustomerName": "customer_name",
         "InitialMaxContractPrice": "initial_price_amount",
-        "PlacementDate":           "published",
+        "PlacementDate": "published",
+        "OKPD2Classification": "okpd2_classification",
     })
 
     # JSON-поля хранятся как TEXT в SQLite — декодируем сразу
@@ -468,9 +470,20 @@ def _load_suppliers(min_price: float = 100_000_000) -> pd.DataFrame:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def extract_okpd2_items(row: dict) -> list:
-    law        = str(row.get("law", ""))
-    reg_number = str(row.get("reg_number", ""))
-    object_name = str(row.get("object_name", "")).replace("\\n", " ").strip()
+    """
+    Извлекает позиции ОКПД2 из JSON-таблиц закупки (детально, по позициям
+    товаров/работ/услуг). Если из JSON ничего не извлечено — используется
+    fallback: колонка Purchase.OKPD2Classification (единая классификация
+    на всю закупку, без разбивки по позициям), если она заполнена и не
+    равна дефолтному значению "Нет данных". Источник каждой позиции
+    помечается полем "source": "json" или "field", чтобы отличать точные
+    построчные ОКПД2 от общей классификации закупки.
+    """
+    law         = str(row.get("law", ""))
+    reg_number  = str(row.get("reg_number", ""))
+    object_name = str(row.get("object_name", "")).replace("\n", " ").strip()
+    okpd2_field = row.get("okpd2_classification")
+    price_total = row.get("price", 0) or 0
     items = []
 
     if "44" in law:
@@ -483,6 +496,7 @@ def extract_okpd2_items(row: dict) -> list:
                         "code": clean_okpd2(code),
                         "cost": clean_price_value(cost) or 0,
                         "law":  "44-ФЗ",
+                        "source": "json",
                     })
         except Exception:
             pass
@@ -495,19 +509,29 @@ def extract_okpd2_items(row: dict) -> list:
                 if okpd_raw:
                     cost_val = 0
                     if price_raw:
-                        params = re.findall(r"([\\d\\s]+,\\d{2})", str(price_raw))
+                        params = re.findall(r"([\d\s]+,\d{2})", str(price_raw))
                         if params:
                             cost_val = clean_price_value(params[-1]) or 0
                     items.append({
                         "code": clean_okpd2(okpd_raw),
                         "cost": cost_val,
                         "law":  "223-ФЗ",
+                        "source": "json",
                     })
         except Exception:
             pass
 
+    if not items and okpd2_field and str(okpd2_field).strip() not in ("", "Нет данных"):
+        fallback_law = "44-ФЗ" if "44" in law else ("223-ФЗ" if "223" in law else (law or "Прочее"))
+        items.append({
+            "code": clean_okpd2(okpd2_field),
+            "cost": price_total,
+            "law": fallback_law,
+            "source": "field",
+        })
+
     if not items:
-        items.append({"code": "Нет ОКПД2", "cost": 0, "law": law})
+        items.append({"code": "Нет ОКПД2", "cost": 0, "law": law, "source": "none"})
 
     for item in items:
         item["reg_number"]  = reg_number
@@ -634,7 +658,7 @@ def analyze_purchases():
     )
 
     # ── ОКПД2 с привязкой к номеру закупки ───────────────────────────────
-    print("\\n... Извлечение позиций ОКПД2 из JSON ...")
+    print("\n... Извлечение позиций ОКПД2 из JSON (с fallback на поле OKPD2Classification) ...")
     items_list = []
     for _, row in df.iterrows():
         items_list.extend(extract_okpd2_items(row.to_dict()))
@@ -642,10 +666,10 @@ def analyze_purchases():
     if items_list:
         items_df = pd.DataFrame(items_list)
         df_has = items_df[items_df["code"] != "Нет ОКПД2"]
-        df_no  = items_df[items_df["code"] == "Нет ОКПД2"]
+        df_no = items_df[items_df["code"] == "Нет ОКПД2"]
 
-        print(f"\\n{'=' * 130}")
-        print(f"ЗАКУПКИ БЕЗ УКАЗАНИЯ ОКПД2 В JSON (Найдено: {len(df_no)})")
+        print(f"\n{'=' * 130}")
+        print(f"ЗАКУПКИ БЕЗ УКАЗАНИЯ ОКПД2 (Найдено: {len(df_no)})")
         print(f"{'=' * 130}")
         if not df_no.empty:
             print(f"{'Реестровый номер':<25} {'Закон':<10} {'Объект закупки'}")
@@ -655,9 +679,18 @@ def analyze_purchases():
                 short = (obj[:90] + "...") if len(obj) > 90 else obj
                 print(f"{r['reg_number']:<25} {r['law']:<10} {short}")
         else:
-            print("У всех загруженных закупок успешно найден ОКПД2.")
+            print("У всех загруженных закупок успешно найден ОКПД2 (JSON или поле OKPD2Classification).")
 
+        # Источник ОКПД2: сколько позиций взято из детального JSON, а сколько —
+        # из общей классификации закупки (fallback field), с конверсией по законам.
         if not df_has.empty:
+            print(f"\n{'=' * 90}")
+            print("ИСТОЧНИК ОКПД2: JSON (построчно) vs OKPD2Classification (fallback)")
+            print(f"{'=' * 90}")
+            p_cnt_src, p_sum_src = build_count_sum_pivots(df_has, "source", value_col="cost")
+            print_count_sum_table("Источник данных ОКПД2 по законам (кол-во позиций и сумма)", p_cnt_src, p_sum_src,
+                                  row_label_width=20)
+
             p_cnt_okpd, p_sum_okpd = build_count_sum_pivots(df_has, "code", value_col="cost", limit=30)
             print_count_sum_table("ЗАКУПКИ: ТОП ПОЗИЦИЙ (ОКПД2)", p_cnt_okpd, p_sum_okpd, row_label_width=30)
     else:
@@ -665,8 +698,12 @@ def analyze_purchases():
 
 
 def analyze_okpd2_usage():
-    """Таблица 10: коды ОКПД2 — ед. и сумма НМЦК по законам (с конверсией)."""
-    print("\\n>>> Анализ кодов ОКПД2 (вся БД, от 100 млн)...")
+    """
+    Таблица 10: коды ОКПД2 — ед. и сумма НМЦК по законам (с конверсией).
+    Учитывает как построчные ОКПД2 из JSON, так и fallback из поля
+    Purchase.OKPD2Classification (для закупок без детальной JSON-таблицы).
+    """
+    print("\n>>> Анализ кодов ОКПД2 (вся БД, от 100 млн)...")
     df = _load_purchases()
     if df.empty:
         return
@@ -677,13 +714,22 @@ def analyze_okpd2_usage():
         items_list.extend(extract_okpd2_items(row.to_dict()))
 
     if not items_list:
-        print("Товары не найдены (проверьте структуру JSON).")
+        print("Товары не найдены (проверьте структуру JSON и поле OKPD2Classification).")
         return
 
     items_df = pd.DataFrame(items_list)
-    p_cnt, p_sum = build_count_sum_pivots(items_df, "code", value_col="cost", limit=50)
-    print_count_sum_table("Таблица 10. Применение кодов ОКПД2 (ед. и сумма)", p_cnt, p_sum, row_label_width=45)
+    df_has = items_df[items_df["code"] != "Нет ОКПД2"]
 
+    if df_has.empty:
+        print("Ни у одной закупки не заполнен ОКПД2 (ни в JSON, ни в OKPD2Classification).")
+        return
+
+    # Разбивка по источнику данных (json vs field) с конверсией по законам
+    p_cnt_src, p_sum_src = build_count_sum_pivots(df_has, "source", value_col="cost")
+    print_count_sum_table("Таблица 10а. Источник ОКПД2: JSON vs OKPD2Classification (fallback)", p_cnt_src, p_sum_src, row_label_width=20)
+
+    p_cnt, p_sum = build_count_sum_pivots(df_has, "code", value_col="cost", limit=50)
+    print_count_sum_table("Таблица 10. Применение кодов ОКПД2 (ед. и сумма)", p_cnt, p_sum, row_label_width=45)
 
 def analyze_item_names():
     """Топ наименований товаров/работ/услуг из JSON-полей закупок (с конверсией по закону)."""
@@ -979,9 +1025,9 @@ if __name__ == "__main__":
     print("  АНАЛИЗ ЗАКУПОК (Peewee / SQLite) — вся БД")
     print("=" * 60)
 
-    analyze_purchases()
-    analyze_okpd2_usage()
-    analyze_item_names()
+    # analyze_purchases()
+    # analyze_okpd2_usage()
+    # analyze_item_names()
     analyze_contracts()
     analyze_contract_status()
     analyze_suppliers()

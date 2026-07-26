@@ -1,6 +1,7 @@
 import csv
 import sqlite3
 from pathlib import Path
+from datetime import date, datetime
 import openpyxl
 from openpyxl.styles import PatternFill
 
@@ -14,10 +15,12 @@ KEY_COLUMN_INDEX = 1  # второй столбец (индексация с 0)
 PRICE_COLUMN_INDEX = 8      # столбец I - Начальная максимальная цена
 CURRENCY_COLUMN_INDEX = 9   # столбец J - Валюта
 OKPD2_COLUMN_INDEX = 14     # столбец O - Классификация по ОКПД2
+DATE_COLUMN_INDEX = 18      # столбец S - Дата размещения
 
 MIN_PRICE = 20_000_000
 TARGET_CURRENCY = "RUB"
-ALLOWED_OKPD2_PREFIXES = ( "30", "77", "64", "52", "42", "41")
+ALLOWED_OKPD2_PREFIXES = ("30", "77", "64", "52", "42", "41")
+MIN_DATE = date(2026, 1, 1)
 
 GREEN_FILL = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid")
 
@@ -26,11 +29,14 @@ processed_files = []
 seen_keys = set()
 header_written = None
 rows_to_write = []
+
+
 def normalize_registry_number(value):
     """Убирает символ '№' и лишние пробелы для корректного сравнения с БД."""
     if not value:
         return ""
     return value.replace('№', '').strip()
+
 
 def parse_price(value):
     """Преобразует строку цены в float, учитывая пробелы как разделители тысяч и запятую как десятичный разделитель."""
@@ -53,6 +59,22 @@ def okpd2_matches(value):
     code = value.strip().split(':', 1)[0]
     code_prefix = code.split('.', 1)[0]
     return code_prefix in ALLOWED_OKPD2_PREFIXES
+
+
+def parse_date(value):
+    """Преобразует строку даты размещения в date. Поддерживает форматы
+    'дд.мм.гггг', 'дд.мм.гггг чч:мм:сс', 'дд.мм.гггг чч:мм', 'гггг-мм-дд'."""
+    if not value:
+        return None
+    value = value.strip()
+    if not value:
+        return None
+    for fmt in ("%d.%m.%Y", "%d.%m.%Y %H:%M:%S", "%d.%m.%Y %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(value, fmt).date()
+        except ValueError:
+            continue
+    return None
 
 
 def load_registry_numbers_from_db(db_path):
@@ -87,6 +109,8 @@ source_path = Path(SOURCES_DIR)
 csv_files = sorted(source_path.glob("*.csv"))
 
 print(f"Найдено файлов: {len(csv_files)}")
+
+
 def detect_delimiter(file_path, encoding='windows-1251'):
     with open(file_path, 'r', encoding=encoding, newline='') as f:
         sample = f.read(2048)
@@ -95,6 +119,8 @@ def detect_delimiter(file_path, encoding='windows-1251'):
         return dialect.delimiter
     except csv.Error:
         return ';'  # запасной вариант по умолчанию
+
+
 for file_path in csv_files:
     try:
         delim = detect_delimiter(file_path)
@@ -116,9 +142,11 @@ for file_path in csv_files:
                 )
                 continue
 
-            required_max_index = max(PRICE_COLUMN_INDEX, CURRENCY_COLUMN_INDEX, OKPD2_COLUMN_INDEX)
+            required_max_index = max(
+                PRICE_COLUMN_INDEX, CURRENCY_COLUMN_INDEX, OKPD2_COLUMN_INDEX, DATE_COLUMN_INDEX
+            )
             if len(header) <= required_max_index:
-                skipped_files.append((file_path.name, "нет столбца цены/валюты/ОКПД2"))
+                skipped_files.append((file_path.name, "нет столбца цены/валюты/ОКПД2/даты"))
                 continue
 
             if header_written is None:
@@ -138,6 +166,10 @@ for file_path in csv_files:
                     continue
 
                 if not okpd2_matches(row[OKPD2_COLUMN_INDEX]):
+                    continue
+
+                placement_date = parse_date(row[DATE_COLUMN_INDEX])
+                if placement_date is None or placement_date < MIN_DATE:
                     continue
 
                 currency = row[CURRENCY_COLUMN_INDEX].strip().upper()

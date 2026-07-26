@@ -10,7 +10,7 @@ def initialize_database():
         db_folder = "файлы бд"
         os.makedirs(db_folder, exist_ok=True)
         db.create_tables([Purchase, User, Role, UserRole, Contract,FinalDetermination,CurrencyRate,UserLog,ChangedDate,Customer,Supplier,Vessel,ContractVersion,
-VesselEngine ])
+VesselEngine,SupplierContract ])
         admin_user = User.create(username='Администратор', password='1')
         readactor =User.create(username='Редактор', password='2')
         regular_user = User.create(username='Пользователь', password='3')

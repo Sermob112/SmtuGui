@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
 from peewee import SqliteDatabase
-from smtuIdle.BD.models import Purchase, Contract, Customer,Supplier,ContractVersion
+from smtuIdle.BD.models import Purchase, Contract, Customer, Supplier, ContractVersion, SupplierContract
 import re
 db = SqliteDatabase('database.db')
 FIELD_MAP = {
@@ -224,8 +224,8 @@ def insert_in_table(filepath: str, user: str, role: str) -> tuple[int, list[str]
 
 
 def map_contract_record(raw: dict) -> dict:
-    """Преобразует запись из JSONL в словарь полей модели Contract."""
     mapped = {}
+
     for pg_field, sqlite_field in CONTRACT_FIELD_MAP.items():
         val = raw.get(pg_field)
         if val is None:
@@ -235,20 +235,54 @@ def map_contract_record(raw: dict) -> dict:
             mapped[sqlite_field] = (
                 json.dumps(val, ensure_ascii=False) if isinstance(val, (dict, list)) else val
             )
+
+        elif pg_field == "date_execution_due":
+            start_from_range, end_from_range = parse_date_range(str(val))
+
+            # EndDate всегда стараемся брать из конца диапазона
+            if end_from_range:
+                mapped["EndDate"] = end_from_range
+
+            # Если StartDate ещё нет, можно взять начало диапазона
+            if start_from_range and not mapped.get("StartDate"):
+                mapped["StartDate"] = start_from_range
+
         elif sqlite_field in CONTRACT_DATE_FIELDS:
             mapped[sqlite_field] = parse_date(str(val))
+
         elif sqlite_field == "ContractPrice":
-            # contract_price в PG хранится как Text — конвертируем в float
             try:
                 mapped[sqlite_field] = float(str(val).replace(" ", "").replace(",", "."))
             except (ValueError, TypeError):
                 mapped[sqlite_field] = None
+
         else:
             mapped[sqlite_field] = val
 
     return mapped
 
+def parse_date_range(value: str | None) -> tuple[str | None, str | None]:
+    if not value:
+        return None, None
 
+    s = str(value).strip()
+
+    # Нормализуем разные тире: —, –, -
+    s = re.sub(r'\s*[—–-]\s*', ' - ', s)
+
+    # Ищем все даты формата DD.MM.YYYY или YYYY-MM-DD
+    dates = re.findall(r'\d{2}\.\d{2}\.\d{4}|\d{4}-\d{2}-\d{2}', s)
+
+    if len(dates) >= 2:
+        start_date = parse_date(dates[0])
+        end_date = parse_date(dates[1])
+        return start_date, end_date
+
+    if len(dates) == 1:
+        single_date = parse_date(dates[0])
+        return single_date, single_date
+
+    return None, None
 def parse_price(value) -> float | None:
     """Парсит цену вида '5 203 924 040,00 ₽' или '5203924040.00' в float."""
     if value is None:
@@ -286,7 +320,7 @@ def normalize_contract_number(raw: str | None) -> str | None:
     return cleaned if cleaned else None
 def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str]]:
     inserted = 0
-    errors   = []
+    errors = []
 
     with open(filepath, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f if line.strip()]
@@ -294,14 +328,16 @@ def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str
     with db.atomic():
         for i, line in enumerate(lines, start=1):
             try:
-                raw    = json.loads(line)
+                raw = json.loads(line)
                 mapped = map_contract_record(raw)
-                reg    = normalize_reg(raw.get("reg_number"))
 
-                # ── Нормализуем ContractNumber ──────────────────────
+                reg = normalize_reg(raw.get("reg_number"))
                 number = normalize_contract_number(raw.get("number"))
-                mapped["ContractNumber"] = number
-                # ────────────────────────────────────────────────────
+
+                if reg:
+                    mapped["RegistryNumber"] = reg
+                if number:
+                    mapped["ContractNumber"] = number
 
                 mapped["ContractPrice"] = parse_price(raw.get("contract_price"))
 
@@ -315,41 +351,37 @@ def insert_contracts(filepath: str, user: str, role: str) -> tuple[int, list[str
                     or Purchase.get_or_none(Purchase.RegistryNumber.contains(reg))
                 )
 
-                if purchase is None:
-                    errors.append(f"Строка {i}: закупка {reg} не найдена, пропущено")
-                    continue
-
-                # ── Ищем существующий контракт ──────────────────────
-                existing = None
-                if number:
-                    # Ищем по нормализованному номеру
-                    existing = Contract.get_or_none(
-                        Contract.ContractNumber == number
-                    )
-                if existing is None:
-                    existing = Contract.get_or_none(Contract.purchase == purchase)
+                existing = (
+                    Contract.get_or_none(Contract.RegistryNumber == reg)
+                    or (Contract.get_or_none(Contract.ContractNumber == number) if number else None)
+                    or (Contract.get_or_none(Contract.purchase == purchase) if purchase else None)
+                )
 
                 if existing is None:
+                    if purchase is None:
+                        errors.append(f"Строка {i}: закупка {reg} не найдена, пропущено")
+                        continue
+
                     mapped["purchase"] = purchase
-                    contract = Contract.create(**mapped)
+                    Contract.create(**mapped)
                     inserted += 1
                 else:
                     changed = False
                     for field, value in mapped.items():
                         if value is None:
                             continue
-                        current = getattr(existing, field)
-                        if current in (None, "Нет данных", "[]", ""):
+                        current = getattr(existing, field, None)
+                        if current in (None, "", "Нет данных", "[]"):
                             setattr(existing, field, value)
                             changed = True
-                    if existing.purchase_id is None:
+
+                    if purchase and existing.purchase_id is None:
                         existing.purchase = purchase
                         changed = True
+
                     if changed:
                         existing.save()
                         inserted += 1
-                    contract = existing
-
 
             except json.JSONDecodeError as e:
                 errors.append(f"Строка {i}: ошибка парсинга JSON — {e}")
@@ -436,13 +468,8 @@ def map_supplier_record(raw: dict) -> dict:
 
 
 def insert_suppliers(filepath: str, user: str, role: str) -> tuple[int, list[str]]:
-    """
-    Загружает JSONL-файл поставщиков в таблицу Supplier.
-    Связь с Contract ищется по reg_number → Contract.RegistryNumber.
-    Уникальность: один поставщик на контракт по ИНН.
-    """
     inserted = 0
-    errors   = []
+    errors = []
 
     with open(filepath, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f if line.strip()]
@@ -450,47 +477,53 @@ def insert_suppliers(filepath: str, user: str, role: str) -> tuple[int, list[str
     with db.atomic():
         for i, line in enumerate(lines, start=1):
             try:
-                raw    = json.loads(line)
+                raw = json.loads(line)
                 mapped = map_supplier_record(raw)
-                reg    = raw.get("reg_number")
-                inn    = mapped.get("inn")
 
-                if not reg:
-                    errors.append(f"Строка {i}: нет reg_number, пропущено")
-                    continue
+                inn = (mapped.get("inn") or "").strip() or None
+                organization = (mapped.get("organization") or "").strip() or None
+                kpp = (mapped.get("kpp") or "").strip() or None
 
-                # Ищем контракт по reg_number
-                contract = Contract.get_or_none(Contract.RegistryNumber == reg)
+                contract = find_contract_by_reg(raw)
                 if contract is None:
-                    errors.append(f"Строка {i}: контракт {reg} не найден в SQLite, пропущено")
+                    errors.append(
+                        f"Строка {i}: контракт не найден по reg_number={raw.get('reg_number')!r}"
+                    )
                     continue
 
-                # Уникальность: ищем по контракту + ИНН
-                existing = None
-                if inn:
-                    existing = Supplier.get_or_none(
-                        (Supplier.contract == contract) & (Supplier.inn == inn)
-                    )
-                # Если ИНН нет — ищем просто по контракту
-                if existing is None and not inn:
-                    existing = Supplier.get_or_none(Supplier.contract == contract)
+                supplier = None
 
-                if existing is None:
-                    mapped["contract"] = contract
-                    Supplier.create(**mapped)
+                if inn:
+                    supplier = Supplier.get_or_none(Supplier.inn == inn)
+
+                if supplier is None and organization and kpp:
+                    supplier = Supplier.get_or_none(
+                        (Supplier.organization == organization) &
+                        (Supplier.kpp == kpp)
+                    )
+
+                if supplier is None and organization:
+                    supplier = Supplier.get_or_none(Supplier.organization == organization)
+
+                if supplier is None:
+                    supplier = Supplier.create(**mapped)
                     inserted += 1
                 else:
                     changed = False
                     for field, value in mapped.items():
                         if value is None:
                             continue
-                        current = getattr(existing, field)
-                        if current in (None, ""):
-                            setattr(existing, field, value)
+                        current = getattr(supplier, field, None)
+                        if current in (None, "", "Нет данных", "[]"):
+                            setattr(supplier, field, value)
                             changed = True
                     if changed:
-                        existing.save()
-                        inserted += 1
+                        supplier.save()
+
+                SupplierContract.get_or_create(
+                    supplier=supplier,
+                    contract=contract
+                )
 
             except json.JSONDecodeError as e:
                 errors.append(f"Строка {i}: ошибка парсинга JSON — {e}")
@@ -499,7 +532,23 @@ def insert_suppliers(filepath: str, user: str, role: str) -> tuple[int, list[str
 
     return inserted, errors
 
+def find_contract_for_supplier(raw: dict):
+    contract_id = raw.get("contract_id")
+    reg_raw = raw.get("reg_number")
+    reg = normalize_reg(reg_raw) if reg_raw else None
 
+    contract = None
+
+    if contract_id:
+        contract = Contract.get_or_none(Contract.id == contract_id)
+
+    if contract is None and reg:
+        contract = (
+            Contract.get_or_none(Contract.RegistryNumber == reg)
+            or Contract.get_or_none(Contract.RegistryNumber == f"№{reg}")
+        )
+
+    return contract
 def map_cv_record(raw: dict) -> dict:
     mapped = {}
     for pg_field, sqlite_field in CV_FIELD_MAP.items():
@@ -521,23 +570,19 @@ def normalize_reg(value: str) -> str:
     return value.replace("№", "").strip()
 
 
-def find_contract_by_reg(reg: str):
-    """Ищет контракт перебирая возможные форматы."""
-    reg_clean = normalize_reg(reg)
+def find_contract_by_reg(raw: dict):
+    reg_raw = raw.get("reg_number")
+    if not reg_raw:
+        return None
 
-    # Вариант 1: точное совпадение
-    c = Contract.get_or_none(Contract.RegistryNumber == reg_clean)
-    if c:
-        return c
+    reg = normalize_reg(reg_raw)
 
-    # Вариант 2: с префиксом №
-    c = Contract.get_or_none(Contract.RegistryNumber == f"№{reg_clean}")
-    if c:
-        return c
-
-    # Вариант 3: LIKE (на случай пробелов)
-    c = Contract.get_or_none(Contract.RegistryNumber.contains(reg_clean))
-    return c
+    contract = (
+        Contract.get_or_none(Contract.RegistryNumber == reg)
+        or Contract.get_or_none(Contract.RegistryNumber == f"№{reg}")
+        or Contract.get_or_none(Contract.RegistryNumber.contains(reg))
+    )
+    return contract
 
 
 def find_contract_for_version(raw: dict) -> Contract | None:

@@ -2,7 +2,8 @@ import sys
 
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
-from smtuIdle.BD.models import Purchase, Contract, FinalDetermination, CurrencyRate, Supplier, Customer, Vessel
+
+from smtuIdle.BD.models import *
 from PySide6.QtCore import Qt, QTimer, QSize,QEvent
 from PySide6.QtGui import QIcon,QFont
 from PySide6.QtCore import QDate
@@ -401,7 +402,7 @@ class PurchasesWidgetAll(QWidget):
             "Разница",
             "Снижение %",
             "Заказчик по контракту",
-            "Победитель",
+            "Исполнитель",
             "Наименование закупки",
         ]
         self.table_cont.setHorizontalHeaderLabels(column_headers)
@@ -423,8 +424,9 @@ class PurchasesWidgetAll(QWidget):
         # ── Поиск ────────────────────────────────────────────
         self.search_input_contract = QLineEdit()
         self.search_input_contract.setPlaceholderText(
-            "Поиск по победителю, заказчику, реестровому номеру"
+            "Поиск по исполнителю, заказчику, реестровому номеру"
         )
+
         self.search_input_contract.setFixedWidth(500)
         self.search_input_contract.textChanged.connect(self.highlight_input_contract)
         completer = QCompleter(self.findUnicContract())
@@ -445,11 +447,17 @@ class PurchasesWidgetAll(QWidget):
         self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item_contract)
 
         self.sort_by_putch_winner = QComboBox()
-        self.sort_by_putch_winner.addItem("Фильтрация по победителю")
+        self.sort_by_putch_winner.addItem("Фильтрация по исполнителю")
         self.sort_by_putch_winner.setFixedWidth(250)
-        for w in Contract.select(Contract.WinnerExecutor).distinct().order_by(fn.Lower(Contract.WinnerExecutor)):
-            if w.WinnerExecutor:
-                self.sort_by_putch_winner.addItem(str(w.WinnerExecutor))
+        for s in (
+                Supplier
+                        .select(Supplier.organization)
+                        .join(SupplierContract, on=(SupplierContract.supplier == Supplier.id))
+                        .distinct()
+                        .order_by(fn.Lower(Supplier.organization))
+        ):
+            if s.organization:
+                self.sort_by_putch_winner.addItem(str(s.organization))
         self.sort_by_putch_winner.currentIndexChanged.connect(self.highlight_current_item_contract)
 
         # ── Цена ──────────────────────────────────────────────
@@ -601,42 +609,41 @@ class PurchasesWidgetAll(QWidget):
         tab = QWidget()
         layout = QVBoxLayout(tab)
 
-        self.table_supplier = QTableWidget(self)
-        self.table_supplier.setColumnCount(9)
-        headers = ["№ПП", "Организация", "ИНН", "КПП", "Страна",
-                   "Адрес", "Телефон", "Email", "Статус"]
-        self.table_supplier.setHorizontalHeaderLabels(headers)
-        self.table_supplier.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        self.table_supplier.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
-        self.table_supplier.setColumnWidth(1, 400)
-        self.table_supplier.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.table_supplier.setShowGrid(True)
-        self.table_supplier.verticalHeader().setVisible(False)
-        self.table_supplier.setWordWrap(True)
+        self.tablesupplier = QTableWidget(self)
+        self.tablesupplier.setColumnCount(10)  # было 9
+        headers = ["ID", "Организация", "ИНН", "КПП", "Страна",
+                   "Адрес", "Телефон", "Email", "Статус", "Контракты"]  # добавлена колонка
+        self.tablesupplier.setHorizontalHeaderLabels(headers)
+        self.tablesupplier.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        self.tablesupplier.horizontalHeader().setSectionResizeMode(1, QHeaderView.Fixed)
+        self.tablesupplier.setColumnWidth(1, 400)
+        self.tablesupplier.horizontalHeader().setSectionResizeMode(9, QHeaderView.Fixed)  # для новой колонки
+        self.tablesupplier.setColumnWidth(9, 350)
+        self.tablesupplier.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tablesupplier.setShowGrid(True)
+        self.tablesupplier.verticalHeader().setVisible(False)
+        self.tablesupplier.setWordWrap(True)
+        self.labelsupplier = QLabel("", self)
+        self.labelsupplier.setAlignment(Qt.AlignHCenter)
 
-        self.label_supplier = QLabel("Всего записей", self)
-        self.label_supplier.setAlignment(Qt.AlignHCenter)
+        self.searchsupplier = QLineEdit()
+        self.searchsupplier.setPlaceholderText("Поиск по организации, ИНН, КПП или номеру контракта")
+        self.searchsupplier.setFixedWidth(400)
+        self.searchsupplier.textChanged.connect(self.apply_filter_supplier)
 
-        # Поиск
-        self.search_supplier = QLineEdit()
-        self.search_supplier.setPlaceholderText("Поиск по организации, ИНН, КПП")
-        self.search_supplier.setFixedWidth(400)
-        self.search_supplier.textChanged.connect(self.apply_filter_supplier)
+        btnresetsupplier = QPushButton("Сброс")
+        btnresetsupplier.setFixedWidth(150)
+        btnresetsupplier.clicked.connect(self.reset_supplier)
 
-        # Сброс
-        btn_reset_supplier = QPushButton("Сбросить фильтры")
-        btn_reset_supplier.setFixedWidth(150)
-        btn_reset_supplier.clicked.connect(self.reset_supplier)
+        searchlayout = QHBoxLayout()
+        searchlayout.addWidget(QLabel("Поиск:"))
+        searchlayout.addWidget(self.searchsupplier)
+        searchlayout.addWidget(btnresetsupplier)
+        searchlayout.setAlignment(Qt.AlignLeft)
 
-        search_layout = QHBoxLayout()
-        search_layout.addWidget(QLabel("Поиск:"))
-        search_layout.addWidget(self.search_supplier)
-        search_layout.addWidget(btn_reset_supplier)
-        search_layout.setAlignment(Qt.AlignLeft)
-
-        layout.addLayout(search_layout)
-        layout.addWidget(self.table_supplier)
-        layout.addWidget(self.label_supplier)
+        layout.addLayout(searchlayout)
+        layout.addWidget(self.tablesupplier)
+        layout.addWidget(self.labelsupplier)
 
         self.reload_supplier()
         return tab
@@ -753,8 +760,8 @@ class PurchasesWidgetAll(QWidget):
 
     # ── Поставщики ────────────────────────────────────────────
     def reload_supplier(self):
-        self.suppliers_qs = Supplier.select()
-        self._show_suppliers(list(self.suppliers_qs))
+        self.suppliersqs = Supplier.select()
+        self._show_suppliers(list(self.suppliersqs))
 
     def apply_filter_supplier(self):
         keyword = self.search_supplier.text().strip()
@@ -772,17 +779,28 @@ class PurchasesWidgetAll(QWidget):
         self.reload_supplier()
 
     def _show_suppliers(self, rows: list):
-        self.table_supplier.setRowCount(0)
-        self.label_supplier.setText(f"Всего записей: {len(rows)}")
+        self.tablesupplier.setRowCount(0)
+        self.labelsupplier.setText(f"Найдено: {len(rows)}")
+
         for i, s in enumerate(rows):
-            self.table_supplier.insertRow(i)
-            for col, val in enumerate([
-                s.id, s.organization, s.inn, s.kpp, s.country,
-                s.address, s.phone, s.mail, s.status
-            ]):
+            # подтягиваем все контракты этого поставщика через связку
+            contract_links = (SupplierContract
+                              .select(Contract)
+                              .join(Contract)
+                              .where(SupplierContract.supplier == s.id))
+            contract_labels = [
+                c.contract.RegistryNumber or c.contract.ContractNumber or f"#{c.contract.Id}"
+                for c in contract_links
+            ]
+            contracts_str = ", ".join(contract_labels) if contract_labels else "—"
+
+            self.tablesupplier.insertRow(i)
+            values = (s.id, s.organization, s.inn, s.kpp, s.country,
+                      s.address, s.phone, s.mail, s.status, contracts_str)
+            for col, val in enumerate(values):
                 item = QTableWidgetItem(str(val) if val is not None else "")
                 item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
-                self.table_supplier.setItem(i, col, item)
+                self.tablesupplier.setItem(i, col, item)
 
     # ── Заказчики ─────────────────────────────────────────────
     def reload_customer(self):
@@ -790,23 +808,32 @@ class PurchasesWidgetAll(QWidget):
         self._show_customers(list(self.customers_qs))
 
     def apply_filter_customer(self):
-        keyword = self.search_customer.text().strip()
-        law = self.filter_customer_law.currentText()
-        q = Customer.select()
+        keyword = self.searchsupplier.text().strip()
+        q = Supplier.select()
         if keyword:
+            # добираем поставщиков, у которых совпадает контракт (по RegistryNumber),
+            # не только по полям самого поставщика
+            matching_ids = (SupplierContract
+                            .select(SupplierContract.supplier)
+                            .join(Contract)
+                            .where(Contract.RegistryNumber.contains(keyword))
+                            .distinct()
+                            .tuples())
+            matching_ids = [row[0] for row in matching_ids]
+
             q = q.where(
-                Customer.name.contains(keyword) |
-                Customer.inn.contains(keyword) |
-                Customer.region.contains(keyword)
+                Supplier.organization.contains(keyword) |
+                Supplier.inn.contains(keyword) |
+                Supplier.kpp.contains(keyword) |
+                Supplier.id.in_(matching_ids)
             )
-        if law != "Все законы":
-            q = q.where(Customer.law == law)
-        self._show_customers(list(q))
+        self._show_suppliers(list(q))
+
 
     def reset_customer(self):
-        self.search_customer.clear()
-        self.filter_customer_law.setCurrentIndex(0)
-        self.reload_customer()
+            self.search_customer.clear()
+            self.filter_customer_law.setCurrentIndex(0)
+            self.reload_customer()
 
     def _show_customers(self, rows: list):
         self.table_customer.setRowCount(0)
@@ -997,7 +1024,7 @@ class PurchasesWidgetAll(QWidget):
             nmck_str = format_string("%.0f", nmck, grouping=True)  if nmck else "—"
             diff_str = format_string("%.0f", diff, grouping=True)  if (price and nmck) else "—"
             reduction_str = f"{reduction:.2f}%" if reduction is not None else "—"
-
+            executor_name = self.get_contract_executor(c)
             values = [
                 c.Id,
                 c.RegistryNumber or "—",
@@ -1010,7 +1037,7 @@ class PurchasesWidgetAll(QWidget):
                 diff_str,
                 reduction_str,
                 c.ContractingAuthority or "—",
-                c.WinnerExecutor or "—",
+                executor_name,
                 c.purchase.PurchaseName or "—",
             ]
 
@@ -1209,7 +1236,7 @@ class PurchasesWidgetAll(QWidget):
 
     def apply_filter_contract(self):
         keyword = self.search_input_contract.text().strip()
-        winner = self.sort_by_putch_winner.currentText()
+        executor = self.sort_by_putch_winner.currentText()
         sort_idx = self.sort_options_contract.currentIndex()
         min_p = self.min_price_input_contrac.text().strip()
         max_p = self.max_price_input_contrac.text().strip()
@@ -1219,26 +1246,47 @@ class PurchasesWidgetAll(QWidget):
         q = Contract.select(Contract, Purchase).join(Purchase)
 
         if keyword:
+            matching_contract_ids = (
+                SupplierContract
+                .select(SupplierContract.contract)
+                .join(Supplier, on=(SupplierContract.supplier == Supplier.id))
+                .where(Supplier.organization.contains(keyword))
+                .distinct()
+            )
+
             q = q.where(
-                Contract.WinnerExecutor.contains(keyword) |
                 Contract.ContractingAuthority.contains(keyword) |
                 Contract.RegistryNumber.contains(keyword) |
-                Purchase.PurchaseName.contains(keyword)
+                Contract.ContractNumber.contains(keyword) |
+                Purchase.PurchaseName.contains(keyword) |
+                (Contract.id.in_(matching_contract_ids))
             )
-        if winner and winner != "Фильтрация по победителю":
-            q = q.where(Contract.WinnerExecutor == winner)
+
+        if executor and executor != "Фильтрация по исполнителю":
+            executor_contract_ids = (
+                SupplierContract
+                .select(SupplierContract.contract)
+                .join(Supplier, on=(SupplierContract.supplier == Supplier.id))
+                .where(Supplier.organization == executor)
+                .distinct()
+            )
+            q = q.where(Contract.id.in_(executor_contract_ids))
+
         if min_p:
             try:
                 q = q.where(Contract.ContractPrice >= float(min_p.replace(" ", "")))
             except ValueError:
                 pass
+
         if max_p:
             try:
                 q = q.where(Contract.ContractPrice <= float(max_p.replace(" ", "")))
             except ValueError:
                 pass
+
         if min_d.isValid():
             q = q.where(Contract.StartDate >= min_d.toPython())
+
         if max_d.isValid():
             q = q.where(Contract.StartDate <= max_d.toPython())
 
@@ -1248,10 +1296,11 @@ class PurchasesWidgetAll(QWidget):
             2: Contract.StartDate.asc(),
             3: Contract.StartDate.desc(),
         }
+
         q = q.order_by(order_map.get(sort_idx, Contract.StartDate.desc()))
 
-        self.contracts = q  # ← сохраняем query
-        self.contracts_list = list(q)  # ← и список
+        self.contracts = q
+        self.contracts_list = list(q)
         self.show_all_contracts()
 
     def resetFiltersContract(self):
@@ -1330,32 +1379,44 @@ class PurchasesWidgetAll(QWidget):
             return unique_values_list
 
     def findUnicContract(self):
-        unique_values_query = (
+        unique_values_list = []
+
+        contract_rows = (
             Purchase
             .select(
                 Purchase.PurchaseName,
                 Purchase.CustomerName,
-                Contract.WinnerExecutor,
                 Contract.ContractingAuthority,
+                Contract.Id
             )
             .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
             .where(Contract.ContractNumber != "Нет данных")
             .distinct()
-            .dicts()  # ← результат сразу как список словарей, никаких проблем с атрибутами
+            .dicts()
         )
 
-        unique_values_list = []
-        for row in unique_values_query:
-            purchase_name = row.get("PurchaseName")
-            winner_executor = row.get("WinnerExecutor")
-            contracting_authority = row.get("ContractingAuthority")
-            customer_name = row.get("CustomerName")
-
-            for value in [purchase_name, winner_executor, contracting_authority, customer_name]:
-                if value is not None:
+        for row in contract_rows:
+            for value in [
+                row.get("PurchaseName"),
+                row.get("CustomerName"),
+                row.get("ContractingAuthority"),
+            ]:
+                if value:
                     unique_values_list.append(str(value))
 
-        return unique_values_list
+            contract_id = row.get("Id")
+            if contract_id:
+                suppliers = (
+                    Supplier
+                    .select(Supplier.organization)
+                    .join(SupplierContract, on=(SupplierContract.supplier == Supplier.id))
+                    .where(SupplierContract.contract == contract_id)
+                )
+                for s in suppliers:
+                    if s.organization:
+                        unique_values_list.append(str(s.organization))
+
+        return list(dict.fromkeys(unique_values_list))
     def handleActivated(self, text):
         # Обработка выбора элемента из автозаполнения
         self.selected_text = text
@@ -1594,7 +1655,19 @@ class PurchasesWidgetAll(QWidget):
         sort_by_putch_okpd2 = self.sort_by_putch_okpd2.currentText() if self.sort_by_putch_okpd2.currentText() != "Фильтровать по ОКПД2" else "-"
         return sort_by_putch_order,min_date,max_date,min_price,max_price,sort_by_putch_okpd2
 
-        
+    def get_contract_executor(self, contract) -> str:
+        supplier_link = (
+            SupplierContract
+            .select(SupplierContract, Supplier)
+            .join(Supplier, on=(SupplierContract.supplier == Supplier.id))
+            .where(SupplierContract.contract == contract)
+            .first()
+        )
+
+        if supplier_link and supplier_link.supplier:
+            return supplier_link.supplier.organization or "—"
+
+        return "—"
         
 #
 # if __name__ == '__main__':

@@ -290,22 +290,21 @@ class ChangedDate(BaseModel):
 #  Supplier  —  Поставщики (исполнители контракта)
 # ─────────────────────────────────────────────
 class Supplier(BaseModel):
-    id           = AutoField(primary_key=True, verbose_name="Идентификатор")
+    id           = AutoField(primary_key=True)
 
-    organization  = CharField(null=True, max_length=512, verbose_name="Организация")
-    country       = CharField(null=True, max_length=255, verbose_name="Страна")
-    address       = CharField(null=True, max_length=512, verbose_name="Адрес")
-    index_address = CharField(null=True, max_length=50,  verbose_name="Почтовый индекс")
-    phone         = CharField(null=True, max_length=100, verbose_name="Телефон")
-    mail          = CharField(null=True, max_length=255, verbose_name="Email")
-    status        = CharField(null=True, max_length=255, verbose_name="Статус")
-    inn           = CharField(null=True, max_length=50,  verbose_name="ИНН")
-    kpp           = CharField(null=True, max_length=50,  verbose_name="КПП")
-
-    contract      = ForeignKeyField(Contract, on_delete='CASCADE', backref='suppliers', verbose_name="Контракт")
+    organization  = CharField(null=True, max_length=512)
+    country       = CharField(null=True, max_length=255)
+    address       = CharField(null=True, max_length=512)
+    index_address = CharField(null=True, max_length=50)
+    phone         = CharField(null=True, max_length=100)
+    mail          = CharField(null=True, max_length=255)
+    status        = CharField(null=True, max_length=255)
+    inn           = CharField(null=True, max_length=50)
+    kpp           = CharField(null=True, max_length=50)
 
     class Meta:
         table_name = 'supplier'
+
 # ─────────────────────────────────────────────
 #  Vessel  —  Характеристики судна
 # ─────────────────────────────────────────────
@@ -420,6 +419,16 @@ class VesselEngine(BaseModel):
 # ─────────────────────────────────────────────
 # ContractVersion — Версии контрактов (снимки)
 # ─────────────────────────────────────────────
+class SupplierContract(Model):
+    supplier = ForeignKeyField(Supplier, backref='supplier_contracts', on_delete='CASCADE')
+    contract = ForeignKeyField(Contract, backref='contract_suppliers', on_delete='CASCADE')
+
+    class Meta:
+        database = db
+        table_name = 'supplier_contract'
+        indexes = (
+            (('supplier', 'contract'), True),
+        )
 class ContractVersion(BaseModel):
     id = AutoField(primary_key=True, verbose_name="Идентификатор")
 

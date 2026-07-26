@@ -12,7 +12,7 @@ from PySide6.QtCore import Qt, Signal, QUrl
 from PySide6.QtGui import QColor, QFont, QDesktopServices
 
 # ВАЖНО: Убедитесь, что вы импортировали модель Contract из вашего файла моделей
-from smtuIdle.BD.models import Contract
+from smtuIdle.BD.models import Contract, SupplierContract
 from smtuIdle.BD.models import Contract, Supplier, Vessel, ContractVersion
 # Установка локали для форматирования чисел (если нужна)
 try:
@@ -376,7 +376,12 @@ class ContractWidget(QWidget):
             links_parent = self.current_parent
 
             # 1. ПОСТАВЩИКИ (Исполнители)
-            suppliers = Supplier.select().where(Supplier.contract == c)
+            suppliers = (
+                Supplier
+                .select()
+                .join(SupplierContract)
+                .where(SupplierContract.contract == c)
+            )
             if suppliers.exists():
                 for sup in suppliers:
                     sup_name = sup.organization if sup.organization else f"ID {sup.id}"
@@ -425,18 +430,20 @@ class ContractWidget(QWidget):
             versions = ContractVersion.select().where(ContractVersion.contract == c).order_by(
                 ContractVersion.version.desc())
             if versions.exists():
-                # Создаем одну главную папку для всех версий
+                font_c = QFont()
+                font_c.setBold(True)
+
+                font_link = QFont()
+                font_link.setUnderline(True)
+
                 ver_node = QTreeWidgetItem(links_parent)
                 ver_node.setText(0, f"Версии контракта (Всего: {versions.count()})")
                 ver_node.setFirstColumnSpanned(True)
                 ver_node.setFont(0, font_c)
                 ver_node.setBackground(0, QColor(240, 240, 240))
-                # Можно раскрыть по умолчанию, если их немного, или оставить свернутыми, если их 100.
-                # Сделаем свернутым по умолчанию, чтобы не засорять экран
                 ver_node.setExpanded(False)
 
                 for ver in versions:
-                    # Создаем строку-ссылку для каждой версии внутри папки ver_node
                     ver_title = f"Версия {ver.version}" if ver.version else f"Версия ID {ver.id}"
                     date_info = f" (обновлено {ver.date_updated_in_registry})" if ver.date_updated_in_registry else ""
 
@@ -446,9 +453,9 @@ class ContractWidget(QWidget):
                     link_item.setData(1, Qt.UserRole, f"GOTO_VERSION:{ver.id}")
                     link_item.setForeground(1, Qt.blue)
                     link_item.setFont(1, font_link)
-        else:
-            self.label_form.setText("Нет данных")
-            self.label_form.show()
+            else:
+                self.label_form.setText("Нет данных")
+                self.label_form.show()
 
     def open_file(self, item, column):
         if column == 1:
