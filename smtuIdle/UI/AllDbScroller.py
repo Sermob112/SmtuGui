@@ -5,7 +5,7 @@ from peewee import SqliteDatabase
 
 from smtuIdle.BD.models import *
 from PySide6.QtCore import Qt, QTimer, QSize,QEvent
-from PySide6.QtGui import QIcon,QFont
+from PySide6.QtGui import QIcon, QFont, QKeySequence
 from PySide6.QtCore import QDate
 from peewee import JOIN
 from smtuIdle.InsertWidgetCurrency import InsertWidgetCurrency
@@ -167,6 +167,8 @@ class PurchasesWidgetAll(QWidget):
         self.max_price_label = QLabel("Цена до (в рублях)")
         self.max_price_input = QLineEdit()
         self.max_price_input.setFixedWidth(100)
+        self.min_price_input.textChanged.connect(lambda: self._format_number_input(self.min_price_input))
+        self.max_price_input.textChanged.connect(lambda: self._format_number_input(self.max_price_input))
         self.toExcel = QPushButton("Экспорт в Excel данных по закупке", self)
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
         self.toExcel.setFixedWidth(400)
@@ -392,8 +394,8 @@ class PurchasesWidgetAll(QWidget):
         self.table_cont.setColumnCount(18)
         column_headers = [
             "№ПП",
-            "Реестр. № договора",
-            "Реестр. № закупки",
+            "Закон",
+            "Номер закупки",
             "Номер контракта",
             "Дата начала до изм.",
             "Дата начала действ.",
@@ -448,6 +450,18 @@ class PurchasesWidgetAll(QWidget):
             "Сортировать по дате (от старых к новым)",
             "Сортировать по дате (от новых к старым)",
         ])
+        self.sort_by_contract_law = QComboBox()
+        self.sort_by_contract_law.addItem("Фильтрация по закону")
+        self.sort_by_contract_law.setFixedWidth(220)
+
+        for row in (Purchase
+                .select(Purchase.PurchaseOrder)
+                .distinct()
+                .order_by(Purchase.PurchaseOrder)):
+            if row.PurchaseOrder:
+                self.sort_by_contract_law.addItem(str(row.PurchaseOrder))
+
+        self.sort_by_contract_law.currentIndexChanged.connect(self.highlight_current_item_contract)
         self.sort_options_contract.setFixedWidth(250)
         self.sort_options_contract.currentIndexChanged.connect(self.highlight_current_item_contract)
 
@@ -474,7 +488,10 @@ class PurchasesWidgetAll(QWidget):
         self.max_price_input_contrac.setPlaceholderText("Цена до (в рублях)")
         self.min_price_input_contrac.textChanged.connect(self.highlight_input_contract)
         self.max_price_input_contrac.textChanged.connect(self.highlight_input_contract)
-
+        self.min_price_input_contrac.textChanged.connect(
+            lambda: self._format_number_input(self.min_price_input_contrac))
+        self.max_price_input_contrac.textChanged.connect(
+            lambda: self._format_number_input(self.max_price_input_contrac))
         # ── Дата ──────────────────────────────────────────────
         self.min_data_input_contrac = QDateEdit()
         self.min_data_input_contrac.setCalendarPopup(True)
@@ -492,6 +509,7 @@ class PurchasesWidgetAll(QWidget):
         self.apply_filter_button_contract = QPushButton("Применить фильтры")
         self.apply_filter_button_contract.setIcon(QIcon("../Pics/icons8-фильтр-ios-17-32.png"))
         self.apply_filter_button_contract.setFixedWidth(200)
+
         self.apply_filter_button_contract.clicked.connect(self.apply_filter_contract)
         self.apply_filter_button_contract.clicked.connect(self.highlight_apply_filter_button_contract)
 
@@ -533,6 +551,7 @@ class PurchasesWidgetAll(QWidget):
         pfl = QHBoxLayout(panel_filters)
         pfl.addWidget(self.sort_options_contract)
         pfl.addWidget(self.sort_by_putch_winner)
+        pfl.addWidget(self.sort_by_contract_law)
         pfl.setAlignment(Qt.AlignLeft)
         self.menu_frame_filters_contract = QFrame()
         self.menu_frame_filters_contract.setLayout(QVBoxLayout())
@@ -542,10 +561,12 @@ class PurchasesWidgetAll(QWidget):
         # Панель: цена
         panel_price = QWidget()
         ppr = QHBoxLayout(panel_price)
-        ppr.addWidget(QLabel("Мин. цена:"));
+        ppr.addWidget(QLabel("Цена от (в рублях)"))
         ppr.addWidget(self.min_price_input_contrac)
-        ppr.addWidget(QLabel("Макс. цена:"));
+        ppr.addSpacing(12)
+        ppr.addWidget(QLabel("Цена до (в рублях)"))
         ppr.addWidget(self.max_price_input_contrac)
+        ppr.addStretch()
         ppr.setAlignment(Qt.AlignLeft)
         self.menu_frame_price_contrac = QFrame()
         self.menu_frame_price_contrac.setLayout(QVBoxLayout())
@@ -628,6 +649,11 @@ class PurchasesWidgetAll(QWidget):
         self.tablesupplier.setShowGrid(True)
         self.tablesupplier.verticalHeader().setVisible(False)
         self.tablesupplier.setWordWrap(True)
+        self.tablesupplier.setSelectionBehavior(QAbstractItemView.SelectItems)
+        self.tablesupplier.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tablesupplier.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tablesupplier.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tablesupplier.customContextMenuRequested.connect(self.open_supplier_context_menu)
         self.labelsupplier = QLabel("", self)
         self.labelsupplier.setAlignment(Qt.AlignHCenter)
 
@@ -769,14 +795,17 @@ class PurchasesWidgetAll(QWidget):
         self._show_suppliers(list(self.suppliersqs))
 
     def apply_filter_supplier(self):
-        keyword = self.search_supplier.text().strip()
+        keyword = self.searchsupplier.text().strip()
         q = Supplier.select()
+
         if keyword:
+            kw = keyword.lower()
             q = q.where(
-                Supplier.organization.contains(keyword) |
-                Supplier.inn.contains(keyword) |
-                Supplier.kpp.contains(keyword)
+                (fn.Lower(Supplier.organization).contains(kw)) |
+                (fn.Lower(Supplier.inn).contains(kw)) |
+                (fn.Lower(Supplier.kpp).contains(kw))
             )
+
         self._show_suppliers(list(q))
 
     def reset_supplier(self):
@@ -1061,7 +1090,7 @@ class PurchasesWidgetAll(QWidget):
 
             values = [
                 c.Id,
-                c.RegistryNumber or "—",
+                c.purchase.PurchaseOrder if c.purchase else "—",
                 c.purchase.RegistryNumber if c.purchase else "—",
                 c.ContractNumber or "—",
                 str(initial_start) if initial_start else "—",
@@ -1206,8 +1235,8 @@ class PurchasesWidgetAll(QWidget):
   
 
         # Получаем минимальную и максимальную цены из полей ввода
-        self.min_price = float(self.min_price_input.text()) if self.min_price_input.text() else float('-inf')
-        self.max_price = float(self.max_price_input.text()) if self.max_price_input.text() else float('inf')
+        self.min_price = self._parse_number_input(self.min_price_input.text()) or float('-inf')
+        self.max_price = self._parse_number_input(self.max_price_input.text()) or float('inf')
 
         min_date_str = self.min_data_input.date()
         max_date_str = self.max_data_input.date()
@@ -1262,11 +1291,13 @@ class PurchasesWidgetAll(QWidget):
 
     # Добавляем фильтр по ключевому слову (RegistryNumber)
         if keyword:
+            kw = keyword.lower()
             purchases_query_combined = purchases_query_combined.where(
-                (Purchase.RegistryNumber.contains(keyword)) |
-                (Purchase.ProcurementOrganization.contains(keyword)) |
-                     (Purchase.PurchaseName.contains(keyword)) |
-                     (Purchase.CustomerName.contains(keyword))
+                (fn.Lower(fn.COALESCE(Purchase.RegistryNumber, "")).contains(kw)) |
+                (fn.Lower(fn.COALESCE(Purchase.ProcurementOrganization, "")).contains(kw)) |
+                (fn.Lower(fn.COALESCE(Purchase.PurchaseName, "")).contains(kw)) |
+                (fn.Lower(fn.COALESCE(Purchase.CustomerName, "")).contains(kw)) |
+                (fn.Lower(fn.COALESCE(Purchase.AuctionSubject, "")).contains(kw))
             )
         
         self.purchases = purchases_query_combined.order_by(order_by)
@@ -1284,26 +1315,22 @@ class PurchasesWidgetAll(QWidget):
         max_p = self.max_price_input_contrac.text().strip()
         min_d = self.min_data_input_contrac.date()
         max_d = self.max_data_input_contrac.date()
-
+        law = self.sort_by_contract_law.currentText()
         q = Contract.select(Contract, Purchase).join(Purchase)
 
         if keyword:
-            matching_contract_ids = (
-                SupplierContract
-                .select(SupplierContract.contract)
-                .join(Supplier, on=(SupplierContract.supplier == Supplier.id))
-                .where(Supplier.organization.contains(keyword))
-                .distinct()
-            )
-
+            kw = keyword.lower()
             q = q.where(
-                Contract.ContractingAuthority.contains(keyword) |
-                Contract.RegistryNumber.contains(keyword) |
-                Contract.ContractNumber.contains(keyword) |
-                Purchase.PurchaseName.contains(keyword) |
-                (Contract.id.in_(matching_contract_ids))
+                (fn.Lower(fn.COALESCE(Contract.WinnerExecutor, "")).contains(kw)) |
+                (fn.Lower(fn.COALESCE(Contract.ContractingAuthority, "")).contains(kw)) |
+                (fn.Lower(fn.COALESCE(Contract.RegistryNumber, "")).contains(kw)) |
+                (fn.Lower(fn.COALESCE(Contract.ContractNumber, "")).contains(kw)) |
+                (fn.Lower(fn.COALESCE(Purchase.PurchaseName, "")).contains(kw))
             )
 
+
+        if law and law != "Фильтрация по закону":
+            q = q.where(Purchase.PurchaseOrder == law)
         if executor and executor != "Фильтрация по исполнителю":
             executor_contract_ids = (
                 SupplierContract
@@ -1314,17 +1341,13 @@ class PurchasesWidgetAll(QWidget):
             )
             q = q.where(Contract.id.in_(executor_contract_ids))
 
-        if min_p:
-            try:
-                q = q.where(Contract.ContractPrice >= float(min_p.replace(" ", "")))
-            except ValueError:
-                pass
+        parsed_min = self._parse_number_input(min_p)
+        if parsed_min is not None:
+            q = q.where(Contract.ContractPrice >= parsed_min)
 
-        if max_p:
-            try:
-                q = q.where(Contract.ContractPrice <= float(max_p.replace(" ", "")))
-            except ValueError:
-                pass
+        parsed_max = self._parse_number_input(max_p)
+        if parsed_max is not None:
+            q = q.where(Contract.ContractPrice <= parsed_max)
 
         if min_d.isValid():
             q = q.where(Contract.StartDate >= min_d.toPython())
@@ -1349,6 +1372,7 @@ class PurchasesWidgetAll(QWidget):
         self.search_input_contract.clear()
         self.sort_options_contract.setCurrentIndex(0)
         self.sort_by_putch_winner.setCurrentIndex(0)
+        self.sort_by_contract_law.setCurrentIndex(0)
         self.min_price_input_contrac.clear()
         self.max_price_input_contrac.clear()
         self.min_data_input_contrac.setStyleSheet(self.transparent_style)
@@ -1524,11 +1548,12 @@ class PurchasesWidgetAll(QWidget):
 
     def reset_styles_contract(self):
         # Сброс стилей всех элементов к стандартному состоянию
-        for input_field in [self.min_price_input_contrac, self.max_price_input_contrac, self.apply_filter_button_contract, self.FilterCollapseContract,self.FilterPriceContract,
+        for input_field in [self.min_price_input_contrac, self.sort_by_contract_law, self.max_price_input_contrac, self.apply_filter_button_contract, self.FilterCollapseContract,self.FilterPriceContract,
                             self.FilterDateContract,self.FilterCollapseContract, self.sort_options_contract,self.sort_by_putch_winner,self.Qword_contract, self.QwordFinderContract]:
             input_field.setStyleSheet("")
         self.max_data_input_contrac.setStyleSheet(self.transparent_style) 
-        self.min_data_input_contrac.setStyleSheet(self.transparent_style) 
+        self.min_data_input_contrac.setStyleSheet(self.transparent_style)
+
      
 
     def remove_button_clicked(self):
@@ -1778,6 +1803,26 @@ class PurchasesWidgetAll(QWidget):
         sort_by_putch_okpd2 = self.sort_by_putch_okpd2.currentText() if self.sort_by_putch_okpd2.currentText() != "Фильтровать по ОКПД2" else "-"
         return sort_by_putch_order,min_date,max_date,min_price,max_price,sort_by_putch_okpd2
 
+    def _format_number_input(self, line_edit: QLineEdit):
+        text = line_edit.text()
+        digits = ''.join(ch for ch in text if ch.isdigit())
+        if not digits:
+            line_edit.blockSignals(True)
+            line_edit.setText("")
+            line_edit.blockSignals(False)
+            return
+
+        formatted = f"{int(digits):,}".replace(",", " ")
+        cursor_pos = len(formatted)
+
+        line_edit.blockSignals(True)
+        line_edit.setText(formatted)
+        line_edit.setCursorPosition(cursor_pos)
+        line_edit.blockSignals(False)
+
+    def _parse_number_input(self, text: str):
+        text = (text or "").replace(" ", "").strip()
+        return float(text) if text else None
     def get_contract_executor(self, contract):
         suppliers = (
             Supplier
@@ -1788,10 +1833,27 @@ class PurchasesWidgetAll(QWidget):
         names = [s.organization for s in suppliers if s.organization]
         return ", ".join(names) if names else "—"
 
-        if supplier_link and supplier_link.supplier:
-            return supplier_link.supplier.organization or "—"
+    def open_supplier_context_menu(self, pos):
+        item = self.tablesupplier.itemAt(pos)
+        if not item:
+            return
 
-        return "—"
+        menu = QMenu(self)
+        copy_action = menu.addAction("Копировать")
+        action = menu.exec(self.tablesupplier.viewport().mapToGlobal(pos))
+
+        if action == copy_action:
+            QApplication.clipboard().setText(item.text())
+
+    def keyPressEvent(self, event):
+        if event.matches(QKeySequence.Copy):
+            table = self.focusWidget()
+            if isinstance(table, QTableWidget):
+                item = table.currentItem()
+                if item:
+                    QApplication.clipboard().setText(item.text())
+                    return
+        super().keyPressEvent(event)
         
 #
 # if __name__ == '__main__':

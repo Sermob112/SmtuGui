@@ -173,74 +173,15 @@ class StatisticWidget(QWidget):
         self.menu_frame_2.setLayout(QVBoxLayout())
         self.menu_frame_2.layout().addWidget(self.menu_content_2)
         self.menu_frame_2.setVisible(False)
-
-        # # Добавляем кнопку выпадающего меню Первый этап
-        # self.ThirdStage = QPushButton("Анализ контрактов")
-        # self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png"))
-        # self.ThirdStage.setMaximumWidth(400)
-        # self.ThirdStage.setStyleSheet("text-align: left;padding-left: 10px;font-size: 11pt;")
-        # self.ThirdStage.clicked.connect(self.toggle_stage_3)
-        #  # колапсирующее окно Первый этап
-        # self.menu_content_3 = QWidget()
-        # menu_layout_3 = QVBoxLayout()
-        # self.Qword_3 = QLabel("Анализ заключенных контрактов и разницы НМЦК и ЦКЕИ")
-        # menu_layout_3.addWidget(self.Qword_3)
-        # for index, text in enumerate(self.label_texts[6:]):
-        #     button = QtWidgets.QPushButton(text)
-        #     button.setFixedSize(400, 50)
-            
-        #     size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
-        #     button.setSizePolicy(size_policy)
-        #     button.setStyleSheet("text-align: left;padding-left: 8px;")
-        #     button.clicked.connect(partial(self.show_specific_data, index + 6, button))
-        #     menu_layout_3.addWidget(button,alignment=Qt.AlignmentFlag.AlignTop)
-        #     self.buttons.append(button)
-        # # menu_layout.addWidget(line)
-        # self.menu_content_3.setLayout(menu_layout_3)
-        # self.menu_frame_3 = QFrame()
-        # self.menu_frame_3.setLayout(QVBoxLayout())
-        # self.menu_frame_3.layout().addWidget(self.menu_content_3)
-        # self.menu_frame_3.setVisible(False)
-        
-        #ЦИКЛ кнопок 
-        # for index, text in enumerate(self.label_texts[:3]):
-        #     button = QtWidgets.QPushButton(text)
-        #     button.setFixedSize(800, 30)
-        #     size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
-        #     button.setSizePolicy(size_policy)
-        #     button.setStyleSheet("text-align: left;")
-            
-            
-        #     # Подключите обработчик события к каждой кнопке, передавая индекс
-        #     button.clicked.connect(partial(self.show_specific_data, index, button))
-            
-        #     self.buttons.append(button)
-        
         self.buttons_layout = QVBoxLayout()
 
-        # Добавьте кнопки в вертикальный слой
-        # for button in self.buttons:
-        #     self.buttons_layout.addWidget(button)
-
         main_layout = QHBoxLayout(self)
-        # scroll_area = QScrollArea(self)
-        # scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        # scroll_widget = QtWidgets.QWidget()
-        # scroll_widget.setLayout(self.buttons_layout)
         self.buttons_layout.addWidget(self.FirstStage)
         self.buttons_layout.addWidget(self.menu_frame)
         self.buttons_layout.addWidget(self.SecondStage)
         self.buttons_layout.addWidget(self.menu_frame_2)
-        # self.buttons_layout.addWidget(self.ThirdStage)
-        # self.buttons_layout.addWidget(self.menu_frame_3)
         self.buttons_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        
-        # scroll_area.setWidget(scroll_widget)
-        # main_layout.addWidget(scroll_area)
         main_layout.addLayout(self.buttons_layout)
-        
-
-        #  вертикальный слой для метки и таблицы
         self.vertical_layout = QVBoxLayout(self)
         self.filter_layout = QHBoxLayout(self)
         self.vertical_layout.addLayout(self.filter_layout)
@@ -252,9 +193,6 @@ class StatisticWidget(QWidget):
 
  #  вертикальный слой для кнопок внизу
         button_layout = QVBoxLayout(self)
-        # button_layout.addWidget(btn_back)
-        # button_layout.addWidget(btn_forward)
-
         #  вертикальный слой для кнопок внизу справа
         button_layout2_H = QHBoxLayout(self)
         button_layout2 = QVBoxLayout(self)
@@ -274,9 +212,6 @@ class StatisticWidget(QWidget):
         self.highlight_first_button()
 
         self.setLayout(main_layout)
-        # self.analisQueryCount()
-        # self.analisPriceCount()
-        # self.analyze_price_count()
         if self.role == "Гость":
             self.toExcel.hide()
             
@@ -309,8 +244,7 @@ class StatisticWidget(QWidget):
     def update_data(self):
         self.all_data = [self.analis(),self.analisNMSK(),self.analisOKPD2(),self.analisQueryCount(), 
                          self.analisQueryCountAccept(),self.analisQueryCountDecline(),
-                        #  self.analisNMCKReduce(),self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()
-                        #  ,self.analisYears()
+
                          
                          ]
         self.show_current_data()
@@ -384,60 +318,7 @@ class StatisticWidget(QWidget):
     def reset_filters(self):
         self.all_purchase.resetFilters()
         self.update_data()
-    # def analisPriceCount(self):
-    #     #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
-    #     query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-    #     t = list(query)
-    #     # print(len(t))
-    #     price_proposals_dict = {}
-    #     i = 0
-    #     for purchase in t:  # Используйте t, а не query
-            
-    #         # Извлекаем данные из результата запроса
-    #         price_proposal = purchase.contract.PriceProposal
 
-    #         # Парсим значение PriceProposal (пример, предполагая, что это JSON-строка)
-    #         price_proposal_dict = json.loads(price_proposal)
-
-    #         # Добавляем данные в общий словарь
-    #         price_proposals_dict[i] = price_proposal_dict
-    #         i = i + 1
-       
-       
-    #     coeff_range_order = [
-    #     'по 1-му предложению поставщиков',
-    #     'по 2-м предложениям поставщиков',
-    #     'по 3-м предложениям поставщиков',
-    #     'по 4-м предложениям поставщиков',
-    #     'по 5-ти предложениям поставщиков',
-    #     'по 6-ти предложениям поставщиков',
-
-    # ]
-    #     # Создаем DataFrame
-    #     query = Purchase.select(Purchase.PurchaseOrder, Contract.PriceProposal).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-    #     t = list(query)
-    #     df = pd.DataFrame([(purchase.PurchaseOrder, purchase.contract.PriceProposal) for purchase in t], columns=['PurchaseOrder', 'PriceProposal'])
-    #     # df['PriceProposal'] = df.apply(self.determine_price_range, axis=1)
-    #     df['PriceProposal'] = pd.Categorical(df['PriceProposal'], categories=coeff_range_order, ordered=True)
-    #     df = df.sort_values('PriceProposal')
-    #     pivot_table = df.pivot_table(index='PriceProposal', columns='PurchaseOrder', aggfunc='size', fill_value=0)
-    #     column_sums = pivot_table.sum()
-    #     row_totals = pivot_table.sum(axis=1)
-    #     pivot_table['Общий итог'] = row_totals
-    #     column_sums2 = pivot_table.sum()
-    #     column_means2 = pivot_table.mean()
-    #     total_purchase_counts2 = column_sums2.sum()
-    #     column_sums2['Суммы'] = total_purchase_counts2
-    #     print(pivot_table)
-
-    
-    #     # print(pivot_table)
-    #     return pivot_table
-    
-
-  
-      
-      
     def analisYears(self):
     # Статистический анализ количества записей по дате размещения
         purchases = self.query
@@ -458,14 +339,7 @@ class StatisticWidget(QWidget):
         
         # Считаем сумму по каждому столбцу
         column_sums = pivot_table.sum()
-        
-        # # Добавляем строку с общим итогом
-        # total_row = pd.DataFrame({'Количество записей': column_sums['Количество записей']}, index=['Сумма'])
-        # final_df = pd.concat([pivot_table, total_row])
-        
-        # print(final_df)
-        # print(column_sums)
-        
+
         return pivot_table, column_sums
     def analis(self):
     
@@ -487,7 +361,7 @@ class StatisticWidget(QWidget):
     def analisNMSK(self):
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
         purchases = self.query
-        df = pd.DataFrame([(purchase.AuctionSubject, purchase.PurchaseOrder) for purchase in purchases], columns=[f'{self.formular_texts[1]}', 'PurchaseOrder'])
+        df = pd.DataFrame([(purchase.LotName, purchase.PurchaseOrder) for purchase in purchases], columns=[f'{self.formular_texts[1]}', 'PurchaseOrder'])
         pivot_table = df.pivot_table(index=f'{self.formular_texts[1]}', columns='PurchaseOrder', aggfunc='size', fill_value=0)
         column_sums = pivot_table.sum()
         
@@ -547,14 +421,9 @@ class StatisticWidget(QWidget):
         column_means2 = pivot_table.mean()
         total_purchase_counts2 = column_sums2.sum()
         column_sums2['Суммы'] = total_purchase_counts2
-        # print(pivot_table)
-        # print(column_sums2)
-        # Определите порядок категорий
-       
 
-        return pivot_table, column_sums2 
-    
 
+        return pivot_table, column_sums2
         
     def analisCoeffVar(self):
         purchases = self.query.where(Purchase.CoefficientOfVariation.is_null(False))
@@ -661,10 +530,6 @@ class StatisticWidget(QWidget):
         # print(pivot_table)
         return pivot_table, column_sums
 
-
-
-
-    
     def save_to_excel_combined(self, pivot_tables_purchase, column_sums_purchase, pivot_tables_max_price, column_sums_max_price, output_excel_path):
         data_to_export = {}
 
@@ -716,36 +581,6 @@ class StatisticWidget(QWidget):
     def clear_table(self):
         self.table.setRowCount(0)
 
-    # def populate_table(self, data, sums):
-    #     # Очищаем таблицу перед обновлением
-    #     self.clear_table()
-       
-    #     # Добавляем строки в таблицу
-    #     for index, row in data.iterrows():
-    #         row_position = self.table.rowCount()
-    #         self.table.insertRow(row_position)
-
-    #         # Заполняем ячейки в строке
-    #         self.table.setItem(row_position, 0, QTableWidgetItem(index))
-    #         for col_index, value in enumerate(row):
-    #             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
-
-    #     # Добавляем строку с суммами
-    #     row_position = self.table.rowCount()
-    #     self.table.insertRow(row_position)
-    #     self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
-
-    #     # Добавляем суммы значений из столбцов '223-ФЗ' и '44-ФЗ'
-    #     for col_index in range(1, self.table.columnCount() - 1):
-    #         column_name = self.table.horizontalHeaderItem(col_index).text()
-    #         sum_value = sums.get(column_name, 0)
-    #         self.table.setItem(row_position, col_index, QTableWidgetItem(str(sum_value)))
-
-    #     # Добавляем сумму значений '223-ФЗ' и '44-ФЗ' в последний столбец 'Общий итог'
-    #     last_col_index = self.table.columnCount() - 1
-    #     sum_value_total = sums.get('223-ФЗ', 0) + sums.get('44-ФЗ', 0)
-    #     self.table.setItem(row_position, last_col_index, QTableWidgetItem(str(sum_value_total)))
-
     def populate_table(self, data, sums):
     # Очищаем таблицу перед обновлением
         self.clear_table()
@@ -785,10 +620,6 @@ class StatisticWidget(QWidget):
         for col_index, key in enumerate(sums.keys()):
             value = sums[key]
             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
-      
-    
-
-
 
     def determine_NMCK_range(self,row):
         term =  row[f'{self.formular_texts[7]}'] 
@@ -879,12 +710,6 @@ class StatisticWidget(QWidget):
         pivot_tables_purchase3, column_sums_purchase3 = self.analisQueryCount()
         pivot_tables_purchase4, column_sums_purchase4 = self.analisQueryCountAccept()
         pivot_tables_purchase5, column_sums_purchase5 = self.analisQueryCountDecline()
-
-
-        # pivot_tables_max_price1, column_sums_max_price1 = self.analisMAxPrice()
-        # pivot_tables_max_price2, column_sums_max_price2 = self.analisNMCKReduce()
-        # pivot_tables_max_price3, column_sums_max_price3 = self.analisCoeffVar()
-        # pivot_tables_max_price4, column_sums_max_price4= self.analyze_price_count()
 
         pivot_tables_max_price5, column_sums_max_price5= self.analisOKPD2()
         sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2 = self.all_purchase.return_filters_variabels()

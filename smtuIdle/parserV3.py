@@ -288,31 +288,6 @@ def insert_in_table_full(csv_file_path):
                     continue  # ← пропускаем строку, ничего не создаём
 
                 purchase_data = dict(
-                    PurchaseOrder=purchase_order,
-                    ProcurementMethod=procurement_method,
-                    PurchaseName=purchase_name,
-                    AuctionSubject=auction_subject,
-                    PurchaseIdentificationCode='Нет данных',
-                    LotNumber=lot_number,
-                    LotName=lot_name,
-                    InitialMaxContractPrice=initial_max_contract_price,
-                    Currency=currency,
-                    InitialMaxContractPriceInCurrency=initial_max_contract_price_in_currency,
-                    ContractCurrency=currency,
-                    OKDPClassification='Нет данных',
-                    OKPDClassification='Нет данных',
-                    OKPD2Classification=okpd2,
-                    PositionCode='Нет данных',
-                    CustomerName=customer_name,
-                    ProcurementOrganization='Нет данных',
-                    # PlacementDate=placement_date,
-                    # UpdateDate=placement_date,
-                    ProcurementStage='Нет данных',
-                    ProcurementFeatures='Нет данных',
-                    # ApplicationStartDate=application_start_date,
-                    # ApplicationEndDate=application_end_date,
-                    # AuctionDate=auction_date_val,
-                    TKPData=tkp_data_json,
                     QueryCount=query_count,
                     ResponseCount=response_count,
                     AveragePrice=average_price,
@@ -322,11 +297,9 @@ def insert_in_table_full(csv_file_path):
                     CoefficientOfVariation=coefficient_of_variation,
                     NMCKMarket=nmck_market,
                     FinancingLimit=financing_limit,
-                    PurchaseStatus=purchase_status,
-                    quantity_units=quantity_units,
-                    nmck_per_unit=nmck_per_unit,
-                    notification_link=notification_link,
-                    isChanged=True,
+                    OKPD2Classification=okpd2,
+                    LotNumber=lot_number,
+                    LotName=lot_name,
                 )
 
                 Purchase.update(purchase_data).where(Purchase.RegistryNumber == registry_number).execute()
@@ -338,25 +311,14 @@ def insert_in_table_full(csv_file_path):
                     PriceProposal=price_proposal_json,
                     Applicant=applicant_json,
                     Applicant_satatus=applicant_status_json,
-                    ContractingAuthority=contracting_authority,
-                    WinnerExecutor=winner_executor,
-                    ContractIdentifier=contract_identifier,
-                    RegistryNumber=contract_reg_number,
-                    ContractNumber=contract_number,
-                    ContractPrice=contract_price,
-                    StartDate=start_date,
-                    EndDate=end_date,
-                    AdvancePayment=advance_payment,
-                    ReductionNMCPercent=reduction_nmc_percent,
-                    ReductionNMC=reduction_nmc,
-                    ContractFile='Нет данных',
-                    SupplierProtocol='Нет данных',
                 )
 
-                updated_contract = (Contract
-                                    .update(contract_data)
-                                    .where(Contract.purchase == existing_purchase.Id)
-                                    .execute())
+                updated_contract = (
+                    Contract
+                    .update(contract_data)
+                    .where(Contract.RegistryNumber == registry_number)
+                    .execute()
+                )
 
                 if updated_contract == 0:
                     print(f"[SKIP CONTRACT] Контракт не найден для закупки: {registry_number}")
