@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 from smtuIdle.BD.models import Purchase, Contract, FinalDetermination
@@ -8,8 +10,7 @@ from PySide6.QtGui import QFont,QDesktopServices
 from smtuIdle.insertPanel import InsertWidgetPanel
 from smtuIdle.insertPanelContract import InsertPanelContract
 from PySide6.QtWidgets import QTreeWidgetItem
-# from InsertWidgetNMCK import InsertWidgetNMCK
-# from InsertWidgetCEIA import InsertWidgetCEIA
+
 from smtuIdle.parserV3 import delete_records_by_id
 from PySide6.QtWidgets import QSizePolicy
 import os
@@ -19,16 +20,9 @@ from PySide6.QtCore import Signal
 from smtuIdle.BD.models import Purchase, Contract, FinalDetermination, Customer, Vessel
 from  locale import format_string,setlocale,LC_ALL
 setlocale(LC_ALL, 'ru_RU.UTF-8')
-# Код вашей модели остается таким же, как вы предоставили в предыдущем сообщении.
 
-
-
-# Создаем соединение с базой данных
 db = SqliteDatabase('database.db')
 cursor = db.cursor()
-
-
-
 class PurchasesWidget(QWidget):
     closingSignal = Signal()
     def __init__(self,main_window,role, user, changer):
@@ -106,16 +100,11 @@ class PurchasesWidget(QWidget):
         self.butlayout.setAlignment(Qt.AlignLeft)
         button_layout.addWidget(self.label)
         self.label.setAlignment(Qt.AlignHCenter)
-        # Создаем горизонтальный макет и добавляем элементы
         button_layout2 = QHBoxLayout()
-
-        # Добавляем первую кнопку
         button_layout2.addWidget(self.addButtonCurrency,alignment=Qt.AlignmentFlag.AlignCenter)
         button_layout.addStretch()
         button_layout2.addWidget(self.deleteButton)
-        # button_layout2.setAlignment(Qt.AlignCenter)
 
-       # Создаем горизонтальный макет и добавляем элементы
         layout = QVBoxLayout(self)
 
         # Создаем горизонтальный макет для минимальной и максимальной цены
@@ -327,8 +316,10 @@ class PurchasesWidget(QWidget):
                                   str(current_purchase.comparable_product_price) if current_purchase.comparable_product_price else "Нет данных")
             self.add_row_to_table("НМЦК двумя методами",
                                   str(current_purchase.nmc_two_methods) if current_purchase.nmc_two_methods else "Нет данных")
-            self.add_row_to_table("Файл итогового определения",
-                                  str(current_purchase.file_4) if current_purchase.file_4 else "Нет данных")
+            self.add_file_row_to_table(
+                "Файл итогового определения",
+                current_purchase.file_4 if current_purchase.file_4 else None
+            )
 
             # FINAL DETERMINATION
             self.finalDetermination = FinalDetermination.select().where(FinalDetermination.purchase == current_purchase)
@@ -481,6 +472,19 @@ class PurchasesWidget(QWidget):
             self.label_form.setText("Карточка закупки")
             self.label_form.show()
 
+    def add_file_row_to_table(self, label, file_path):
+        item = QTreeWidgetItem(self.current_parent)
+        item.setText(0, label)
+
+        if file_path:
+            item.setText(1, file_path)
+            item.setData(1, Qt.UserRole, file_path)
+            item.setForeground(1, QColor("blue"))
+            font = item.font(1)
+            font.setUnderline(True)
+            item.setFont(1, font)
+        else:
+            item.setText(1, "Нет данных")
     def add_row_to_table(self, label_text, value_text):
         # Если данных нет - пишем "Нет данных"
         if value_text is None or str(value_text).strip() in ("", "None", "-"):
@@ -670,16 +674,12 @@ class PurchasesWidget(QWidget):
         self.current_parent.setText(0, section_text)
         self.current_parent.setFirstColumnSpanned(True)  # Растягиваем на всю ширину
 
-        # Устанавливаем, развернута группа или нет (в зависимости от переданного параметра)
         self.current_parent.setExpanded(expanded)
 
-        # Стилизация заголовка группы
         font = QFont()
         font.setPointSize(11)
         font.setBold(True)
         self.current_parent.setFont(0, font)
-        # self.current_parent.setBackground(0, QColor(230, 230, 230))
-
 
     def add_button_nmck_clicked(self):
         
@@ -709,64 +709,84 @@ class PurchasesWidget(QWidget):
             if not filepath:
                 return
 
-            # Получаем скрытые данные (метку перехода или ссылку), которые мы зашили в Qt.UserRole
             url_or_cmd = item.data(1, Qt.UserRole)
 
-            # 1. ПРОВЕРКА НА ВНУТРЕННИЕ ПЕРЕХОДЫ МЕЖДУ ФОРМУЛЯРАМИ
+            # ── ВНУТРЕННИЕ ПЕРЕХОДЫ (GOTO_*) ─────────────────────────────────
             if url_or_cmd and isinstance(url_or_cmd, str) and url_or_cmd.startswith("GOTO_"):
                 command, record_id = url_or_cmd.split(":")
                 record_id = int(record_id)
 
-                # Сохраняем текущую страницу в историю, чтобы кнопка "Назад" корректно работала
                 if hasattr(self.main_win, 'history'):
                     self.main_win.history.append(self.main_win.stackedWidget.currentIndex())
 
-                # Переход в зависимости от команды
                 if command == "GOTO_CUSTOMER":
-                    # Передаем id в формуляр и переключаем страницу
                     self.main_win.customerFormular.reload_data_id(record_id)
-                    self.main_win.navigate_to_page(
-                        11)  # Замените 11 на реальный индекс страницы заказчиков в MainWindow
-
+                    self.main_win.navigate_to_page(11)
                 elif command == "GOTO_CONTRACT":
                     self.main_win.contractFormular.reload_data_id(record_id)
-                    self.main_win.navigate_to_page(8)  # Замените 8 на реальный индекс страницы контрактов
-
+                    self.main_win.navigate_to_page(8)
                 elif command == "GOTO_VESSEL":
                     self.main_win.vesselFormular.reload_data_id(record_id)
-                    self.main_win.navigate_to_page(13)  # Замените 13 на реальный индекс страницы судов
+                    self.main_win.navigate_to_page(13)
+                return
 
-                return  # Прерываем функцию, так как это был внутренний переход
+            # ── ОТКРЫТИЕ ФАЙЛА ПО ОТНОСИТЕЛЬНОМУ ПУТИ (file_4) ───────────────
+            if url_or_cmd and isinstance(url_or_cmd, str) and not url_or_cmd.startswith(
+                    ("http", "zakupki", "download")):
 
-            # 2. ПРОВЕРКА НА ОТКРЫТИЕ ФАЙЛОВ И ВНЕШНИХ ССЫЛОК (Оригинальная логика)
-            if os.path.isfile(filepath):
+                # ── ОТЛАДКА ─────────────────────────────────────────────────────────
+                print("=" * 60)
+                print(f"📦 url_or_cmd (из Qt.UserRole): {url_or_cmd}")
+                print(f"📦 db.database: {db.database}")
+                # ────────────────────────────────────────────────────────────────────
+
+                # Находим корень программы через путь к текущему скрипту
+                # Этот файл лежит в smtuIdle/ → корень программы: parent
+                current_file = Path(__file__).resolve()  # .../smtuIdle/ваш_файл.py
+                base_dir = current_file.parent.parent.parent  # .../SmtuGui
+
+                full_path = base_dir / url_or_cmd
+
+                # ── ОТЛАДКА ─────────────────────────────────────────────────────────
+                print(f"📦 current_file: {current_file}")
+                print(f"📦 base_dir: {base_dir}")
+                print(f"📦 full_path: {full_path}")
+                print(f"📦 full_path.exists(): {full_path.exists()}")
+                print(f"📦 full_path.is_file(): {full_path.is_file()}")
+                print("=" * 60)
+                # ────────────────────────────────────────────────────────────────────
+
+                if full_path.exists() and full_path.is_file():
+                    filepath = str(full_path)
+                else:
+                    # Файл не найден — покажем ошибку
+                    QMessageBox.warning(self, "Файл не найден", f"Не найден файл:\n{full_path}")
+                    return
+
+            # ── ОТКРЫТИЕ ФАЙЛА / ССЫЛКИ ──────────────────────────────────────
+            if filepath and os.path.isfile(filepath):
                 if filepath.lower().endswith(('.docx', '.doc')):
                     subprocess.Popen(['start', 'winword', filepath], shell=True)
                 elif filepath.lower().endswith('.pdf'):
                     QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
                 elif filepath.lower().endswith(('.xlsx', '.xls', '.csv')):
                     subprocess.Popen(['start', 'excel', filepath], shell=True)
+                else:
+                    QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
             else:
                 if url_or_cmd and ('http' in url_or_cmd or 'zakupki' in url_or_cmd):
                     QDesktopServices.openUrl(QUrl(url_or_cmd))
-                elif 'http' in filepath or 'zakupki' in filepath:
+                elif filepath and ('http' in filepath or 'zakupki' in filepath):
                     QDesktopServices.openUrl(QUrl(filepath))
-                elif 'download' in filepath:
-                    # Предполагаем, что для загрузки используется текст элемента
-                    url_for = item.text(1)
-                    QDesktopServices.openUrl(QUrl(url_for))
-
-
+                elif filepath and 'download' in filepath:
+                    QDesktopServices.openUrl(QUrl(filepath))
 
     def go_back(self):
         if hasattr(self.mainwin, 'navigate_back'):
             self.mainwin.navigate_back()
         else:
             self.mainwin.stackedWidget.setCurrentIndex(0)
-     
 
-
-        
     def reload_data(self):
         self.purchases = Purchase.select()
         self.purchases_list = list(self.purchases)
@@ -809,9 +829,3 @@ class PurchasesWidget(QWidget):
                     wb.save(f'{selected_file}\формуляр закупки {self.current_purchase.RegistryNumber}.xlsx')
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
        
-
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     csv_loader_widget = PurchasesWidget()
-#     csv_loader_widget.show()
-#     sys.exit(app.exec())

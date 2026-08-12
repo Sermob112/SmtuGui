@@ -1075,15 +1075,32 @@ class PurchasesWidgetAll(QWidget):
                 else None
             )
 
-            reduction = c.ReductionNMCPercent
+            reduction = (
+                ((nmck - current_price) / nmck) * 100
+                if current_price is not None and nmck not in (None, 0)
+                else None
+            )
 
-            initial_price_str = format_string("%.0f", initial_price,
-                                              grouping=True) if initial_price is not None else "—"
-            current_price_str = format_string("%.0f", current_price,
-                                              grouping=True) if current_price is not None else "—"
-            diff_initial_str = format_string("%.0f", diff_initial, grouping=True) if diff_initial is not None else "—"
-            nmck_str = format_string("%.0f", nmck, grouping=True) if nmck is not None else "—"
-            diff_nmck_str = format_string("%.0f", diff_nmck, grouping=True) if diff_nmck is not None else "—"
+            initial_price_str = (
+                format_string("%.0f", initial_price, grouping=True)
+                if initial_price is not None else "—"
+            )
+            current_price_str = (
+                format_string("%.0f", current_price, grouping=True)
+                if current_price is not None else "—"
+            )
+            diff_initial_str = (
+                format_string("%.0f", diff_initial, grouping=True)
+                if diff_initial is not None else "—"
+            )
+            nmck_str = (
+                format_string("%.0f", nmck, grouping=True)
+                if nmck is not None else "—"
+            )
+            diff_nmck_str = (
+                format_string("%.0f", diff_nmck, grouping=True)
+                if diff_nmck is not None else "—"
+            )
             reduction_str = f"{reduction:.2f}%" if reduction is not None else "—"
 
             executor_name = self.get_contract_executor(c)
@@ -1115,7 +1132,7 @@ class PurchasesWidgetAll(QWidget):
                 item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
                 self.table_cont.setItem(i, col, item)
 
-                if col in (9, 10, 11, 12, 13):
+                if col in (9, 10, 11, 12, 13, 14):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignTop)
 
             self.table_cont.setRowHeight(i, self.table_cont.rowHeight(i) + 3)
