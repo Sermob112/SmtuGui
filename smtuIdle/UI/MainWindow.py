@@ -1,6 +1,7 @@
 import os
 import sys
 
+import pandas as pd
 from PySide6.QtWidgets import *
 from PySide6.QtGui import QIcon, QPixmap, QTransform
 from PySide6 import QtCore
@@ -23,8 +24,36 @@ from smtuIdle.UI.CustomerFormular import CustomerWidget
 from smtuIdle.UI.SupplierFormular import SupplierWidget
 from smtuIdle.UI.VesselFormular import VesselWidget
 from smtuIdle.UI.ContractVersionFormular import ContractVersionWidget
+MIN_PRICE = 0
+DATE_FROM_STR = "01.01.2000"
+DATE_FROM = pd.to_datetime(DATE_FROM_STR, format="%d.%m.%Y")
+DATE_TO = pd.Timestamp.today().normalize()
+def date_in_range(value) -> bool:
+    """
+    Проверяет, попадает ли дата публикации закупки
+    в диапазон от DATE_FROM до текущей даты включительно.
+    """
+    if value is None or pd.isna(value):
+        return False
 
+    parsed = pd.to_datetime(
+        str(value).strip(),
+        format="%d.%m.%Y",
+        errors="coerce",
+    )
 
+    # Запасной вариант для DateField, ISO-формата и других значений
+    if pd.isna(parsed):
+        parsed = pd.to_datetime(
+            str(value).strip(),
+            dayfirst=True,
+            errors="coerce",
+        )
+
+    if pd.isna(parsed):
+        return False
+
+    return DATE_FROM <= parsed.normalize() <= DATE_TO
 # from ResultWindow import ResultWindow
 # from Viewer import MyWindow
 # from Module_start import AuthManager
@@ -138,7 +167,7 @@ class Ui_MainWindow(QMainWindow):
             latest_changed_time = latest_record.chenged_time.strftime('%d.%m.%Y %H:%M') 
         
         else:
-            latest_changed_time = "01.04.2026"
+            latest_changed_time = "12.08.2026"
         self.formatted_date = current_date.strftime("%d-%m-%Y")
         
         user = User.get(User.username == self.username)
@@ -625,57 +654,215 @@ class Ui_MainWindow(QMainWindow):
         for widget in self.widgets:
             widget.close()
         event.accept()
+
     def export_to_excel_all(self):
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
-        self.purchases = Purchase.select()
+
+
+        DATE_FROM_SQL = DATE_FROM.strftime("%Y-%m-%d")
+
+        sql = """
+            SELECT
+                p."Id" AS purchase_id
+            FROM "purchase" AS p
+            WHERE p."InitialMaxContractPriceInCurrency" >= ?
+              AND date(p."PlacementDate")
+                  BETWEEN date(?)
+                      AND date('now', 'localtime')
+        """
+
+        db.connect(reuse_if_open=True)
+
+        try:
+            cursor = db.execute_sql(
+                sql,
+                (
+                    MIN_PRICE,
+                    DATE_FROM_SQL,
+                ),
+            )
+
+            eligible_purchase_ids = [
+                row[0]
+                for row in cursor.fetchall()
+            ]
+
+        finally:
+            db.close()
+
+        if not eligible_purchase_ids:
+            QMessageBox.warning(
+                self,
+                "Предупреждение",
+                (
+                    f"Нет закупок, удовлетворяющих условиям:\n"
+                    f"Дата: {DATE_FROM_STR} — "
+                    f"{DATE_TO.strftime('%d.%m.%Y')}\n"
+                    f"НМЦК не менее: "
+                    f"{MIN_PRICE:,.0f} руб."
+                ).replace(",", " "),
+            )
+            return
+
+        self.purchases = (
+            Purchase
+            .select()
+            .where(
+                Purchase.Id.in_(
+                    eligible_purchase_ids
+                )
+            )
+        )
+
         if file_dialog.exec_():
             selected_file = file_dialog.selectedFiles()[0]
-            selected_file = selected_file if selected_file else None
+            selected_file = (
+                selected_file
+                if selected_file
+                else None
+            )
+
             if selected_file:
-                # query1 = self.purchases
-                # query = self.purchases.select(Purchase, Contract).join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
+                purchase_fields = list(Purchase._meta.sorted_fields)
+
+                contract_fields = [
+                    f for f in Contract._meta.sorted_fields
+                    if f.name != "purchase"
+                ]
+
+                customer_fields = list(Customer._meta.sorted_fields)
+                supplier_fields = list(Supplier._meta.sorted_fields)
+
+                purchase_select = [
+                    f.alias(f"purchase__{f.name}")
+                    for f in purchase_fields
+                ]
+
+                contract_select = [
+                    f.alias(f"contract__{f.name}")
+                    for f in contract_fields
+                ]
+
+                customer_select = [
+                    f.alias(f"customer__{f.name}")
+                    for f in customer_fields
+                ]
+
+                supplier_select = [
+                    f.alias(f"supplier__{f.name}")
+                    for f in supplier_fields
+                ]
+
                 query = (
                     self.purchases
-                    .select(Purchase.Id, Purchase.PurchaseOrder, Purchase.RegistryNumber, Purchase.ProcurementMethod,
-        Purchase.PurchaseName, Purchase.AuctionSubject, Purchase.PurchaseIdentificationCode,
-        Purchase.LotNumber, Purchase.LotName, Purchase.InitialMaxContractPrice, Purchase.Currency,
-        Purchase.InitialMaxContractPriceInCurrency, Purchase.ContractCurrency,
-        Purchase.OKDPClassification, Purchase.OKPDClassification, Purchase.OKPD2Classification,
-        Purchase.PositionCode, Purchase.CustomerName, Purchase.ProcurementOrganization,
-        Purchase.PlacementDate, Purchase.UpdateDate, Purchase.ProcurementStage,
-        Purchase.ProcurementFeatures, Purchase.ApplicationStartDate, Purchase.ApplicationEndDate,
-        Purchase.AuctionDate, Purchase.QueryCount, Purchase.ResponseCount, Purchase.AveragePrice,
-        Purchase.MinPrice, Purchase.MaxPrice, Purchase.StandardDeviation, Purchase.CoefficientOfVariation,
-        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceOld,
-        Purchase.notification_link,Purchase.quantity_units,Purchase.nmck_per_unit,
-        Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
-        Contract.PriceProposal, Contract.Applicant, Contract.Applicant_satatus, Contract.WinnerExecutor,
-        Contract.ContractingAuthority, Contract.ContractIdentifier, Contract.RegistryNumber,
-        Contract.ContractNumber, Contract.StartDate, Contract.EndDate, Contract.ContractPrice,
-        Contract.AdvancePayment, Contract.ReductionNMC, Contract.ReductionNMCPercent,
-        Contract.SupplierProtocol, Contract.ContractFile, FinalDetermination.RequestMethod, FinalDetermination.PublicInformationMethod,
-        FinalDetermination.NMCObtainedMethods, FinalDetermination.CostMethodNMC,
-        FinalDetermination.ComparablePrice, FinalDetermination.NMCMethodsTwo,
-        FinalDetermination.CEIComparablePrices, FinalDetermination.CEICostMethod,
-        FinalDetermination.CEIMethodsTwo,  CurrencyRate.CurrencyValue, CurrencyRate.CurrentCurrency,
-        CurrencyRate.DateValueChanged, CurrencyRate.CurrencyRateDate, CurrencyRate.PreviousCurrency)
-                    .join(Contract, JOIN.LEFT_OUTER, on=(Purchase.Id == Contract.purchase))
-                    .join(FinalDetermination, JOIN.LEFT_OUTER, on=(Purchase.Id == FinalDetermination.purchase))
-                    .join(CurrencyRate, JOIN.LEFT_OUTER, on=(Purchase.Id == CurrencyRate.purchase))
-                )     
-                
+                    .select(
+                        *(
+                                purchase_select
+                                + contract_select
+                                + customer_select
+                                + supplier_select
+                        )
+                    )
+                    .join(
+                        Contract,
+                        JOIN.LEFT_OUTER,
+                        on=(Purchase.Id == Contract.purchase),
+                    )
+                    .join(
+                        SupplierContract,
+                        JOIN.LEFT_OUTER,
+                        on=(
+                                SupplierContract.contract == Contract.Id
+                        ),
+                    )
+                    .join(
+                        Supplier,
+                        JOIN.LEFT_OUTER,
+                        on=(
+                                SupplierContract.supplier == Supplier.id
+                        ),
+                    )
+                    .switch(Purchase)
+                    .join(
+                        Customer,
+                        JOIN.LEFT_OUTER,
+                        on=(
+                                Purchase.CustomerName == Customer.name
+                        ),
+                    )
+                )
 
                 self.data = list(query.tuples())
-                records, data, user = self.return_variabels()
-                # print(self.data[0])
-                if export_to_excel_all(self.data ,f'{selected_file}/Все данные__{data}_{records}_{user}.xlsx') == True:
-                    QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
-                else:
-                    QMessageBox.warning(self, "Ошибка", "Ошибка записи")
-            else:
-                QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
 
+                columns = (
+                        [f"purchase__{f.name}" for f in purchase_fields]
+                        + [f"contract__{f.name}" for f in contract_fields]
+                        + [f"customer__{f.name}" for f in customer_fields]
+                        + [f"supplier__{f.name}" for f in supplier_fields]
+                )
+
+                column_translation = {}
+
+                for f in purchase_fields:
+                    column_translation[
+                        f"purchase__{f.name}"
+                    ] = f"Закупка: {f.verbose_name}"
+
+                for f in contract_fields:
+                    column_translation[
+                        f"contract__{f.name}"
+                    ] = f"Контракт: {f.verbose_name}"
+
+                for f in customer_fields:
+                    column_translation[
+                        f"customer__{f.name}"
+                    ] = f"Заказчик: {f.verbose_name}"
+
+                for f in supplier_fields:
+                    title = (
+                        f.verbose_name
+                        if getattr(f, "verbose_name", None)
+                        else f.name
+                    )
+
+                    column_translation[
+                        f"supplier__{f.name}"
+                    ] = f"Поставщик: {title}"
+
+                records, data, user = self.return_variabels()
+
+                success = export_to_excel_all(
+                    self.data,
+                    f"{selected_file}/"
+                    f"Все данные__{data}_{records}_{user}.xlsx",
+                    columns=columns,
+                    column_translation=column_translation,
+                )
+
+                if success:
+                    QMessageBox.information(
+                        self,
+                        "Успех",
+                        (
+                            f"Файл успешно сохранен.\n"
+                            f"Период: {DATE_FROM_STR} — "
+                            f"{DATE_TO.strftime('%d.%m.%Y')}\n"
+                            f"Закупок: {len(eligible_purchase_ids)}"
+                        ),
+                    )
+                else:
+                    QMessageBox.warning(
+                        self,
+                        "Ошибка",
+                        "Ошибка записи",
+                    )
+            else:
+                QMessageBox.warning(
+                    self,
+                    "Предупреждение",
+                    "Не выбран файл для сохранения",
+                )
 
     def GlobalUpdate(self):
         self.ChangeWindow.populate_table()

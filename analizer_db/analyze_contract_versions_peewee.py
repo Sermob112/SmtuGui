@@ -190,25 +190,176 @@ def print_count_sum_table(title: str, p_cnt: pd.DataFrame, p_sum: pd.DataFrame,
 
 def parse_version_label(label):
     """
-    '№ 3890800303219000006 (Версия № 3 от 15.04.2021, действующая версия)'
-    → (3, Timestamp('2021-04-15'))
+    Извлекает номер и дату версии.
+
+    Пример:
+    '№ 123 (Версия № 3 от 15.04.2021, действующая версия)'
+    →
+    (3, Timestamp('2021-04-15'))
     """
-    if not label or not isinstance(label, str):
-        return 999, None
-    num_match = re.search(r"Версия\s*№\s*(\d+)", label, re.IGNORECASE)
-    version_num = int(num_match.group(1)) if num_match else 999
-    date_match = re.search(r"от\s+(\d{2}\.\d{2}\.\d{4})", label)
+
+    if not label:
+        return None, None
+
+    # На случай, если значение версии хранится числом.
+    if isinstance(label, (int, float)) and not pd.isna(label):
+        return int(label), None
+
+    if not isinstance(label, str):
+        return None, None
+
+    num_match = re.search(
+        r"Версия\s*№\s*(\d+)",
+        label,
+        re.IGNORECASE,
+    )
+
+    version_num = (
+        int(num_match.group(1))
+        if num_match
+        else None
+    )
+
+    date_match = re.search(
+        r"от\s+(\d{2}\.\d{2}\.\d{4})",
+        label,
+    )
+
     version_date = None
+
     if date_match:
-        try:
-            version_date = pd.to_datetime(date_match.group(1), format="%d.%m.%Y")
-        except Exception:
-            pass
+        version_date = pd.to_datetime(
+            date_match.group(1),
+            format="%d.%m.%Y",
+            errors="coerce",
+        )
+
     return version_num, version_date
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Извлечение данных из JSON
 # ─────────────────────────────────────────────────────────────────────────────
+
+def load_first_version_prices(
+    contract_ids: list,
+) -> pd.DataFrame:
+    """
+    Возвращает цену самой первой версии каждого контракта.
+
+    Первая версия определяется по:
+      1. номеру версии;
+      2. дате версии;
+      3. id версии.
+
+    Контракты без версий возвращаются без строки
+    и затем получат NaN после left merge.
+    """
+
+    result_columns = [
+        "contract_id",
+        "first_version_price_raw",
+        "first_version_label",
+        "first_version_id",
+    ]
+
+    if not contract_ids:
+        return pd.DataFrame(
+            columns=result_columns
+        )
+
+    db.connect(reuse_if_open=True)
+
+    try:
+        versions = list(
+            ContractVersion
+            .select(
+                ContractVersion.id,
+                ContractVersion.contract,
+                ContractVersion.version,
+                ContractVersion.contract_price.alias(
+                    "first_version_price_raw"
+                ),
+            )
+            .where(
+                ContractVersion.contract.in_(contract_ids)
+            )
+            .dicts()
+        )
+    finally:
+        db.close()
+
+    if not versions:
+        return pd.DataFrame(
+            columns=result_columns
+        )
+
+    df = pd.DataFrame(versions)
+
+    parsed = df["version"].apply(
+        parse_version_label
+    )
+
+    df["version_num"] = parsed.apply(
+        lambda value: value[0]
+    )
+
+    df["version_date"] = parsed.apply(
+        lambda value: value[1]
+    )
+
+    # Версии с неизвестным номером отправляем
+    # после нормально распознанных версий.
+    df["version_num_sort"] = (
+        pd.to_numeric(
+            df["version_num"],
+            errors="coerce",
+        )
+        .fillna(10**9)
+    )
+
+    # Дата нужна как второй критерий.
+    # Если даты нет, ставим максимальную дату.
+    df["version_date_sort"] = pd.to_datetime(
+        df["version_date"],
+        errors="coerce",
+    ).fillna(pd.Timestamp.max)
+
+    df["first_version_price_raw"] = (
+        df["first_version_price_raw"]
+        .apply(clean_price_value)
+    )
+
+    # Сначала версия № 1, затем № 2, № 3 и т. д.
+    # При одинаковом номере используется дата,
+    # затем id записи.
+    df = df.sort_values(
+        [
+            "contract",
+            "version_num_sort",
+            "version_date_sort",
+            "id",
+        ],
+        ascending=True,
+    )
+
+    first_versions = (
+        df
+        .drop_duplicates(
+            subset=["contract"],
+            keep="first",
+        )
+        .rename(
+            columns={
+                "contract": "contract_id",
+                "version": "first_version_label",
+                "id": "first_version_id",
+            }
+        )
+    )
+
+    return first_versions[
+        result_columns
+    ].reset_index(drop=True)
 def extract_contract_items_new(json_data):
     data = _parse_json(json_data)
     if not isinstance(data, dict):
@@ -539,22 +690,31 @@ def load_versions_data() -> pd.DataFrame:
         .str.strip()
     )
 
-    print(f"✓ Загружено контрактов: {len(df)}")
+    # ВАЖНО:
+    # здесь НЕ нужно повторно делать df = pd.DataFrame(rows)
+
+    first_version_prices = load_first_version_prices(
+        df["contract_id"].tolist()
+    )
+
+    df = df.merge(
+        first_version_prices,
+        on="contract_id",
+        how="left",
+    )
+
+    print(f"✓ Строк после запроса: {len(df)}")
     print(
         f"✓ Уникальных contract_id: "
         f"{df['contract_id'].nunique()}"
     )
     print(
-        f"✓ Сумма ContractPrice: "
-        f"{df['contract_price_raw'].apply(clean_price_value).sum():,.2f}"
+        f"✓ Контрактов с ценой первой версии: "
+        f"{df['first_version_price_raw'].notna().sum()}"
     )
     print(
-        f"✓ Контрактов с версиями: "
-        f"{(df['version_count'] > 0).sum()}"
-    )
-    print(
-        f"✓ Контрактов без версий: "
-        f"{(df['version_count'] == 0).sum()}"
+        f"✓ Контрактов без цены первой версии: "
+        f"{df['first_version_price_raw'].isna().sum()}"
     )
 
     return df
@@ -720,18 +880,19 @@ def load_process_info() -> pd.DataFrame:
 def prepare_df(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
-    # Числовые поля. Оставляем NaN, не заменяем их строкой.
-    df["contract_price"] = (
-        df["contract_price_raw"]
-        .apply(clean_price_value)
-    )
-
-    df["initial_price"] = (
+    # Цена закупки / НМЦК.
+    df["purchase_price"] = (
         pd.to_numeric(
             df["initial_price"],
             errors="coerce",
         )
         .replace(0.0, float("nan"))
+    )
+
+    # Цена контракта первой версии.
+    df["first_version_price"] = (
+        df["first_version_price_raw"]
+        .apply(clean_price_value)
     )
 
     df["published_dt"] = pd.to_datetime(
@@ -742,7 +903,6 @@ def prepare_df(df: pd.DataFrame) -> pd.DataFrame:
 
     df["year"] = df["published_dt"].dt.year
 
-    # Текстовые поля только для отображения.
     df["law"] = (
         df["law"]
         .fillna("")
@@ -756,12 +916,7 @@ def prepare_df(df: pd.DataFrame) -> pd.DataFrame:
         .fillna("")
         .astype(str)
         .str.strip()
-        .replace("", "Нет данных")
     )
-
-    # Если version_count отсутствует, считаем, что версии не найдены.
-    if "version_count" not in df.columns:
-        df["version_count"] = 0
 
     df["version_count"] = (
         pd.to_numeric(
@@ -772,37 +927,56 @@ def prepare_df(df: pd.DataFrame) -> pd.DataFrame:
         .astype(int)
     )
 
-    # Расчёты выполняются только там, где обе цены есть.
+    # Главная формула:
+    # цена закупки - цена контракта первой версии.
     df["delta"] = (
-        df["contract_price"] - df["initial_price"]
+        df["purchase_price"]
+        - df["first_version_price"]
     )
 
+    # Процент относительно цены закупки.
     df["delta_pct"] = (
         df["delta"]
-        .div(df["initial_price"])
+        .div(df["purchase_price"])
         .mul(100)
         .round(2)
     )
 
-    # Текстовые статусы для вывода.
-    df["contract_price_display"] = (
-        df["contract_price"]
-        .apply(lambda x: fmt(x) if pd.notna(x) else "Нет данных")
+    # Поля для отображения.
+    df["purchase_price_display"] = (
+        df["purchase_price"]
+        .apply(
+            lambda x: fmt(x)
+            if pd.notna(x)
+            else "Нет данных"
+        )
     )
 
-    df["initial_price_display"] = (
-        df["initial_price"]
-        .apply(lambda x: fmt(x) if pd.notna(x) else "Нет данных")
+    df["first_version_price_display"] = (
+        df["first_version_price"]
+        .apply(
+            lambda x: fmt(x)
+            if pd.notna(x)
+            else "Нет данных"
+        )
     )
 
     df["delta_display"] = (
         df["delta"]
-        .apply(lambda x: fmt(x) if pd.notna(x) else "Нет данных")
+        .apply(
+            lambda x: fmt(x)
+            if pd.notna(x)
+            else "Нет данных"
+        )
     )
 
     df["delta_pct_display"] = (
         df["delta_pct"]
-        .apply(lambda x: f"{x:.1f}%" if pd.notna(x) else "Нет данных")
+        .apply(
+            lambda x: f"{x:.1f}%"
+            if pd.notna(x)
+            else "Нет данных"
+        )
     )
 
     return df
@@ -863,75 +1037,121 @@ def diagnose_json_structure():
                                 print(f"      label={f.get('label')!r} value={f.get('value')!r}")
 
 def analyze_price_vs_nmck(df: pd.DataFrame):
-    print(f"\n{'=' * 130}")
-    print("ТАБЛИЦА 1. Сравнение цены контракта с НМЦК")
-    print(f"{'=' * 130}")
+    print(f"\n{'=' * 140}")
+    print(
+        "ТАБЛИЦА 1. Цена закупки в валюте "
+        "vs цена контракта первой версии"
+    )
+    print(f"{'=' * 140}")
 
-    # Все контракты, включая контракты без цен.
     df_all = (
         df
-        .drop_duplicates(subset=["contract_id"])
+        .drop_duplicates(
+            subset=["contract_id"]
+        )
         .copy()
     )
 
-    # Только контракты, по которым можно вычислить дельту.
+    # Для расчёта нужны цена закупки
+    # и цена первой версии.
     df_calc = df_all[
-        df_all["contract_price"].notna()
-        & df_all["initial_price"].notna()
-        ].copy()
+        df_all["purchase_price"].notna()
+        & df_all["first_version_price"].notna()
+        & (df_all["purchase_price"] != 0)
+    ].copy()
 
     total_all = len(df_all)
     total_calc = len(df_calc)
     total_no_data = total_all - total_calc
 
-    print(f"\n  Всего контрактов           : {total_all}")
-    print(f"  С данными для сравнения    : {total_calc}")
-    print(f"  Без данных для сравнения   : {total_no_data}")
+    print(
+        f"\n  Всего контрактов              : "
+        f"{total_all}"
+    )
+    print(
+        f"  С данными для сравнения       : "
+        f"{total_calc}"
+    )
+    print(
+        f"  Без данных для сравнения      : "
+        f"{total_no_data}"
+    )
 
     if not df_calc.empty:
-        inc = (df_calc["delta"] > 0).sum()
-        dec = (df_calc["delta"] < 0).sum()
-        unch = (df_calc["delta"] == 0).sum()
+        # delta > 0:
+        # закупочная цена больше цены первой версии.
+        economy = (
+            df_calc["delta"] > 0
+        ).sum()
+
+        # delta < 0:
+        # цена первой версии выше цены закупки.
+        overpayment = (
+            df_calc["delta"] < 0
+        ).sum()
+
+        equal = (
+            df_calc["delta"] == 0
+        ).sum()
 
         print(
-            f"  Цена контракта > НМЦК      : "
-            f"{inc} ({inc / total_calc * 100:.1f}%)"
+            f"\n  Цена первой версии ниже закупки : "
+            f"{economy} "
+            f"({economy / total_calc * 100:.1f}%)"
         )
         print(
-            f"  Цена контракта < НМЦК      : "
-            f"{dec} ({dec / total_calc * 100:.1f}%)"
+            f"  Цена первой версии выше закупки : "
+            f"{overpayment} "
+            f"({overpayment / total_calc * 100:.1f}%)"
         )
         print(
-            f"  Цена контракта == НМЦК     : "
-            f"{unch} ({unch / total_calc * 100:.1f}%)"
+            f"  Цены равны                       : "
+            f"{equal} "
+            f"({equal / total_calc * 100:.1f}%)"
         )
+
         print(
-            f"  Средняя дельта, %          : "
+            f"  Средняя дельта, %                : "
             f"{df_calc['delta_pct'].mean():.2f}%"
         )
 
-    # В таблицу подробностей выводим все контракты.
+        print(
+            f"  Суммарная экономия               : "
+            f"{fmt(df_calc.loc[
+                df_calc['delta'] > 0,
+                'delta'
+            ].sum())} руб."
+        )
+
+        print(
+            f"  Суммарный перерасход             : "
+            f"{fmt(abs(df_calc.loc[
+                df_calc['delta'] < 0,
+                'delta'
+            ].sum()))} руб."
+        )
+
     print(
         f"\n{'Реестровый номер':<28} "
         f"{'Закон':<10} "
         f"{'Версий':>7} "
-        f"{'НМЦК':>20} "
-        f"{'Цена контракта':>20} "
+        f"{'Цена закупки':>20} "
+        f"{'Цена первой версии':>24} "
         f"{'Δ руб.':>20} "
         f"{'Δ %':>10}"
     )
-    print("-" * 130)
+    print("-" * 140)
 
     for _, row in df_all.iterrows():
-        initial_price = (
-            fmt(row["initial_price"])
-            if pd.notna(row["initial_price"])
+        purchase_price = (
+            fmt(row["purchase_price"])
+            if pd.notna(row["purchase_price"])
             else "Нет данных"
         )
 
-        contract_price = (
-            fmt(row["contract_price"])
-            if pd.notna(row["contract_price"])
+        first_version_price = (
+            fmt(row["first_version_price"])
+            if pd.notna(row["first_version_price"])
             else "Нет данных"
         )
 
@@ -951,15 +1171,31 @@ def analyze_price_vs_nmck(df: pd.DataFrame):
             f"{str(row['reg_number']):<28} "
             f"{str(row['law']):<10} "
             f"{int(row['version_count']):>7} "
-            f"{initial_price:>20} "
-            f"{contract_price:>20} "
+            f"{purchase_price:>20} "
+            f"{first_version_price:>24} "
             f"{delta:>20} "
             f"{delta_pct:>10}"
         )
 
-    print("-" * 130)
+    print("-" * 140)
 
-    # Возвращаем все 56 контрактов.
+    no_data = df_all[
+        df_all["purchase_price"].isna()
+        | df_all["first_version_price"].isna()
+    ]
+
+    if not no_data.empty:
+        print("\nКонтракты без данных для сравнения:")
+
+        for _, row in no_data.iterrows():
+            print(
+                f"  {row['reg_number']} | "
+                f"закупка: "
+                f"{row['purchase_price_display']} | "
+                f"первая версия: "
+                f"{row['first_version_price_display']}"
+            )
+
     return df_all
 
 def analyze_by_law(df_v: pd.DataFrame):
@@ -974,9 +1210,10 @@ def analyze_by_law(df_v: pd.DataFrame):
     )
 
     df_calc = df_v[
-        df_v["contract_price"].notna()
-        & df_v["initial_price"].notna()
-    ].copy()
+        df_v["purchase_price"].notna()
+        & df_v["first_version_price"].notna()
+        & (df_v["purchase_price"] != 0)
+        ].copy()
 
     for law in LAWS:
         sub_all = df_v[
@@ -1038,16 +1275,19 @@ def analyze_by_law(df_v: pd.DataFrame):
     # а не только те, где рассчитана дельта.
     df_pivot = df_v.copy()
     df_pivot["_dummy_group"] = "Все контракты"
-    df_pivot["contract_price"] = df_pivot["contract_price"].fillna(0)
+    df_pivot["purchase_price"] = (
+        df_pivot["purchase_price"]
+        .fillna(0)
+    )
 
     p_cnt, p_sum = build_count_sum_pivots(
         df_pivot,
         "_dummy_group",
-        "contract_price",
+        "purchase_price",
     )
 
     print_count_sum_table(
-        "ТАБЛИЦА 2а. Все контракты: количество и сумма по законам",
+        "ТАБЛИЦА 2а. Цена закупки по законам",
         p_cnt,
         p_sum,
         row_label_width=30,
@@ -1671,8 +1911,8 @@ if __name__ == "__main__":
             analyze_by_year(df_v)
         analyze_version_counts(df)
 
-    analyze_payment_targets()
-    analyze_process_info()
-    df_duration = load_contract_duration()
-    if not df_duration.empty:
-        analyze_contract_duration(df_duration)
+    # analyze_payment_targets()
+    # analyze_process_info()
+    # df_duration = load_contract_duration()
+    # if not df_duration.empty:
+    #     analyze_contract_duration(df_duration)

@@ -511,8 +511,8 @@ def get_json_field(instance, field_name: str) -> dict | list | None:
 def set_json_field(instance, field_name: str, value: dict | list):
     setattr(instance, field_name, json.dumps(value, ensure_ascii=False))
 
-
-if __name__ == '__main__':
-    init_db()
-    print("База данных успешно инициализирована.")
-    print(f"Таблицы: {[m._meta.table_name for m in ALL_MODELS]}")
+#
+# if __name__ == '__main__':
+#     init_db()
+#     print("База данных успешно инициализирована.")
+#     print(f"Таблицы: {[m._meta.table_name for m in ALL_MODELS]}")

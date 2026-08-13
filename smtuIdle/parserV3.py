@@ -599,32 +599,20 @@ def export_to_excel_contract(data, output_excel_path, filters):
         filter_df.fillna('', inplace=True)
         filter_df.rename(columns=filter_column_translation, inplace=True)
 
+        # Собираем порядок полей и подписи прямо из модели Contract
+        field_translation = {
+            name: (field.verbose_name or name)
+            for name, field in Contract._meta.fields.items()
+        }
+
         rows = []
         for t in data:
-            rows.append({
-                "Номер закупки":                                t.get("purchase_id", ''),
-                "Реестровый номер контракта":                   t.get("RegistryNumber", ''),
-                "№ договора":                                   t.get("ContractNumber", ''),
-                "Дата начала / подписания":                     t.get("StartDate", ''),
-                "Дата окончания / исполнения":                  t.get("EndDate", ''),
-                "Цена договора, руб.":                          t.get("ContractPrice", ''),
-                "Заказчик по контракту":                        t.get("ContractingAuthority", ''),
-                "Победитель-исполнитель контракта":             t.get("WinnerExecutor", ''),
-                "Общее кол-во заявок":                          t.get("TotalApplications", ''),
-                "Допущенных заявок":                            t.get("AdmittedApplications", ''),
-                "Отклонённых заявок":                           t.get("RejectedApplications", ''),
-                "Ценовое предложение":                          t.get("PriceProposal", ''),
-                "Заявитель":                                    t.get("Applicant", ''),
-                "Статус заявителя":                             t.get("Applicant_satatus", ''),
-                "Идентификатор договора":                       t.get("ContractIdentifier", ''),
-                "Размер авансирования, руб. (%)":               t.get("AdvancePayment", ''),
-                "Снижение НМЦК, руб.":                          t.get("ReductionNMC", ''),
-                "Снижение НМЦК, %":                             t.get("ReductionNMCPercent", ''),
-                "Протоколы определения поставщика (выписка)":   t.get("SupplierProtocol", ''),
-                "Договор":                                      t.get("ContractFile", ''),
-            })
+            row = {}
+            for field_name, verbose_name in field_translation.items():
+                row[verbose_name] = t.get(field_name, '')
+            rows.append(row)
 
-        data_df = pd.DataFrame(rows)
+        data_df = pd.DataFrame(rows, columns=list(field_translation.values()))
         data_df.fillna('', inplace=True)
 
         with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:

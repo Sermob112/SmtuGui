@@ -10570,3 +10570,14 @@
 /.idea/vcs.xml
 /Отладка 2 финал.csv
 /тест НМЦК (итог).csv
+# Виртуальное окружение Python
+parservVne/Lib/
+
+# Результаты сборки
+smtuIdle/build/
+
+# Локальные базы данных
+*.db
+
+# Загруженные CSV/XLSX-файлы
+CSV/sources/

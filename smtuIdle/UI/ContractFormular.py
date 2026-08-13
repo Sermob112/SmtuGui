@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, Signal, QUrl
 from PySide6.QtGui import QColor, QFont, QDesktopServices
+from openpyxl.utils import get_column_letter
+import json as json_lib
 
 # ВАЖНО: Убедитесь, что вы импортировали модель Contract из вашего файла моделей
 from smtuIdle.BD.models import Contract, SupplierContract
@@ -530,30 +532,163 @@ class ContractWidget(QWidget):
                 elif 'download' in filepath:
                     url_for = item.text(1)
                     QDesktopServices.openUrl(QUrl(url_for))
+
     def export_to_excel(self):
+        if not hasattr(self, 'current_contract') or self.current_contract is None:
+            QMessageBox.warning(self, "Ошибка", "Нет текущего контракта для экспорта")
+            return
+
+        c = self.current_contract
+
         wb = Workbook()
         ws = wb.active
+        ws.title = "Общие сведения"
 
-        root = self.tree.invisibleRootItem()
-        for i in range(root.childCount()):
-            parent_item = root.child(i)
-            ws.append([parent_item.text(0)])
+        # Заголовки для транспонированной таблицы
+        ws.append(["Параметр", "Значение"])
 
-            for j in range(parent_item.childCount()):
-                child_item = parent_item.child(j)
-                ws.append([child_item.text(0), child_item.text(1)])
+        # --- 1. Все скалярные поля модели Contract (транспонировано) ---
+        for field in Contract._meta.fields.values():
+            name = field.name
+            verbose = field.verbose_name or name
+            value = getattr(c, name, None)
 
+            # JSON‑поля откладываем на отдельный лист
+            if name.endswith('_json'):
+                continue
+
+            if value is None:
+                value_str = "Нет данных"
+            elif isinstance(value, (int, float)):
+                value_str = value
+            else:
+                value_str = str(value)
+
+            ws.append([verbose, value_str])
+
+        # Автоширина колонок
+        ws.column_dimensions["A"].width = 40
+        ws.column_dimensions["B"].width = 80
+
+        # --- 2. JSON‑поля (отдельный лист) ---
+        json_fields = [
+            ("common_info_json", "Общая информация"),
+            ("payment_targets_json", "Платежи и объекты закупки"),
+            ("process_info_json", "Исполнение (расторжение)"),
+            ("documents_json", "Вложения"),
+            ("journal_versions_json", "Журнал версий"),
+            ("event_log_json", "Журнал событий"),
+        ]
+
+        if any(getattr(c, fname, None) for fname, _ in json_fields):
+            ws_json = wb.create_sheet("JSON данные")
+            ws_json.append(["Поле", "Значение (JSON)"])
+
+            for fname, label in json_fields:
+                raw = getattr(c, fname, None)
+                if raw and str(raw).strip() not in ("", "None", "-", "[]", "{}"):
+                    try:
+                        parsed = json_lib.loads(raw)
+                        value_str = json_lib.dumps(parsed, ensure_ascii=False, indent=2)
+                    except json_lib.JSONDecodeError:
+                        value_str = str(raw)
+                else:
+                    value_str = "Нет данных"
+
+                ws_json.append([label, value_str])
+
+            ws_json.column_dimensions["A"].width = 35
+            ws_json.column_dimensions["B"].width = 80
+
+        # --- 3. Поставщики (Supplier через SupplierContract) ---
+        suppliers = (
+            Supplier
+            .select()
+            .join(SupplierContract)
+            .where(SupplierContract.contract == c)
+        )
+        if suppliers.exists():
+            ws_sup = wb.create_sheet("Поставщики")
+            ws_sup.append(["ID", "Организация", "ИНН", "КПП", "Страна", "Адрес", "Телефон", "Email", "Статус"])
+
+            for sup in suppliers:
+                ws_sup.append([
+                    sup.id,
+                    sup.organization or "",
+                    sup.inn or "",
+                    sup.kpp or "",
+                    sup.country or "",
+                    sup.address or "",
+                    sup.phone or "",
+                    sup.mail or "",
+                    sup.status or "",
+                ])
+
+            for col_idx in range(1, 10):
+                ws_sup.column_dimensions[get_column_letter(col_idx)].width = 20
+
+        # --- 4. Суда (Vessel) ---
+        vessels = Vessel.select().where(Vessel.contract == c)
+        if vessels.exists():
+            ws_ves = wb.create_sheet("Суда")
+            ws_ves.append([
+                "ID", "Проект судна", "Тип (РМРС)", "Класс", "Год постройки",
+                "Страна постройки", "Верфь", "Дедвейт", "Реестр. номер закупки"
+            ])
+
+            for ves in vessels:
+                ws_ves.append([
+                    ves.id,
+                    ves.ship_project or "",
+                    ves.ship_type_rmrs or "",
+                    ves.ship_class or "",
+                    ves.year_built or "",
+                    ves.country_built or "",
+                    ves.shipyard_name or "",
+                    ves.deadweight or "",
+                    ves.registry_number or "",
+                ])
+
+            for col_idx in range(1, 10):
+                ws_ves.column_dimensions[get_column_letter(col_idx)].width = 20
+
+        # --- 5. Версии контракта (ContractVersion) ---
+        versions = (
+            ContractVersion
+            .select()
+            .where(ContractVersion.contract == c)
+            .order_by(ContractVersion.version.desc())
+        )
+        if versions.exists():
+            ws_ver = wb.create_sheet("Версии контракта")
+            ws_ver.append(["ID", "Версия", "Дата обновления в реестре"])
+
+            for ver in versions:
+                ws_ver.append([
+                    ver.id,
+                    ver.version or "",
+                    ver.date_updated_in_registry or "",
+                ])
+
+            for col_idx in range(1, 4):
+                ws_ver.column_dimensions[get_column_letter(col_idx)].width = 25
+
+        # --- 6. Сохранение файла ---
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
 
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
-            if selected_file and hasattr(self, 'current_contract'):
-                safe_name = str(self.current_contract.ContractNumber) if self.current_contract.ContractNumber else str(
-                    self.current_contract.Id)
-                # Очищаем спецсимволы, чтобы Excel не ругался на имя файла
-                safe_name = "".join(x for x in safe_name if x.isalnum() or x in "._- ")
+            if selected_file:
+                # Формируем имя файла: "Контракт № ....xlsx"
+                if c.ContractNumber:
+                    safe_name = str(c.ContractNumber)
+                else:
+                    safe_name = str(c.Id)
 
-                save_path = f"{selected_file}/Contract_{safe_name}.xlsx"
+                # Очищаем спецсимволы, чтобы ОС не ругалась на имя файла
+                safe_name = "".join(ch for ch in safe_name if ch.isalnum() or ch in "._- ")
+
+                save_path = f"{selected_file}/Контракт № {safe_name}.xlsx"
                 wb.save(save_path)
                 QMessageBox.information(self, "Успех", f"Данные успешно выгружены в {save_path}")

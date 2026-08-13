@@ -83,24 +83,21 @@ class StatisticWidgetContract(QWidget):
         self.Update = QPushButton("Обновить", self)
         self.Reset_filters = QPushButton("Сбросить фильтры", self)
         # btn_analysis = QPushButton("Анализ", self)
-        self.query = self.all_purchase.return_filtered_contracts()
-        # btn_back.clicked.connect(self.show_previous_data)
-        # btn_forward.clicked.connect(self.show_next_data)
+        # self.query = self.all_purchase.return_filtered_contracts()
+
+        self.current_data_index = 0
+        self.all_data = []
+
+        # --- 2. Подписываем сигналы ---
         self.toExcel.clicked.connect(self.export_to_excel_clicked)
         self.Update.clicked.connect(self.update_data)
         self.Reset_filters.clicked.connect(self.reset_filters)
-        # Инициализация переменной для отслеживания текущего индекса данных
-        self.current_data_index = 0
-    
 
+        # --- 3. Теперь безопасно вызываем update_data ---
+        self.update_data()
 
         self.table.horizontalHeader().setStretchLastSection(True)
-        # Установите политику изменения размеров колонок содержимого
         self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        # self.table.horizontalHeader().setStretchLastSection(True)
-
-        # self.table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
-        
           # Список для хранения всех данных, которые  отобразить в таблице
         self.all_data = [self.winner_analis(), self.count_non_zero_contract_prices()
                          ,self.count_non_zero_contract_num(),self.analisNMCKReduce()
@@ -193,14 +190,8 @@ class StatisticWidgetContract(QWidget):
         self.menu_frame_3.setLayout(QVBoxLayout())
         self.menu_frame_3.layout().addWidget(self.menu_content_3)
         self.menu_frame_3.setVisible(False)
-
-        
         self.buttons_layout = QVBoxLayout()
-
-
-
         main_layout = QHBoxLayout(self)
-
         self.buttons_layout.addWidget(self.FirstStage)
         self.buttons_layout.addWidget(self.menu_frame)
         self.buttons_layout.addWidget(self.ThirdStage)
@@ -235,10 +226,6 @@ class StatisticWidgetContract(QWidget):
 
  #  вертикальный слой для кнопок внизу
         button_layout = QVBoxLayout(self)
-        # button_layout.addWidget(btn_back)
-        # button_layout.addWidget(btn_forward)
-
-        #  вертикальный слой для кнопок внизу справа
         button_layout2_H = QHBoxLayout(self)
         button_layout2 = QVBoxLayout(self)
        
@@ -257,9 +244,7 @@ class StatisticWidgetContract(QWidget):
         self.highlight_first_button()
 
         self.setLayout(main_layout)
-        # self.analisQueryCount()
-        # self.analisPriceCount()
-        # self.analyze_price_count()
+
         if self.role == "Гость":
             self.toExcel.hide()
         else:
@@ -318,22 +303,29 @@ class StatisticWidgetContract(QWidget):
         if self.menu_frame_3.isVisible():
             self.ThirdStage.setIcon(QIcon("Pics/arrow-down.png"))
         else:
-            self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png")) 
+            self.ThirdStage.setIcon(QIcon("Pics/right-arrow.png"))
+
     def update_data(self):
-        self.all_data = [self.winner_analis(), self.count_non_zero_contract_prices()
-                         ,self.count_non_zero_contract_num(),self.analisNMCKReduce()
-                         ,self.analyze_price_count(), self.analisMAxPrice(),self.analisCoeffVar()]
+        self.query = self.all_purchase.return_filtered_contracts()  # теперь это contracts_list
+        self.all_data = [
+            self.winner_analis(),
+            self.count_non_zero_contract_prices(),
+            self.count_non_zero_contract_num(),
+            self.analisNMCKReduce(),
+            self.analyze_price_count(),
+            self.analisMAxPrice(),
+            self.analisCoeffVar()
+        ]
         self.show_current_data()
-        self.query = self.all_purchase.return_filtered_contracts()
-        sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2= self.all_purchase.return_filters_variabels()
-        self.filter_layout.addWidget(self.label_filter_data)
-        self.filter_layout.addWidget(self.label_filter_order)
-        self.filter_layout.addWidget(self.label_filter_price)
-        self.filter_layout.addWidget(self.label_filter_okpd2)
+
+        sort_by_putch_order, min_date, max_date, min_price, max_price, okpd2 = (
+            self.all_purchase.return_filters_variabels()
+        )
+
         self.label_filter_data.setText(f"Фильтр по дате: с {min_date} по {max_date}")
-        self.label_filter_order.setText(f"Фильтр по закону:{sort_by_putch_order}")
-        self.label_filter_price.setText(f"Фильтр по цене:{min_price} - {max_price}")
-        self.label_filter_okpd2.setText(f"Фильтр по ОКПД2:{okpd2}")
+        self.label_filter_order.setText(f"Фильтр по закону: {sort_by_putch_order}")
+        self.label_filter_price.setText(f"Фильтр по цене: {min_price} - {max_price}")
+        self.label_filter_okpd2.setText(f"Фильтр по ОКПД2: {okpd2}")
 
     def analyze_price_count(self):
         coeff_range_order = [
@@ -424,9 +416,6 @@ class StatisticWidgetContract(QWidget):
     def reset_filters(self):
         self.all_purchase.resetFilters()
         self.update_data()
-
-      
-      
     def winner_analis(self):
    
         #Статистический анализ методов, использованных для определения НМЦК и ЦКЕП
@@ -484,11 +473,7 @@ class StatisticWidgetContract(QWidget):
         # Создаем DataFrame для суммы
         column_sums_df = pd.DataFrame({'Единицы': [column_sums]})
         column_sums_df.index = ['Итого']
-        # print(column_sums)
         return pivot_table, column_sums_df
-
-
-
 
     def analisMAxPrice(self):
         purchases = self.query
@@ -516,10 +501,6 @@ class StatisticWidgetContract(QWidget):
         column_means2 = pivot_table.mean()
         total_purchase_counts2 = column_sums2.sum()
         column_sums2['Суммы'] = total_purchase_counts2
-     
-        # Определите порядок категорий
-       
-
         return pivot_table, column_sums2 
     def analisCoeffVar(self):
         purchases = self.query
@@ -661,13 +642,11 @@ class StatisticWidgetContract(QWidget):
         self.table.insertRow(row_position)
         self.table.setItem(row_position, 0, QTableWidgetItem('Суммы'))
         first_column_name = data.index.name
-        # print("First column name:", first_column_name)
         for col_index, key in enumerate(sums.keys()):
             value = sums[key]
             self.table.setItem(row_position, col_index + 1, QTableWidgetItem(str(value)))
 
     def populate_table(self, data, sums):
-
         # Получаем список всех уникальных законов
         all_purchase_orders = set(data.columns)
 
@@ -750,17 +729,13 @@ class StatisticWidgetContract(QWidget):
             return 'Цена контракта 200 000 - 500 000 тыс.руб.'
         elif 100000 <= qyt <= 200000:
             return 'Цена контракта 100 000 - 200 000 тыс.руб.'
-        # elif 100000 <= row['InitialMaxContractPrice']:
-        #     return 'Менее 100 тыс.руб'
+
         else:
             return 'Менее 100 тыс.руб'
         
     def show_current_data(self):
         # Очистка таблицы перед обновлением
         self.clear_table()
-        # self.plot_graph()
-        # self.plot_pie()
-        # Получение текущих данных
         current_data = self.all_data[self.current_data_index]
         # Отображение данных в таблице
         if self.current_data_index < 3:
@@ -810,8 +785,6 @@ class StatisticWidgetContract(QWidget):
             filters.append(" " + str(min_price))
         if max_price:
             filters.append(str(max_price))
-        
-       
         file_name = f"Данные статистики по Фильтрам контракта {' '.join(filters)}.xlsx"
         self.save_to_excel_combined(
         [pivot_tables_purchase1, pivot_tables_purchase2, pivot_tables_purchase3],
@@ -825,10 +798,8 @@ class StatisticWidgetContract(QWidget):
     # Проверка, что индекс находится в пределах допустимых значений
         for btn in self.buttons:
             btn.setStyleSheet("text-align: left;")
-
         # Подсвечиваем только нажатую кнопку
         button.setStyleSheet("text-align: left; background-color: lightGreen;")
-
         # Обновляем текущую активную кнопку
         self.active_button = button
         if 0 <= index < len(self.label_texts):
@@ -841,11 +812,3 @@ class StatisticWidgetContract(QWidget):
         if self.buttons:
             first_button = self.buttons[0]
             self.show_specific_data(0, first_button)
-# if __name__ == "__main__":
-#     from PySide6.QtWidgets import QApplication
-#     import sys
-
-#     app = QApplication(sys.argv)
-#     window = StatisticWidget()
-#     window.show()
-#     sys.exit(app.exec())

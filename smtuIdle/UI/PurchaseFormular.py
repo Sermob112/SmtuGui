@@ -1,5 +1,9 @@
+import sys
 from pathlib import Path
-
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
+import json as json_lib
+from pathlib import Path
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
 from smtuIdle.BD.models import Purchase, Contract, FinalDetermination
@@ -15,7 +19,6 @@ from smtuIdle.parserV3 import delete_records_by_id
 from PySide6.QtWidgets import QSizePolicy
 import os
 import subprocess
-from openpyxl import Workbook
 from PySide6.QtCore import Signal
 from smtuIdle.BD.models import Purchase, Contract, FinalDetermination, Customer, Vessel
 from  locale import format_string,setlocale,LC_ALL
@@ -23,6 +26,17 @@ setlocale(LC_ALL, 'ru_RU.UTF-8')
 
 db = SqliteDatabase('database.db')
 cursor = db.cursor()
+
+
+def get_base_dir() -> Path:
+    if getattr(sys, 'frozen', False):
+        return Path(sys.executable).parent
+    else:
+        return Path(__file__).resolve().parent.parent.parent
+
+
+BASE_DIR = get_base_dir()
+FILES_DIR = BASE_DIR / "db_files"
 class PurchasesWidget(QWidget):
     closingSignal = Signal()
     def __init__(self,main_window,role, user, changer):
@@ -730,38 +744,25 @@ class PurchasesWidget(QWidget):
                     self.main_win.navigate_to_page(13)
                 return
 
-            # ── ОТКРЫТИЕ ФАЙЛА ПО ОТНОСИТЕЛЬНОМУ ПУТИ (file_4) ───────────────
+            # ── ОТКРЫТИЕ ФАЙЛА ПО ОТНОСИТЕЛЬНОМУ ПУТИ (из db_files) ─────────
             if url_or_cmd and isinstance(url_or_cmd, str) and not url_or_cmd.startswith(
                     ("http", "zakupki", "download")):
 
-                # ── ОТЛАДКА ─────────────────────────────────────────────────────────
-                print("=" * 60)
-                print(f"📦 url_or_cmd (из Qt.UserRole): {url_or_cmd}")
-                print(f"📦 db.database: {db.database}")
-                # ────────────────────────────────────────────────────────────────────
+                # url_or_cmd может быть вида "db_files\№ 0129....docx"
+                # Нормализуем слеши
+                rel_path = url_or_cmd.replace("/", "\\")
 
-                # Находим корень программы через путь к текущему скрипту
-                # Этот файл лежит в smtuIdle/ → корень программы: parent
-                current_file = Path(__file__).resolve()  # .../smtuIdle/ваш_файл.py
-                base_dir = current_file.parent.parent.parent  # .../SmtuGui
+                # Если путь уже начинается с db_files, убираем дублирование
+                if rel_path.lower().startswith("db_files"):
+                    rel_path = rel_path[len("db_files"):].lstrip("\\/")
 
-                full_path = base_dir / url_or_cmd
+                full_path = FILES_DIR / rel_path
 
-                # ── ОТЛАДКА ─────────────────────────────────────────────────────────
-                print(f"📦 current_file: {current_file}")
-                print(f"📦 base_dir: {base_dir}")
-                print(f"📦 full_path: {full_path}")
-                print(f"📦 full_path.exists(): {full_path.exists()}")
-                print(f"📦 full_path.is_file(): {full_path.is_file()}")
-                print("=" * 60)
-                # ────────────────────────────────────────────────────────────────────
-
-                if full_path.exists() and full_path.is_file():
-                    filepath = str(full_path)
-                else:
-                    # Файл не найден — покажем ошибку
+                if not (full_path.exists() and full_path.is_file()):
                     QMessageBox.warning(self, "Файл не найден", f"Не найден файл:\n{full_path}")
                     return
+
+                filepath = str(full_path)
 
             # ── ОТКРЫТИЕ ФАЙЛА / ССЫЛКИ ──────────────────────────────────────
             if filepath and os.path.isfile(filepath):
@@ -805,27 +806,169 @@ class PurchasesWidget(QWidget):
         warning = QMessageBox.warning(self, title, text, QMessageBox.Ok)
 
     def show_current_purchase_to_excel(self):
+        if not hasattr(self, 'current_purchase') or self.current_purchase is None:
+            QMessageBox.warning(self, "Ошибка", "Нет текущей закупки для экспорта")
+            return
+
+        p = self.current_purchase
+
         wb = Workbook()
         ws = wb.active
+        ws.title = "Общие сведения"
 
-        root = self.tree.invisibleRootItem()
-        # Проходим по всем группам
-        for i in range(root.childCount()):
-            parent_item = root.child(i)
-            ws.append([parent_item.text(0)])  # Имя группы
+        ws.append(["Параметр", "Значение"])
 
-            # Проходим по строкам внутри группы
-            for j in range(parent_item.childCount()):
-                child_item = parent_item.child(j)
-                ws.append([child_item.text(0), child_item.text(1)])
+        def add_row(label, value):
+            if value is None or str(value).strip() in ("", "None", "-"):
+                ws.append([label, "Нет данных"])
+            else:
+                ws.append([label, value])
 
-            file_dialog = QFileDialog(self)
-            file_dialog.setFileMode(QFileDialog.Directory)
-            self.purchases = Purchase.select()
-            if file_dialog.exec_():
-                selected_file = file_dialog.selectedFiles()[0]
-                selected_file = selected_file if selected_file else None
-                if selected_file:
-                    wb.save(f'{selected_file}\формуляр закупки {self.current_purchase.RegistryNumber}.xlsx')
-                    QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
-       
+        fields = [
+            ("ID в БД", p.Id),
+            ("Закон", p.PurchaseOrder),
+            ("Реестровый номер", p.RegistryNumber),
+            ("Метод закупки", p.ProcurementMethod),
+            ("Наименование закупки", p.PurchaseName),
+            ("Предмет аукциона", p.AuctionSubject),
+            ("Код закупки", p.PurchaseIdentificationCode),
+            ("Номер лота", p.LotNumber),
+            ("Наименование лота", p.LotName),
+            ("НМЦК", p.InitialMaxContractPrice),
+            ("Валюта", p.Currency),
+            ("НМЦК в валюте", p.InitialMaxContractPriceInCurrency),
+            ("Кол-во единиц", p.quantity_units),
+            ("НМЦК на единицу", p.nmck_per_unit ),
+            ("Валюта контракта", p.ContractCurrency),
+            ("ОКДП", p.OKDPClassification),
+            ("ОКПД", p.OKPDClassification),
+            ("ОКПД2", p.OKPD2Classification),
+            ("Код позиции", p.PositionCode),
+            ("Наименование заказчика", p.CustomerName),
+            ("Организация закупки", p.ProcurementOrganization),
+            ("Дата размещения", p.PlacementDate),
+            ("Дата обновления", p.UpdateDate),
+            ("Этап закупки", p.ProcurementStage),
+            ("Особенности закупки", p.ProcurementFeatures),
+            ("Дата начала подачи заявок", p.ApplicationStartDate),
+            ("Дата окончания подачи заявок", p.ApplicationEndDate),
+            ("Дата аукциона", p.AuctionDate),
+            ("Ссылка на извещение", p.notification_link),
+            ("Файл НМЦК", p.nmck_file),
+            ("Протокол", p.protocol_file),
+            ("Число заявок", p.QueryCount),
+            ("Число ответов", p.ResponseCount),
+            ("Средняя цена", p.AveragePrice),
+            ("Минимальная цена", p.MinPrice),
+            ("Максимальная цена", p.MaxPrice),
+            ("Стандартное отклонение", p.StandardDeviation),
+            ("Коэффициент вариации", p.CoefficientOfVariation),
+            ("НМЦК market", p.NMCKMarket),
+            ("Лимит финансирования", p.FinancingLimit),
+        ]
+
+        for label, value in fields:
+            add_row(label, value)
+
+        ws.column_dimensions["A"].width = 40
+        ws.column_dimensions["B"].width = 90
+
+        # --- 2. JSON-поля ---
+        json_fields = [
+            ("TKPData", "ТКП данные"),
+            ("common_info_json", "Общая информация"),
+            ("documents_json", "Документы"),
+            ("event_log_json", "Журнал событий"),
+            ("supplier_result_json", "Результат поставщика"),
+            ("lots_json", "Лоты"),
+            ("protocols_json", "Протоколы"),
+            ("contracts_info_json", "Информация по контрактам"),
+            ("changes_json", "Изменения"),
+        ]
+
+        existing_json = [x for x in json_fields if hasattr(p, x[0])]
+        if existing_json:
+            ws_json = wb.create_sheet("JSON данные")
+            ws_json.append(["Поле", "Значение (JSON)"])
+
+            for fname, label in existing_json:
+                raw = getattr(p, fname, None)
+                if raw and str(raw).strip() not in ("", "None", "-", "[]", "{}"):
+                    try:
+                        parsed = json_lib.loads(raw)
+                        value_str = json_lib.dumps(parsed, ensure_ascii=False, indent=2)
+                    except Exception:
+                        value_str = str(raw)
+                else:
+                    value_str = "Нет данных"
+                ws_json.append([label, value_str])
+
+            ws_json.column_dimensions["A"].width = 35
+            ws_json.column_dimensions["B"].width = 100
+
+        # --- 3. Контракт ---
+        contract = (
+            Contract.select()
+            .where(Contract.purchase == p.Id)
+            .first()
+        )
+        if contract is None and p.RegistryNumber:
+            contract = (
+                Contract.select()
+                .where(Contract.RegistryNumber == p.RegistryNumber)
+                .first()
+            )
+
+        if contract:
+            ws_cont = wb.create_sheet("Контракт")
+            ws_cont.append(["Параметр", "Значение"])
+
+            contract_fields = [
+                ("ID в БД", contract.Id),
+                ("№ договора", contract.ContractNumber),
+                ("Реестровый номер", contract.RegistryNumber),
+                ("Идентификатор договора", contract.ContractIdentifier),
+                ("Заказчик по контракту", contract.ContractingAuthority),
+                ("Победитель-исполнитель", contract.WinnerExecutor),
+                ("Дата начала", contract.StartDate),
+                ("Дата окончания", contract.EndDate),
+                ("Цена договора", contract.ContractPrice),
+                ("Авансирование", contract.AdvancePayment),
+                ("Снижение НМЦК", contract.ReductionNMC),
+                ("Снижение НМЦК %", contract.ReductionNMCPercent),
+                ("Всего заявок", contract.TotalApplications),
+                ("Допущено", contract.AdmittedApplications),
+                ("Отклонено", contract.RejectedApplications),
+                ("Ценовое предложение", contract.PriceProposal),
+                ("Заявитель", contract.Applicant),
+                ("Статус заявителя", contract.Applicant_satatus),
+                ("Протокол поставщика", contract.SupplierProtocol),
+                ("Файл договора", contract.ContractFile),
+            ]
+
+            for label, value in contract_fields:
+                if value is None or str(value).strip() in ("", "None", "-"):
+                    ws_cont.append([label, "Нет данных"])
+                else:
+                    ws_cont.append([label, value])
+
+            ws_cont.column_dimensions["A"].width = 40
+            ws_cont.column_dimensions["B"].width = 90
+
+        # --- 4. Сохранение ---
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(QFileDialog.Directory)
+
+        if file_dialog.exec_():
+            selected_file = file_dialog.selectedFiles()[0]
+            if selected_file:
+                if p.RegistryNumber:
+                    safe_name = str(p.RegistryNumber)
+                else:
+                    safe_name = str(p.Id)
+
+                safe_name = "".join(ch for ch in safe_name if ch.isalnum() or ch in "._- ")
+                save_path = f"{selected_file}/Формуляр закупки № {safe_name}.xlsx"
+
+                wb.save(save_path)
+                QMessageBox.information(self, "Успех", f"Файл успешно сохранен: {save_path}")

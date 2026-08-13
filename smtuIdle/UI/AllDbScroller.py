@@ -701,10 +701,14 @@ class PurchasesWidgetAll(QWidget):
 
         # Поиск
         self.search_customer = QLineEdit()
-        self.search_customer.setPlaceholderText("Поиск по наименованию, ИНН, региону")
+        self.search_customer.setPlaceholderText("Поиск по наименованию, ИНН, закону")
         self.search_customer.setFixedWidth(400)
-        self.search_customer.textChanged.connect(self.apply_filter_customer)
 
+        completer = QCompleter(self.findUnicCustomer())
+        completer.setFilterMode(Qt.MatchContains)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        self.search_customer.setCompleter(completer)
+        self.search_customer.textChanged.connect(self.apply_filter_customer)
         # Фильтр по закону
         self.filter_customer_law = QComboBox()
         self.filter_customer_law.addItem("Все законы")
@@ -798,18 +802,22 @@ class PurchasesWidgetAll(QWidget):
         keyword = self.searchsupplier.text().strip()
         q = Supplier.select()
 
-        if keyword:
-            kw = keyword.lower()
-            q = q.where(
-                (fn.Lower(Supplier.organization).contains(kw)) |
-                (fn.Lower(Supplier.inn).contains(kw)) |
-                (fn.Lower(Supplier.kpp).contains(kw))
-            )
+        rows = list(q)
 
-        self._show_suppliers(list(q))
+        # Текстовый поиск делаем в Python для корректной работы с кириллицей
+        if keyword:
+            kw = keyword.strip().lower()
+            rows = [
+                s for s in rows
+                if (s.organization and kw in s.organization.lower()) or
+                   (s.inn and kw in s.inn.lower()) or
+                   (s.kpp and kw in s.kpp.lower())
+            ]
+
+        self._show_suppliers(rows)
 
     def reset_supplier(self):
-        self.search_supplier.clear()
+        self.searchsupplier.clear()  # ← обратите внимание: self.searchsupplier, а не self.search_supplier
         self.reload_supplier()
 
     def _show_suppliers(self, rows: list):
@@ -842,45 +850,56 @@ class PurchasesWidgetAll(QWidget):
         self._show_customers(list(self.customers_qs))
 
     def apply_filter_customer(self):
-        keyword = self.searchsupplier.text().strip()
-        q = Supplier.select()
+        keyword = self.search_customer.text().strip()
+        law = self.filter_customer_law.currentText()
+
+        q = Customer.select()
+
+        # Если выбран закон — фильтруем сразу на уровне SQL
+        if law and law != "Все законы":
+            q = q.where(Customer.law == law)
+
+        rows = list(q)
+
+        # Текстовый поиск делаем в Python
         if keyword:
-            # добираем поставщиков, у которых совпадает контракт (по RegistryNumber),
-            # не только по полям самого поставщика
-            matching_ids = (SupplierContract
-                            .select(SupplierContract.supplier)
-                            .join(Contract)
-                            .where(Contract.RegistryNumber.contains(keyword))
-                            .distinct()
-                            .tuples())
-            matching_ids = [row[0] for row in matching_ids]
+            kw = keyword.strip().lower()
+            rows = [
+                c for c in rows
+                if (c.name and kw in c.name.lower()) or
+                   (c.inn and kw in c.inn.lower())
+            ]
 
-            q = q.where(
-                Supplier.organization.contains(keyword) |
-                Supplier.inn.contains(keyword) |
-                Supplier.kpp.contains(keyword) |
-                Supplier.id.in_(matching_ids)
-            )
-        self._show_suppliers(list(q))
-
-
+        # print("apply_filter_customer:", repr(keyword), law, "->", len(rows))
+        self._show_customers(rows)
     def reset_customer(self):
-            self.search_customer.clear()
-            self.filter_customer_law.setCurrentIndex(0)
-            self.reload_customer()
+        self.search_customer.clear()
+        self.filter_customer_law.setCurrentIndex(0)
+        self.reload_customer()
+
 
     def _show_customers(self, rows: list):
+        print("_show_customers:", len(rows))
         self.table_customer.setRowCount(0)
         self.label_customer.setText(f"Всего записей: {len(rows)}")
+
         for i, c in enumerate(rows):
             self.table_customer.insertRow(i)
             for col, val in enumerate([
-                c.id, c.name, c.inn, c.kpp, c.ogrn,
-                c.region, c.city, c.law
+                i + 1,  # №ПП
+                c.name,
+                c.inn,
+                c.kpp,
+                c.ogrn,
+                c.region,
+                c.city,
+                c.law,
             ]):
                 item = QTableWidgetItem(str(val) if val is not None else "")
                 item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
                 self.table_customer.setItem(i, col, item)
+
+
 
     # ── Суда ──────────────────────────────────────────────────
     def reload_vessel(self):
@@ -1139,7 +1158,7 @@ class PurchasesWidgetAll(QWidget):
     def highlight_apply_filter_button(self):
     # Подсвечиваем кнопку apply_filter_button
         self.apply_filter_button.setStyleSheet("background-color: #ccffcc;")
-    
+
     def highlight_apply_filter_button_contract(self):
     # Подсвечиваем кнопку apply_filter_button
         self.apply_filter_button_contract.setStyleSheet("background-color: #ccffcc;")
@@ -1182,7 +1201,7 @@ class PurchasesWidgetAll(QWidget):
         min_data_valid = self.min_data_input_contrac.date().isValid()
         max_data_valid = self.max_data_input_contrac.date().isValid()
         search_text = self.search_input_contract.text()
-        
+
         # Подсветка полей в зависимости от введенных данных
         if min_price or max_price:
             self.min_price_input_contrac.setStyleSheet("background-color: #ccffcc;")
@@ -1236,22 +1255,19 @@ class PurchasesWidgetAll(QWidget):
                 self.sort_by_putch_winner.setStyleSheet("background-color: #ccffcc;")
                 self.FilterCollapseContract.setStyleSheet("background-color: #ccffcc;")
 
-    
     def apply_filter(self):
         self.current_position = 0
         self.selected_option = self.sort_options.currentText()
 
-        if  self.selected_option == "Сортировать по цене (возрастание)":
+        if self.selected_option == "Сортировать по цене (возрастание)":
             order_by = Purchase.InitialMaxContractPrice
-        elif  self.selected_option == "Сортировать по цене (убывание)":
+        elif self.selected_option == "Сортировать по цене (убывание)":
             order_by = Purchase.InitialMaxContractPrice.desc()
-        elif  self.selected_option == "Сортировать по дате (от новых к старым)":
+        elif self.selected_option == "Сортировать по дате (от новых к старым)":
             order_by = Purchase.PlacementDate.desc()
-        elif  self.selected_option == "Сортировать по дате (от старых к новым)":
+        elif self.selected_option == "Сортировать по дате (от старых к новым)":
             order_by = Purchase.PlacementDate
-  
 
-        # Получаем минимальную и максимальную цены из полей ввода
         self.min_price = self._parse_number_input(self.min_price_input.text()) or float('-inf')
         self.max_price = self._parse_number_input(self.max_price_input.text()) or float('inf')
 
@@ -1261,67 +1277,53 @@ class PurchasesWidgetAll(QWidget):
         self.min_date = min_date_str.toPython() if min_date_str.isValid() else None
         self.max_date = max_date_str.toPython() if max_date_str.isValid() else None
 
-        
-        # Выполняем запрос с фильтрацией по диапазону цен и сортировкой
-        # Фильтр по цене
-        purchases = Purchase.select().where(
-            (Purchase.InitialMaxContractPrice.between(self.min_price, self.max_price))
-        ).order_by(order_by)
-        # Фильтр по дате
-        if  self.min_date and  self.max_date:
-            purchases = purchases.where(
-                (Purchase.PlacementDate.between( self.min_date,  self.max_date))
-            )
-
-        # Фильтр по цене и дате
+        # --- SQL-фильтры: цена, дата, закон, ОКПД2, метод закупки, заказчик ---
         purchases_query_combined = Purchase.select().where(
             (Purchase.InitialMaxContractPrice.between(self.min_price, self.max_price)) &
-            (Purchase.PlacementDate.between( self.min_date,  self.max_date) if  self.min_date and  self.max_date else True)
-        )
-        # Фильтр по законам
-       
+            (Purchase.PlacementDate.between(self.min_date, self.max_date) if self.min_date and self.max_date else True)
+        ).order_by(order_by)
+
         self.selected_order = self.sort_by_putch_order.currentText()
-        if  self.selected_order != "Фильтрация по закону":
+        if self.selected_order != "Фильтрация по закону":
             purchases_query_combined = purchases_query_combined.where(
-                Purchase.PurchaseOrder ==  self.selected_order
+                Purchase.PurchaseOrder == self.selected_order
             )
-            # Фильтр по ОКПД2
+
         self.selected_okpd = self.sort_by_putch_okpd2.currentText()
-        if  self.selected_okpd != "Фильтрация по ОКПД2":
+        if self.selected_okpd != "Фильтрация по ОКПД2":
             purchases_query_combined = purchases_query_combined.where(
-                Purchase.OKPD2Classification ==  self.selected_okpd
+                Purchase.OKPD2Classification == self.selected_okpd
             )
-        # Фильтр по Методу закупки
+
         self.selected_ProcurementMethod = self.sort_by_putch_ProcurementMethod.currentText()
-        if  self.selected_ProcurementMethod != "Фильтрация по методу закупки":
+        if self.selected_ProcurementMethod != "Фильтрация по методу закупки":
             purchases_query_combined = purchases_query_combined.where(
-                Purchase.ProcurementMethod ==  self.selected_ProcurementMethod
+                Purchase.ProcurementMethod == self.selected_ProcurementMethod
             )
-        # Фильтр по Заказчикам
+
         self.CustomerName = self.sort_by_putch_CustomerName.currentText()
-        if  self.CustomerName != "Фильтрация по заказчикам":
+        if self.CustomerName != "Фильтрация по заказчикам":
             purchases_query_combined = purchases_query_combined.where(
-                Purchase.CustomerName ==  self.CustomerName
+                Purchase.CustomerName == self.CustomerName
             )
-        # keyword = self.selected_text
-        keyword  = self.search_input.text()
 
-    # Добавляем фильтр по ключевому слову (RegistryNumber)
-        if keyword:
-            kw = keyword.lower()
-            purchases_query_combined = purchases_query_combined.where(
-                (fn.Lower(fn.COALESCE(Purchase.RegistryNumber, "")).contains(kw)) |
-                (fn.Lower(fn.COALESCE(Purchase.ProcurementOrganization, "")).contains(kw)) |
-                (fn.Lower(fn.COALESCE(Purchase.PurchaseName, "")).contains(kw)) |
-                (fn.Lower(fn.COALESCE(Purchase.CustomerName, "")).contains(kw)) |
-                (fn.Lower(fn.COALESCE(Purchase.AuctionSubject, "")).contains(kw))
-            )
-        
         self.purchases = purchases_query_combined.order_by(order_by)
-        
+        rows = list(self.purchases)
 
-        self.purchases_list = list(self.purchases)
-       
+        # --- Текстовый поиск по ключевому слову делаем в Python ---
+        keyword = self.search_input.text().strip()
+        if keyword:
+            kw = keyword.strip().lower()
+            rows = [
+                p for p in rows
+                if (p.RegistryNumber and kw in p.RegistryNumber.lower()) or
+                   (p.ProcurementOrganization and kw in p.ProcurementOrganization.lower()) or
+                   (p.PurchaseName and kw in p.PurchaseName.lower()) or
+                   (p.CustomerName and kw in p.CustomerName.lower()) or
+                   (p.AuctionSubject and kw in p.AuctionSubject.lower())
+            ]
+
+        self.purchases_list = rows
         self.show_all_purchases()
 
     def apply_filter_contract(self):
@@ -1333,21 +1335,13 @@ class PurchasesWidgetAll(QWidget):
         min_d = self.min_data_input_contrac.date()
         max_d = self.max_data_input_contrac.date()
         law = self.sort_by_contract_law.currentText()
+
         q = Contract.select(Contract, Purchase).join(Purchase)
 
-        if keyword:
-            kw = keyword.lower()
-            q = q.where(
-                (fn.Lower(fn.COALESCE(Contract.WinnerExecutor, "")).contains(kw)) |
-                (fn.Lower(fn.COALESCE(Contract.ContractingAuthority, "")).contains(kw)) |
-                (fn.Lower(fn.COALESCE(Contract.RegistryNumber, "")).contains(kw)) |
-                (fn.Lower(fn.COALESCE(Contract.ContractNumber, "")).contains(kw)) |
-                (fn.Lower(fn.COALESCE(Purchase.PurchaseName, "")).contains(kw))
-            )
-
-
+        # --- SQL-фильтры: закон, исполнитель, цена, дата ---
         if law and law != "Фильтрация по закону":
             q = q.where(Purchase.PurchaseOrder == law)
+
         if executor and executor != "Фильтрация по исполнителю":
             executor_contract_ids = (
                 SupplierContract
@@ -1356,7 +1350,7 @@ class PurchasesWidgetAll(QWidget):
                 .where(Supplier.organization == executor)
                 .distinct()
             )
-            q = q.where(Contract.id.in_(executor_contract_ids))
+            q = q.where(Contract.Id.in_(executor_contract_ids))
 
         parsed_min = self._parse_number_input(min_p)
         if parsed_min is not None:
@@ -1378,11 +1372,24 @@ class PurchasesWidgetAll(QWidget):
             2: Contract.StartDate.asc(),
             3: Contract.StartDate.desc(),
         }
-
         q = q.order_by(order_map.get(sort_idx, Contract.StartDate.desc()))
 
-        self.contracts = q
-        self.contracts_list = list(q)
+        rows = list(q)
+
+        # --- Текстовый поиск по ключевому слову делаем в Python ---
+        if keyword:
+            kw = keyword.strip().lower()
+            rows = [
+                c for c in rows
+                if (c.WinnerExecutor and kw in c.WinnerExecutor.lower()) or
+                   (c.ContractingAuthority and kw in c.ContractingAuthority.lower()) or
+                   (c.RegistryNumber and kw in c.RegistryNumber.lower()) or
+                   (c.ContractNumber and kw in c.ContractNumber.lower()) or
+                   (c.purchase and c.purchase.PurchaseName and kw in c.purchase.PurchaseName.lower())
+            ]
+
+        self.contracts = rows
+        self.contracts_list = rows
         self.show_all_contracts()
 
     def resetFiltersContract(self):
@@ -1428,6 +1435,17 @@ class PurchasesWidgetAll(QWidget):
         # Обновляем данные
         self.window.contractFormular.reload_data_id(selected_id)
 
+    def findUnicCustomer(self):
+        unique_values_list = []
+
+        # Берём name, inn, law из Customer
+        for c in Customer.select(Customer.name, Customer.inn, Customer.law).distinct():
+            for val in (c.name, c.inn, c.law):
+                if val:
+                    unique_values_list.append(str(val))
+
+        # Убираем дубли, сохраняя порядок
+        return list(dict.fromkeys(unique_values_list))
     def findUnic(self):
             unique_values_list = []
             unique_values_query = Purchase.select(
@@ -1561,16 +1579,17 @@ class PurchasesWidgetAll(QWidget):
                                self.FilterDate,self.FilterPrice]:
             input_field.setStyleSheet("")
         self.max_data_input.setStyleSheet(self.transparent_style) 
-        self.min_data_input.setStyleSheet(self.transparent_style) 
+        self.min_data_input.setStyleSheet(self.transparent_style)
 
     def reset_styles_contract(self):
         # Сброс стилей всех элементов к стандартному состоянию
-        for input_field in [self.min_price_input_contrac, self.sort_by_contract_law, self.max_price_input_contrac, self.apply_filter_button_contract, self.FilterCollapseContract,self.FilterPriceContract,
-                            self.FilterDateContract,self.FilterCollapseContract, self.sort_options_contract,self.sort_by_putch_winner,self.Qword_contract, self.QwordFinderContract]:
+        for input_field in [self.min_price_input_contrac, self.sort_by_contract_law, self.max_price_input_contrac,
+                            self.apply_filter_button_contract, self.FilterCollapseContract, self.FilterPriceContract,
+                            self.FilterDateContract, self.FilterCollapseContract, self.sort_options_contract,
+                            self.sort_by_putch_winner, self.QwordFinderContract]:
             input_field.setStyleSheet("")
-        self.max_data_input_contrac.setStyleSheet(self.transparent_style) 
+        self.max_data_input_contrac.setStyleSheet(self.transparent_style)
         self.min_data_input_contrac.setStyleSheet(self.transparent_style)
-
      
 
     def remove_button_clicked(self):
@@ -1809,6 +1828,10 @@ class PurchasesWidgetAll(QWidget):
             .order_by(ContractVersion.id.asc())
             .first()
         )
+
+    def return_filtered_contracts(self):
+        # Возвращает уже отфильтрованный список контрактов (после apply_filter_contract)
+        return self.contracts_list
     def return_filters_variabels(self):
     
         # search_input = self.selected_text if self.selected_text is not None else ""

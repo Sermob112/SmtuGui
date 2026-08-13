@@ -31,22 +31,22 @@ SMTU_PACKAGE = os.path.join(PROJECT_ROOT, 'smtuIdle')
 import os
 from pathlib import Path
 
-PROJECT_ROOT = 'C:\\Users\\Sergey\\Desktop\\Work\\SmtuGui'
+PROJECT_ROOT = r'C:\Users\Sergey\Desktop\Work\SmtuGui'
 SMTU_PACKAGE = os.path.join(PROJECT_ROOT, 'smtuIdle')
+FILES_DIR = os.path.join(PROJECT_ROOT, 'db_files')
 
-# Функция, которая собирает только .py файлы из указанной директории
 def collect_only_py(src_dir, dest_prefix):
     result = []
     src_path = Path(src_dir)
     for py_file in src_path.rglob('*.py'):
-        # Вычисляем относительный путь внутри пакета (куда класть файл в .exe)
         relative_dest = os.path.join(dest_prefix, py_file.parent.relative_to(src_path.parent))
         result.append((str(py_file), str(relative_dest)))
     return result
 
 datas = (
-    collect_only_py(SMTU_PACKAGE, 'smtuIdle')   # Только .py из smtuIdle
-    + [(os.path.join(PROJECT_ROOT, 'Pics'), 'Pics')]  # Картинки — оставляем как есть
+    collect_only_py(SMTU_PACKAGE, 'smtuIdle')
+    + [(os.path.join(PROJECT_ROOT, 'Pics'), 'Pics')]
+    + [(FILES_DIR, 'db_files')]  # ← добавили папку с файлами
 )
 
 a = Analysis(
