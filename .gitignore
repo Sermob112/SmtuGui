@@ -10581,3 +10581,19 @@ smtuIdle/build/
 
 # Загруженные CSV/XLSX-файлы
 CSV/sources/
+
+# Python-кэш
+__pycache__/
+*.py[cod]
+
+# Базы данных
+*.db
+db_files/
+
+# Сборка и готовые exe-файлы
+smtuIdle/build/
+smtuIdle/dist/
+*.exe
+
+# Исходные выгрузки
+CSV/sources/
