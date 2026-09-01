@@ -1,8 +1,6 @@
 import json
 import os
-import re
 import subprocess
-from datetime import datetime
 from locale import format_string, setlocale, LC_ALL
 from openpyxl import Workbook
 
@@ -17,8 +15,7 @@ import json as json_lib
 
 # ВАЖНО: Убедитесь, что вы импортировали модель Contract из вашего файла моделей
 from smtuIdle.BD.models import Contract, SupplierContract
-from smtuIdle.BD.models import Contract, Supplier, Vessel, ContractVersion, Purchase
-
+from smtuIdle.BD.models import Contract, Supplier, Vessel, ContractVersion
 # Установка локали для форматирования чисел (если нужна)
 try:
     setlocale(LC_ALL, 'ru_RU.UTF-8')
@@ -51,7 +48,7 @@ class ContractWidget(QWidget):
         # Настройка сетки и стилей
 
         self.tree.setStyleSheet("""
-
+          
             QTreeWidget::item {
                 border-bottom: 1px solid #e0e0e0;
                 border-right: 1px solid #e0e0e0;
@@ -67,6 +64,7 @@ class ContractWidget(QWidget):
         font_title.setPointSize(10)
         font_title.setBold(True)
         self.label_form.setFont(font_title)
+
 
         # --- Кнопки управления ---
         self.BackButton = QPushButton("Назад", self)
@@ -249,6 +247,7 @@ class ContractWidget(QWidget):
                         child_name = f"Колонка {idx + 1}"
                     elif parent_key in ("all_hrefs", "hrefs"):
                         child_name = f"Ссылка {idx + 1}"
+
                     # Если родительский ключ совпадает с новыми полями, можно дать более точное имя
                     if parent_key == "totals summary":
                         child_name = f"Пункт сводки {idx + 1}"
@@ -290,105 +289,6 @@ class ContractWidget(QWidget):
         else:
             parent_item.setText(1, str(json_data))
 
-    # =========================================================
-    # ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ РАСЧЁТА ИЗМЕНЕНИЙ КОНТРАКТА
-    # =========================================================
-    def get_initial_contract_version(self, contract):
-        initial_version = (
-            ContractVersion
-            .select()
-            .where(
-                (ContractVersion.contract == contract) &
-                (ContractVersion.version.contains("Версия № 0"))
-            )
-            .order_by(ContractVersion.id.asc())
-            .first()
-        )
-
-        if initial_version:
-            return initial_version
-
-        return (
-            ContractVersion
-            .select()
-            .where(ContractVersion.contract == contract)
-            .order_by(ContractVersion.id.asc())
-            .first()
-        )
-
-    def parse_float_safe(self, value):
-        if value is None:
-            return None
-
-        s = str(value).strip()
-        if not s or s in ("Нет данных", "[]", "None", "null"):
-            return None
-
-        s = re.sub(r"[^\d,.\-]", "", s)
-
-        if not s:
-            return None
-
-        if "," in s and "." in s:
-            s = s.replace(".", "").replace(",", ".")
-        elif "," in s:
-            s = s.replace(",", ".")
-
-        try:
-            return float(s)
-        except (ValueError, TypeError):
-            return None
-
-    def parse_date_safe(self, value):
-        if not value:
-            return None
-
-        if hasattr(value, "year"):
-            return value
-
-        for fmt in ("%Y-%m-%d", "%d.%m.%Y", "%Y-%m-%d %H:%M:%S"):
-            try:
-                return datetime.strptime(str(value), fmt).date()
-            except ValueError:
-                continue
-
-        try:
-            return datetime.fromisoformat(str(value)).date()
-        except Exception:
-            return None
-
-    def months_diff_safe(self, start_date, end_date):
-        if not start_date or not end_date:
-            return None
-        return (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
-
-    def get_related_purchase(self, contract):
-        """Возвращает связанную закупку (Purchase) для контракта.
-        Сначала пробуем прямую связь через FK, затем — по реестровому номеру."""
-        purchase = getattr(contract, 'purchase', None)
-        if purchase is None and contract.RegistryNumber:
-            purchase = (
-                Purchase
-                .select()
-                .where(Purchase.RegistryNumber == contract.RegistryNumber)
-                .first()
-            )
-        return purchase
-
-    def has_penalty(self, contract):
-        """Определяет наличие штрафа по контракту.
-        ВНИМАНИЕ: имя поля в модели Contract уточните и при необходимости
-        замените 'Penalty'/'PenaltyAmount'/'FineAmount' на реальное имя поля."""
-        for attr in ("Penalty", "PenaltyAmount", "FineAmount", "Fine"):
-            value = getattr(contract, attr, None)
-            if value is None:
-                continue
-            parsed = self.parse_float_safe(value) if not isinstance(value, (int, float)) else value
-            if parsed:
-                return "Да"
-            return "Нет"
-        return None
-
     def show_current_contract(self):
         self.tree.clear()
         self.current_parent = None
@@ -413,79 +313,18 @@ class ContractWidget(QWidget):
             self.add_row_to_table('Дата начала', c.StartDate)
             self.add_row_to_table('Дата окончания', c.EndDate)
 
-            # Наличие аванса / штрафа выводим в главном разделе "Общие сведения"
-            has_advance = "Да" if c.AdvancePayment not in (None, 0, 0.0) else "Нет"
-            self.add_row_to_table('Наличие аванса', has_advance)
-
-            penalty_flag = self.has_penalty(c)
-            self.add_row_to_table('Наличие штрафа', penalty_flag)
-
-            # --- Связанная закупка (Purchase) ---
-            purchase = self.get_related_purchase(c)
-
             # --- 2. Финансы (развернуто) ---
             self.add_section_to_table('Финансовая информация', expanded=True)
 
             price = f"{format_string('%.2f', c.ContractPrice, grouping=True)} {self.symbol}" if c.ContractPrice is not None else None
             advance = f"{format_string('%.2f', c.AdvancePayment, grouping=True)} {self.symbol}" if c.AdvancePayment is not None else None
-
-            # Расчёт снижения НМЦК из начальной максимальной цены закупки
-            nmck = purchase.InitialMaxContractPrice if purchase and purchase.InitialMaxContractPrice is not None else None
-            current_price_val = c.ContractPrice if c.ContractPrice is not None else None
-
-            reduction = (
-                ((nmck - current_price_val) / nmck) * 100
-                if current_price_val is not None and nmck not in (None, 0)
-                else None
-            )
-
-            reduction_rub = (
-                nmck - current_price_val
-                if current_price_val is not None and nmck is not None
-                else None
-            )
-
-            reduction_str = f"{reduction:.2f}%" if reduction is not None else None
-            reduction_rub_str = (
-                f"{format_string('%.2f', reduction_rub, grouping=True)} {self.symbol}"
-                if reduction_rub is not None else None
-            )
+            reduction = f"{format_string('%.2f', c.ReductionNMC, grouping=True)} {self.symbol}" if c.ReductionNMC is not None else None
+            reduction_pct = f"{format_string('%.2f', c.ReductionNMCPercent)} %" if c.ReductionNMCPercent is not None else None
 
             self.add_row_to_table('Цена договора', price)
             self.add_row_to_table('Размер авансирования', advance)
-            self.add_row_to_table('Снижение НМЦК (руб.)', reduction_rub_str)
-            self.add_row_to_table('Снижение НМЦК (%)', reduction_str)
-
-            # Начальная валюта контракта (если была указана в закупке)
-            if purchase and purchase.Currency and purchase.Currency != "Нет данных":
-                self.add_row_to_table('Начальная валюта', purchase.Currency)
-
-            # --- Изменение цены и даты контракта относительно исходной версии ---
-            initial_version = self.get_initial_contract_version(c)
-
-            initial_price = self.parse_float_safe(initial_version.contract_price) if initial_version else None
-            current_price = c.ContractPrice if c.ContractPrice is not None else None
-
-            if initial_price is not None and current_price is not None and initial_price != current_price:
-                price_diff = current_price - initial_price
-                sign = "+" if price_diff > 0 else ""
-                price_diff_str = f"{sign}{format_string('%.2f', price_diff, grouping=True)} {self.symbol}"
-                self.add_row_to_table(
-                    'Изменение цены контракта',
-                    f"{format_string('%.2f', initial_price, grouping=True)} {self.symbol} → "
-                    f"{format_string('%.2f', current_price, grouping=True)} {self.symbol} ({price_diff_str})"
-                )
-
-            initial_end = self.parse_date_safe(initial_version.date_execution_due) if initial_version else None
-            current_end = self.parse_date_safe(c.EndDate)
-
-            if initial_end and current_end and initial_end != current_end:
-                months_diff = self.months_diff_safe(initial_end, current_end)
-                months_str = f"{'+' if months_diff and months_diff > 0 else ''}{months_diff} мес." if months_diff is not None else ""
-                self.add_row_to_table(
-                    'Изменение даты контракта',
-                    f"{initial_end} → {current_end} ({months_str})" if months_str else f"{initial_end} → {current_end}"
-                )
+            self.add_row_to_table('Снижение НМЦК (руб.)', reduction)
+            self.add_row_to_table('Снижение НМЦК (%)', reduction_pct)
 
             # --- 3. Данные по заявкам (свернуто) ---
             self.add_section_to_table('Данные по заявкам', expanded=False)
@@ -532,36 +371,11 @@ class ContractWidget(QWidget):
                         self.add_row_to_table("Данные", str(json_string))
                 else:
                     self.add_row_to_table("Данные", "Нет данных")
-            # =========================================================
-            # СВЯЗАННЫЕ ДАННЫЕ (ПОСТАВЩИКИ, СУДА, ВЕРСИИ)
-            # =========================================================
+                # =========================================================
+                # СВЯЗАННЫЕ ДАННЫЕ (ПОСТАВЩИКИ, СУДА, ВЕРСИИ)
+                # =========================================================
             self.add_section_to_table('Связанные документы', expanded=True)
             links_parent = self.current_parent
-
-            # 0. ЗАКУПКА (Purchase)
-            if purchase:
-                purchase_name = purchase.PurchaseName if getattr(purchase, 'PurchaseName',
-                                                                 None) else f"ID {purchase.Id}"
-                purchase_node = QTreeWidgetItem(links_parent)
-                purchase_node.setText(0, f"Закупка: {purchase_name}")
-                purchase_node.setFirstColumnSpanned(True)
-                font_p = QFont()
-                font_p.setBold(True)
-                purchase_node.setFont(0, font_p)
-                purchase_node.setBackground(0, QColor(240, 240, 240))
-
-                link_item = QTreeWidgetItem(purchase_node)
-                link_item.setText(0, 'Перейти в карточку закупки')
-                link_item.setText(1, f"ID: {purchase.Id}")
-                link_item.setData(1, Qt.UserRole, f"GOTO_PURCHASE:{purchase.Id}")
-                link_item.setForeground(1, Qt.blue)
-                font_link_p = QFont()
-                font_link_p.setUnderline(True)
-                link_item.setFont(1, font_link_p)
-
-                QTreeWidgetItem(purchase_node, ['Реестровый номер закупки', str(purchase.RegistryNumber)])
-                QTreeWidgetItem(purchase_node, ['Начальная максимальная цена', str(purchase.InitialMaxContractPrice)])
-                QTreeWidgetItem(purchase_node, ['Начальная валюта', str(purchase.Currency)])
 
             # 1. ПОСТАВЩИКИ (Исполнители)
             suppliers = (
@@ -641,9 +455,33 @@ class ContractWidget(QWidget):
                     link_item.setData(1, Qt.UserRole, f"GOTO_VERSION:{ver.id}")
                     link_item.setForeground(1, Qt.blue)
                     link_item.setFont(1, font_link)
-        else:
-            self.label_form.setText("Нет данных")
-            self.label_form.show()
+            else:
+                self.label_form.setText("Нет данных")
+                self.label_form.show()
+
+    def open_file(self, item, column):
+        if column == 1:
+            filepath = item.text(1)
+
+            if filepath == "Нет данных":
+                return
+
+            if os.path.isfile(filepath):
+                if filepath.lower().endswith(('.docx', '.doc')):
+                    subprocess.Popen(['start', 'winword', filepath], shell=True)
+                elif filepath.lower().endswith('.pdf'):
+                    QDesktopServices.openUrl(QUrl.fromLocalFile(filepath))
+                elif filepath.lower().endswith(('.xlsx', '.xls', '.csv')):
+                    subprocess.Popen(['start', 'excel', filepath], shell=True)
+            else:
+                url = item.data(1, Qt.UserRole)
+                if url:
+                    QDesktopServices.openUrl(QUrl(url))
+                elif 'http' in filepath or 'zakupki' in filepath:
+                    QDesktopServices.openUrl(QUrl(filepath))
+                elif 'download' in filepath:
+                    url_for = item.text(1)
+                    QDesktopServices.openUrl(QUrl(url_for))
 
     def open_file(self, item, column):
         if column == 1:
@@ -674,10 +512,6 @@ class ContractWidget(QWidget):
                 elif command == "GOTO_VERSION":
                     self.main_win.contractVersionFormular.reload_data_id(record_id)
                     self.main_win.navigate_to_page(14)  # Замените на реальный индекс версии контракта
-
-                elif command == "GOTO_PURCHASE":
-                    self.main_win.purchaseFormular.reload_data_id(record_id)
-                    self.main_win.navigate_to_page(15)  # Замените на реальный индекс закупки в MainWindow
 
                 return  # Прерываем, так как это не файл и не http ссылка
             # ----------------------------------------

@@ -407,7 +407,7 @@ class PurchasesWidgetAll(QWidget):
             "Разница с ценой до изменения",
             "НМЦК",
             "Разница с НМЦК",
-            "Снижение %",
+            "Изменение цены контракта %",
             "Заказчик по контракту",
             "Исполнитель",
             "Наименование закупки",
@@ -1017,11 +1017,11 @@ class PurchasesWidgetAll(QWidget):
             for current_position, current_purchase in enumerate(self.purchases_list):
                 # Добавляем новую строку для каждой записи
                 self.table.insertRow(current_position)
-                initial_price =  format_string("%.0f", current_purchase.InitialMaxContractPrice, grouping=True)
+                initial_price =  format_string("%.0f", current_purchase.InitialMaxContractPriceInCurrency, grouping=True)
                 # Добавляем данные в каждую ячейку для текущей записи
                 for col, value in enumerate([current_purchase.Id, current_purchase.PurchaseOrder, current_purchase.RegistryNumber,str(current_purchase.PlacementDate)
                                              , current_purchase.PurchaseName,current_purchase.AuctionSubject,
-                                             initial_price, current_purchase.Currency,
+                                             initial_price, "RUB",
                                               current_purchase.CustomerName
                                              ]):
                     item = QTableWidgetItem(str(value))
@@ -1080,7 +1080,7 @@ class PurchasesWidgetAll(QWidget):
 
             months_diff = self.months_diff_safe(initial_end, current_end) if initial_end and current_end else None
 
-            nmck = c.purchase.InitialMaxContractPrice if c.purchase and c.purchase.InitialMaxContractPrice is not None else None
+            nmck = c.purchase.InitialMaxContractPriceInCurrency if c.purchase and c.purchase.InitialMaxContractPriceInCurrency is not None else None
 
             diff_initial = (
                 current_price - initial_price
@@ -1095,7 +1095,7 @@ class PurchasesWidgetAll(QWidget):
             )
 
             reduction = (
-                ((nmck - current_price) / nmck) * 100
+                ((current_price - nmck) / nmck) * 100
                 if current_price is not None and nmck not in (None, 0)
                 else None
             )
@@ -1120,7 +1120,7 @@ class PurchasesWidgetAll(QWidget):
                 format_string("%.0f", diff_nmck, grouping=True)
                 if diff_nmck is not None else "—"
             )
-            reduction_str = f"{reduction:.2f}%" if reduction is not None else "—"
+            reduction_str = f"{reduction:+.2f}%" if reduction is not None else "—"
 
             executor_name = self.get_contract_executor(c)
 
@@ -1260,9 +1260,9 @@ class PurchasesWidgetAll(QWidget):
         self.selected_option = self.sort_options.currentText()
 
         if self.selected_option == "Сортировать по цене (возрастание)":
-            order_by = Purchase.InitialMaxContractPrice
+            order_by = Purchase.InitialMaxContractPriceInCurrency
         elif self.selected_option == "Сортировать по цене (убывание)":
-            order_by = Purchase.InitialMaxContractPrice.desc()
+            order_by = Purchase.InitialMaxContractPriceInCurrency.desc()
         elif self.selected_option == "Сортировать по дате (от новых к старым)":
             order_by = Purchase.PlacementDate.desc()
         elif self.selected_option == "Сортировать по дате (от старых к новым)":
@@ -1279,7 +1279,7 @@ class PurchasesWidgetAll(QWidget):
 
         # --- SQL-фильтры: цена, дата, закон, ОКПД2, метод закупки, заказчик ---
         purchases_query_combined = Purchase.select().where(
-            (Purchase.InitialMaxContractPrice.between(self.min_price, self.max_price)) &
+            (Purchase.InitialMaxContractPriceInCurrency.between(self.min_price, self.max_price)) &
             (Purchase.PlacementDate.between(self.min_date, self.max_date) if self.min_date and self.max_date else True)
         ).order_by(order_by)
 
@@ -1379,13 +1379,29 @@ class PurchasesWidgetAll(QWidget):
         # --- Текстовый поиск по ключевому слову делаем в Python ---
         if keyword:
             kw = keyword.strip().lower()
+
+            # Тянем все пары (contract_id, organization) одним запросом,
+            # без SQL-приведения регистра — сравнение делаем в Python
+            supplier_rows = (
+                SupplierContract
+                .select(SupplierContract.contract, Supplier.organization)
+                .join(Supplier, on=(SupplierContract.supplier == Supplier.id))
+                .dicts()
+            )
+            supplier_match_ids = {
+                row['contract'] for row in supplier_rows
+                if row['organization'] and kw in row['organization'].lower()
+            }
+
             rows = [
                 c for c in rows
                 if (c.WinnerExecutor and kw in c.WinnerExecutor.lower()) or
                    (c.ContractingAuthority and kw in c.ContractingAuthority.lower()) or
                    (c.RegistryNumber and kw in c.RegistryNumber.lower()) or
                    (c.ContractNumber and kw in c.ContractNumber.lower()) or
-                   (c.purchase and c.purchase.PurchaseName and kw in c.purchase.PurchaseName.lower())
+                   (c.purchase and c.purchase.PurchaseName and kw in c.purchase.PurchaseName.lower()) or
+                   (c.purchase and c.purchase.CustomerName and kw in c.purchase.CustomerName.lower()) or
+                   (c.Id in supplier_match_ids)
             ]
 
         self.contracts = rows
@@ -1657,15 +1673,15 @@ class PurchasesWidgetAll(QWidget):
                     self.purchases
                     .select(Purchase.Id, Purchase.PurchaseOrder, Purchase.RegistryNumber, Purchase.ProcurementMethod,
         Purchase.PurchaseName, Purchase.AuctionSubject, Purchase.PurchaseIdentificationCode,
-        Purchase.LotNumber, Purchase.LotName, Purchase.InitialMaxContractPrice, Purchase.Currency,
-        Purchase.InitialMaxContractPriceInCurrency, Purchase.ContractCurrency,
+        Purchase.LotNumber, Purchase.LotName, Purchase.InitialMaxContractPriceInCurrency,
+        Purchase.InitialMaxContractPriceInCurrencyInCurrency, Purchase.ContractCurrency,
         Purchase.OKDPClassification, Purchase.OKPDClassification, Purchase.OKPD2Classification,
         Purchase.PositionCode, Purchase.CustomerName, Purchase.ProcurementOrganization,
         Purchase.PlacementDate, Purchase.UpdateDate, Purchase.ProcurementStage,
         Purchase.ProcurementFeatures, Purchase.ApplicationStartDate, Purchase.ApplicationEndDate,
         Purchase.AuctionDate, Purchase.QueryCount, Purchase.ResponseCount, Purchase.AveragePrice,
         Purchase.MinPrice, Purchase.MaxPrice, Purchase.StandardDeviation, Purchase.CoefficientOfVariation,
-        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceOld,
+        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceInCurrencyOld,
         Purchase.notification_link,Purchase.quantity_units,Purchase.nmck_per_unit,
         
         Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
