@@ -154,142 +154,223 @@ class ContractWidget(QWidget):
                 item.setData(1, Qt.UserRole, link)
 
     def add_json_to_tree(self, parent_item, json_data, parent_key=""):
+        """
+        Отображает JSON в QTreeWidget.
+
+        - kind == "kv"    → title | text
+        - kind == "table" → для каждой строки: header | value
+        - items           → пропускается, содержимое выкладывается сразу
+        - kind, hrefs     → скрыты
+        """
+
         key_translations = {
-            "title": "Заголовок",
-            "items": "Элементы",
-            "hrefs": "Ссылки",
-            "all_hrefs": "Все ссылки",
-            "header": "Название группы",
-            "kind": "Тип",
-            "kv": "Значение",
-            "type": "Тип документа",
-            "sign_link": "Ссылка на подпись",
-            "sign_url": "Ссылка на подпись",
+            "общие_данные": "Общие данные",
+            "общая_информация": "Общая информация",
+            "информация_о_заказчике": "Информация о заказчике",
+            "информация_о_поставщиках": "Информация о поставщиках",
+            "информация_об_изменении_контракта": "Информация об изменении контракта",
+            "items": "Данные",
+            "table": "Таблица",
+            "table standalone": "Отдельная таблица",
             "table_standalone": "Отдельная таблица",
-            "url": "Ссылка",
-            "parsed_table": "Табличные данные",
             "rows": "Строки таблицы",
             "headers": "Заголовки колонок",
-            "doc_name": "Название документа",
-            "files": "Файлы",
-            "links": "Связанные ссылки",
-            "text": "Текст",
-
-            # Новые ключи из вашего запроса
-            "totals summary": "Итоговая сводка",
-            "section title": "Заголовок раздела",
-            "Table": "Таблица",
-            "Nested": "Вложенные данные",
-            "Meta": "Метаданные",
-            "Actions": "Действия",
-            "Href": "Ссылка",
-            "Print link": "Ссылка на печать",
-            "Rows by index": "Строки по порядку",
-            "table": "Таблица",
+            "rows_by_index": "Строки таблицы",
+            "totals_row": "Итоговая строка",
+            "totals_summary": "Итоговая сводка",
+            "nested": "Вложенные данные",
+            "section_title": "Заголовок раздела",
+            "header": "Название группы",
             "name": "Название",
-            "quantitu": "Количество",
-            # Исправлено с quantitu -> quantity (или оставлено как есть, если в JSON именно так)
             "price": "Цена",
             "sum": "Сумма",
+            "quantity": "Количество",
+            "quantitu": "Количество",
             "ktru": "КТРУ",
-            "raw_sum_text": "Текстовая сумма"
+            "raw_sum_text": "Текстовая сумма",
+            "url": "Ссылка",
+            "sign_url": "Ссылка на подпись",
+            "sign_link": "Ссылка на подпись",
+            "text": "Текст",
         }
 
-        if not json_data:
+        if json_data in (None, "", [], {}):
             return
 
+        # ---------------------------------------------------------
+        # kind == "kv"
+        # ---------------------------------------------------------
+        if isinstance(json_data, dict) and json_data.get("kind") == "kv":
+            title = json_data.get("title") or "Параметр"
+            text = json_data.get("text")
+
+            item = QTreeWidgetItem(parent_item)
+            item.setText(0, str(title))
+            item.setText(
+                1,
+                str(text) if text not in (None, "") else "Нет данных"
+            )
+
+            font = QFont()
+            font.setPointSize(10)
+            item.setFont(0, font)
+            item.setFont(1, font)
+
+            hrefs = json_data.get("hrefs") or []
+            if hrefs:
+                url = hrefs[0]
+
+                item.setForeground(1, Qt.blue)
+
+                link_font = QFont()
+                link_font.setPointSize(10)
+                link_font.setUnderline(True)
+                item.setFont(1, link_font)
+
+                item.setData(1, Qt.UserRole, str(url))
+
+            return
+
+        # ---------------------------------------------------------
+        # kind == "table"
+        # ---------------------------------------------------------
+        if isinstance(json_data, dict) and json_data.get("kind") == "table":
+            table_data = json_data.get("table") or {}
+            headers = table_data.get("headers") or []
+            rows = table_data.get("rows") or []
+
+            # Если rows пуст, пробуем rows_by_index
+            if not rows:
+                rows = table_data.get("rows_by_index") or []
+
+            for row in rows:
+                if not isinstance(row, dict):
+                    # Если строка — список, сопоставляем с headers по позиции
+                    if isinstance(row, list) and headers:
+                        for idx, val in enumerate(row):
+                            if idx < len(headers):
+                                child = QTreeWidgetItem(parent_item)
+                                child.setText(0, str(headers[idx]))
+                                child.setText(
+                                    1,
+                                    str(val) if val not in (None, "") else "Нет данных"
+                                )
+                    continue
+
+                # row — dict: ключ = заголовок, значение = ячейка
+                for header, value in row.items():
+                    child = QTreeWidgetItem(parent_item)
+                    child.setText(0, str(header))
+                    child.setText(
+                        1,
+                        str(value) if value not in (None, "") else "Нет данных"
+                    )
+
+            return
+
+        # ---------------------------------------------------------
+        # Словарь
+        # ---------------------------------------------------------
         if isinstance(json_data, dict):
             for key, value in json_data.items():
-                # Если ключ пустой или null, используем заглушку
-                if key == "null" or key is None:
-                    display_key = "Параметр"
-                else:
-                    # Проверка на наличие перевода
-                    if key in key_translations:
-                        display_key = key_translations[key]
-                    else:
-                        # Если нет перевода, форматируем как есть (snake_case -> Title Case)
-                        display_key = str(key).replace("_", " ").capitalize()
+                # Служебные поля
+                if key in ("kind", "hrefs", "all_hrefs"):
+                    continue
+
+                # Пропускаем items и сразу раскрываем содержимое
+                if key == "items":
+                    if isinstance(value, list):
+                        for item_value in value:
+                            self.add_json_to_tree(parent_item, item_value, "items")
+                    elif isinstance(value, dict):
+                        self.add_json_to_tree(parent_item, value, "items")
+                    continue
+
+                # Не дублируем header внутри раздела
+                if key == "header" and parent_key:
+                    continue
+
+                # Пустые значения не показываем
+                if value in (None, "", [], {}):
+                    continue
+
+                display_key = key_translations.get(
+                    key,
+                    str(key).replace("_", " ").capitalize()
+                )
 
                 if isinstance(value, (dict, list)):
                     child = QTreeWidgetItem(parent_item)
                     child.setText(0, display_key)
+
                     font = QFont()
                     font.setBold(True)
                     child.setFont(0, font)
+
                     self.add_json_to_tree(child, value, key)
                 else:
-                    # Логика отображения значений (скаляров)
-                    if key == "text":
-                        parent_item.setText(1, str(value))
-                    elif key in ("url", "sign_url", "sign_link"):
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, display_key)
-                        child.setText(1, str(value))
+                    child = QTreeWidgetItem(parent_item)
+                    child.setText(0, display_key)
+                    child.setText(1, str(value))
+
+                    if key in ("url", "sign_url", "sign_link"):
                         child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
+
+                        link_font = QFont()
+                        link_font.setUnderline(True)
+                        child.setFont(1, link_font)
+
                         child.setData(1, Qt.UserRole, str(value))
-                    elif key in ("all_hrefs", "hrefs"):
-                        pass  # Обработка списков ссылок ниже в else if isinstance(json_data, list)
+
+            return
+
+        # ---------------------------------------------------------
+        # Список
+        # ---------------------------------------------------------
+        if isinstance(json_data, list):
+            for idx, value in enumerate(json_data):
+                # kind == kv сразу становится строкой title | text
+                if isinstance(value, dict) and value.get("kind") == "kv":
+                    self.add_json_to_tree(parent_item, value, parent_key)
+                    continue
+
+                # kind == table сразу разворачиваем в header | value
+                if isinstance(value, dict) and value.get("kind") == "table":
+                    self.add_json_to_tree(parent_item, value, "table")
+                    continue
+
+                if isinstance(value, (dict, list)):
+                    if parent_key in ("rows", "rows_by_index"):
+                        item_name = f"Строка {idx + 1}"
+                    elif parent_key == "headers":
+                        item_name = f"Колонка {idx + 1}"
                     else:
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, display_key)
-                        child.setText(1, str(value) if value is not None else "Нет данных")
-
-        elif isinstance(json_data, list):
-            for idx, item in enumerate(json_data):
-                if isinstance(item, (dict, list)):
-                    # Определение имени для вложенных объектов
-                    child_name = f"Запись {idx + 1}"
-
-                    # Специфичные имена для контекста (например, заголовки или ссылки)
-                    if parent_key == "headers":
-                        child_name = f"Колонка {idx + 1}"
-                    elif parent_key in ("all_hrefs", "hrefs"):
-                        child_name = f"Ссылка {idx + 1}"
-                    # Если родительский ключ совпадает с новыми полями, можно дать более точное имя
-                    if parent_key == "totals summary":
-                        child_name = f"Пункт сводки {idx + 1}"
-                    elif parent_key in ("rows", "Rows by index"):
-                        child_name = f"Строка {idx + 1}"
+                        item_name = f"Запись {idx + 1}"
 
                     child = QTreeWidgetItem(parent_item)
-                    child.setText(0, child_name)
+                    child.setText(0, item_name)
 
-                    if parent_key in ("all_hrefs", "hrefs"):
-                        child.setText(1, str(item))
-                        child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
-                        child.setData(1, Qt.UserRole, str(item))
-                    else:
-                        self.add_json_to_tree(child, item, parent_key)
+                    font = QFont()
+                    font.setBold(True)
+                    child.setFont(0, font)
+
+                    self.add_json_to_tree(child, value, parent_key)
                 else:
-                    # Если в списке простые значения (например, массив строк или чисел)
-                    if parent_key == "headers":
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Колонка {idx + 1}")
-                        child.setText(1, str(item) if item is not None else "Нет данных")
-                    elif parent_key in ("all_hrefs", "hrefs"):
-                        # Обработка списка ссылок вложенных объектов (если вдруг это не dict внутри list)
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Ссылка {idx + 1}")
-                        child.setText(1, str(item))
-                        child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
-                        child.setData(1, Qt.UserRole, str(item))
-                    else:
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Элемент {idx + 1}")
-                        child.setText(1, str(item) if item is not None else "Нет данных")
-        else:
-            parent_item.setText(1, str(json_data))
+                    child = QTreeWidgetItem(parent_item)
 
+                    if parent_key == "headers":
+                        child.setText(0, f"Колонка {idx + 1}")
+                    else:
+                        child.setText(0, f"Элемент {idx + 1}")
+
+                    child.setText(
+                        1,
+                        str(value) if value is not None else "Нет данных"
+                    )
+
+            return
+
+        parent_item.setText(1, str(json_data))
     # =========================================================
     # ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ РАСЧЁТА ИЗМЕНЕНИЙ КОНТРАКТА
     # =========================================================
@@ -430,31 +511,37 @@ class ContractWidget(QWidget):
             advance = f"{format_string('%.2f', c.AdvancePayment, grouping=True)} {self.symbol}" if c.AdvancePayment is not None else None
 
             # Расчёт снижения НМЦК из начальной максимальной цены закупки
-            nmck = purchase.InitialMaxContractPrice if purchase and purchase.InitialMaxContractPrice is not None else None
-            current_price_val = c.ContractPrice if c.ContractPrice is not None else None
+            nmck = (
+                purchase.InitialMaxContractPrice
+                if purchase and purchase.InitialMaxContractPrice is not None
+                else None
+            )
+
+            current_price = c.ContractPrice if c.ContractPrice is not None else None
 
             reduction = (
-                ((nmck - current_price_val) / nmck) * 100
-                if current_price_val is not None and nmck not in (None, 0)
+                ((current_price - nmck) / nmck) * 100
+                if current_price is not None and nmck not in (None, 0)
                 else None
             )
 
             reduction_rub = (
-                nmck - current_price_val
-                if current_price_val is not None and nmck is not None
+                current_price - nmck
+                if current_price is not None and nmck is not None
                 else None
             )
 
-            reduction_str = f"{reduction:.2f}%" if reduction is not None else None
+            reduction_str = f"{reduction:+.2f}%" if reduction is not None else "—"
             reduction_rub_str = (
                 f"{format_string('%.2f', reduction_rub, grouping=True)} {self.symbol}"
-                if reduction_rub is not None else None
+                if reduction_rub is not None
+                else "—"
             )
 
             self.add_row_to_table('Цена договора', price)
             self.add_row_to_table('Размер авансирования', advance)
-            self.add_row_to_table('Снижение НМЦК (руб.)', reduction_rub_str)
-            self.add_row_to_table('Снижение НМЦК (%)', reduction_str)
+            self.add_row_to_table('Отклонение цены контракта от НМЦК (руб.)', reduction_rub_str)
+            self.add_row_to_table('Отклонение цены контракта от НМЦК (%)', reduction_str)
 
             # Начальная валюта контракта (если была указана в закупке)
             if purchase and purchase.Currency and purchase.Currency != "Нет данных":
@@ -675,9 +762,10 @@ class ContractWidget(QWidget):
                     self.main_win.contractVersionFormular.reload_data_id(record_id)
                     self.main_win.navigate_to_page(14)  # Замените на реальный индекс версии контракта
 
+
                 elif command == "GOTO_PURCHASE":
-                    self.main_win.purchaseFormular.reload_data_id(record_id)
-                    self.main_win.navigate_to_page(15)  # Замените на реальный индекс закупки в MainWindow
+                    self.main_win.purchaseViewer.reload_data_id(record_id)
+                    self.main_win.navigate_to_page(2) # Замените на реальный индекс закупки в MainWindow
 
                 return  # Прерываем, так как это не файл и не http ссылка
             # ----------------------------------------

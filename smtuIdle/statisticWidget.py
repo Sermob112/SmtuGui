@@ -742,6 +742,7 @@ class StatisticWidget(QWidget):
         [column_sums_max_price5],
         file_name
     )
+
     def show_specific_data(self, index, button):
     # Проверка, что индекс находится в пределах допустимых значений
         for btn in self.buttons:

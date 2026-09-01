@@ -527,12 +527,14 @@ class Ui_MainWindow(QMainWindow):
         else:
             self.pushButton6.hide()
         
-        if self.users_roles[0] == "Гость" and self.users_roles[0] == "Пользователь" :
+        if self.users_roles[0] == "Гость" or self.users_roles[0] == "Пользователь" :
             self.pushButton5.hide()
             self.pushButton1.hide()
+            self.pushButton4.hide()
         else:
             self.pushButton5.show()
             self.pushButton1.show()
+            self.pushButton4.show()
 
     def navigate_to_page(self, index):
         current_index = self.stackedWidget.currentIndex()

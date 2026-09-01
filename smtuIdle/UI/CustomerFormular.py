@@ -37,7 +37,7 @@ class CustomerWidget(QWidget):
 
         # Настройка сетки и стилей
         self.tree.setStyleSheet("""
-           
+
             QTreeWidget::item {
                 border-bottom: 1px solid #e0e0e0;
                 border-right: 1px solid #e0e0e0;
@@ -54,11 +54,10 @@ class CustomerWidget(QWidget):
         font_title.setBold(True)
         self.label_form.setFont(font_title)
 
-
         # --- Кнопки управления ---
         self.BackButton = QPushButton("Назад", self)
         self.BackButton.clicked.connect(self.go_back)
-        self.BackButton.hide()  # Скрыто по умолчанию, как в вашем коде
+        self.BackButton.hide()
 
         self.exportButton = QPushButton("Экспорт в Excel", self)
         self.exportButton.setMaximumWidth(300)
@@ -137,10 +136,23 @@ class CustomerWidget(QWidget):
             font_link.setPointSize(10)
             font_link.setUnderline(True)
             item.setFont(1, font_link)
-            # Вшиваем оригинальный урл в Data ячейки
             item.setData(1, Qt.UserRole, value_text)
 
     def add_json_to_tree(self, parent_item, json_data, parent_key=""):
+        """
+        Упрощённое отображение JSON в дереве.
+
+        kind == "kv":
+            {
+                "kind": "kv",
+                "title": "...",
+                "text": "...",
+                "hrefs": [...]
+            }
+        отображается одной строкой:
+            title | text
+        """
+
         key_translations = {
             "title": "Заголовок",
             "items": "Элементы",
@@ -153,6 +165,7 @@ class CustomerWidget(QWidget):
             "sign_link": "Ссылка на подпись",
             "sign_url": "Ссылка на подпись",
             "table_standalone": "Отдельная таблица",
+            "table standalone": "Отдельная таблица",
             "url": "Ссылка",
             "parsed_table": "Табличные данные",
             "rows": "Строки таблицы",
@@ -160,80 +173,122 @@ class CustomerWidget(QWidget):
             "doc_name": "Название документа",
             "files": "Файлы",
             "links": "Связанные ссылки",
-            "text": "Текст"
+            "text": "Текст",
+                    "Table": "Таблица"
         }
 
-        if not json_data:
+        if json_data in (None, "", [], {}):
             return
 
+        # Обработка записей kind == "kv"
+        if isinstance(json_data, dict) and json_data.get("kind") == "kv":
+            title = json_data.get("title") or "Параметр"
+            text = json_data.get("text")
+
+            item = QTreeWidgetItem(parent_item)
+            item.setText(0, str(title))
+            item.setText(1, str(text) if text not in (None, "") else "Нет данных")
+
+            font = QFont()
+            font.setPointSize(10)
+            item.setFont(0, font)
+            item.setFont(1, font)
+
+            hrefs = json_data.get("hrefs") or []
+            if hrefs:
+                url = hrefs[0]
+
+                item.setForeground(1, Qt.blue)
+
+                link_font = QFont()
+                link_font.setPointSize(10)
+                link_font.setUnderline(True)
+                item.setFont(1, link_font)
+
+                item.setData(1, Qt.UserRole, str(url))
+
+            return
+
+        # Обработка словаря
         if isinstance(json_data, dict):
             for key, value in json_data.items():
-                if key == "null" or key is None:
-                    key = "Параметр"
+                if key in ("kind", "hrefs", "all_hrefs"):
+                    continue
 
-                if key in key_translations:
-                    display_key = key_translations[key]
-                else:
-                    display_key = str(key).replace("_", " ").capitalize()
+                if key == "items":
+                    if isinstance(value, list):
+                        for item_value in value:
+                            self.add_json_to_tree(parent_item, item_value, "items")
+                    elif isinstance(value, dict):
+                        self.add_json_to_tree(parent_item, value, "items")
+                    continue
+
+                if key == "header" and parent_key:
+                    continue
+
+                if value in (None, "", [], {}):
+                    continue
+
+                display_key = key_translations.get(
+                    key,
+                    str(key).replace("_", " ").capitalize()
+                )
 
                 if isinstance(value, (dict, list)):
                     child = QTreeWidgetItem(parent_item)
                     child.setText(0, display_key)
+
                     font = QFont()
                     font.setBold(True)
                     child.setFont(0, font)
+
                     self.add_json_to_tree(child, value, key)
                 else:
-                    if key == "text":
-                        parent_item.setText(1, str(value))
-                    elif key in ("url", "sign_url", "sign_link"):
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, display_key)
-                        child.setText(1, str(value))
-                        child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
-                        child.setData(1, Qt.UserRole, str(value))
-                    elif key in ("all_hrefs", "hrefs"):
-                        pass
-                    else:
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, display_key)
-                        child.setText(1, str(value) if value is not None else "Нет данных")
+                    child = QTreeWidgetItem(parent_item)
+                    child.setText(0, display_key)
+                    child.setText(1, str(value))
 
-        elif isinstance(json_data, list):
-            for idx, item in enumerate(json_data):
-                if isinstance(item, (dict, list)):
-                    child_name = f"Запись {idx + 1}"
-                    if parent_key == "headers":
-                        child_name = f"Колонка {idx + 1}"
-                    elif parent_key in ("all_hrefs", "hrefs"):
-                        child_name = f"Ссылка {idx + 1}"
+            return
+
+        # Обработка списка
+        if isinstance(json_data, list):
+            for index, value in enumerate(json_data):
+                if isinstance(value, dict) and value.get("kind") == "kv":
+                    self.add_json_to_tree(parent_item, value, parent_key)
+                    continue
+
+                if isinstance(value, (dict, list)):
+                    if parent_key in ("rows", "rows_by_index"):
+                        item_name = f"Строка {index + 1}"
+                    elif parent_key == "headers":
+                        item_name = f"Колонка {index + 1}"
+                    else:
+                        item_name = f"Запись {index + 1}"
 
                     child = QTreeWidgetItem(parent_item)
-                    child.setText(0, child_name)
+                    child.setText(0, item_name)
 
-                    if parent_key in ("all_hrefs", "hrefs"):
-                        child.setText(1, str(item))
-                        child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
-                        child.setData(1, Qt.UserRole, str(item))
-                    else:
-                        self.add_json_to_tree(child, item, parent_key)
+                    font = QFont()
+                    font.setBold(True)
+                    child.setFont(0, font)
+
+                    self.add_json_to_tree(child, value, parent_key)
                 else:
+                    child = QTreeWidgetItem(parent_item)
+
                     if parent_key == "headers":
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Колонка {idx + 1}")
-                        child.setText(1, str(item) if item is not None else "Нет данных")
+                        child.setText(0, f"Колонка {index + 1}")
                     else:
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Элемент {idx + 1}")
-                        child.setText(1, str(item) if item is not None else "Нет данных")
-        else:
-            parent_item.setText(1, str(json_data))
+                        child.setText(0, f"Элемент {index + 1}")
+
+                    child.setText(
+                        1,
+                        str(value) if value is not None else "Нет данных"
+                    )
+
+            return
+
+        parent_item.setText(1, str(json_data))
 
     def show_current_customer(self):
         self.tree.clear()
@@ -250,7 +305,7 @@ class CustomerWidget(QWidget):
                 self.label_form.setText("Формуляр заказчика")
             self.label_form.show()
 
-            # --- 1. Основные реквизиты (развернуто) ---
+            # --- 1. Основные реквизиты (развёрнуто) ---
             self.add_section_to_table('Общие сведения', expanded=True)
             self.add_row_to_table('Идентификатор БД', current_customer.id)
             self.add_row_to_table('Наименование', current_customer.name)
@@ -261,14 +316,14 @@ class CustomerWidget(QWidget):
             self.add_row_to_table('Код заказчика', current_customer.customer_code)
             self.add_row_to_table('ID организации', current_customer.organization_id)
 
-            # --- 2. Контактная информация (свернуто) ---
+            # --- 2. Контактная информация (свёрнуто) ---
             self.add_section_to_table('Контактная информация', expanded=False)
             self.add_row_to_table('Страна', current_customer.country)
             self.add_row_to_table('Регион', current_customer.region)
             self.add_row_to_table('Город', current_customer.city)
             self.add_row_to_table('Полный адрес', current_customer.address_full)
 
-            # --- 3. Ссылки ЕИС (свернуто) ---
+            # --- 3. Ссылки ЕИС (свёрнуто) ---
             self.add_section_to_table('Ссылки и ресурсы', expanded=False)
             self.add_row_to_table('Сайт организации', current_customer.organization_url)
             self.add_row_to_table('Ссылка на закупки', current_customer.purchases_url)
@@ -276,7 +331,7 @@ class CustomerWidget(QWidget):
             self.add_row_to_table('Формуляр аккаунта', current_customer.account_card_url)
             self.add_row_to_table('Доп. информация (url)', current_customer.additional_info_url)
 
-            # --- 4. JSON Данные ---
+            # --- 4. JSON Данные (свёрнуто) ---
             json_fields = [
                 ("Вложения", current_customer.documents_card_json),
                 ("Дополнительная информация", current_customer.additional_info_json),
@@ -286,14 +341,22 @@ class CustomerWidget(QWidget):
             for section_name, json_string in json_fields:
                 self.add_section_to_table(section_name, expanded=False)
 
-                if json_string and str(json_string).strip() not in ("", "None", "-"):
+                if json_string and str(json_string).strip() not in (
+                        "", "None", "-", "[]", "{}"
+                ):
                     try:
                         parsed_json = json.loads(json_string)
                         self.add_json_to_tree(self.current_parent, parsed_json)
                     except json.JSONDecodeError:
-                        self.add_row_to_table("Данные", str(json_string))
+                        self.add_row_to_table(
+                            "Содержимое JSON",
+                            str(json_string)
+                        )
                 else:
-                    self.add_row_to_table("Данные", "Нет данных")
+                    self.add_row_to_table(
+                        "Содержимое JSON",
+                        "Нет данных"
+                    )
 
         else:
             self.label_form.setText("Нет данных")
@@ -342,8 +405,14 @@ class CustomerWidget(QWidget):
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
             if selected_file and hasattr(self, 'current_customer'):
-                # Сохраняем файл по ИНН или Названию
-                safe_name = str(self.current_customer.inn) if self.current_customer.inn else "Customer"
+                safe_name = (
+                    str(self.current_customer.inn)
+                    if self.current_customer.inn
+                    else "Customer"
+                )
                 save_path = f"{selected_file}/Customer_{safe_name}.xlsx"
                 wb.save(save_path)
-                QMessageBox.information(self, "Успех", f"Данные успешно выгружены в {save_path}")
+                QMessageBox.information(
+                    self, "Успех",
+                    f"Данные успешно выгружены в {save_path}"
+                )

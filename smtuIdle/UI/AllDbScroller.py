@@ -2,7 +2,8 @@ import sys
 
 from PySide6.QtWidgets import *
 from peewee import SqliteDatabase
-
+import re
+from datetime import datetime
 from smtuIdle.BD.models import *
 from PySide6.QtCore import Qt, QTimer, QSize,QEvent
 from PySide6.QtGui import QIcon, QFont, QKeySequence
@@ -15,6 +16,8 @@ from peewee import fn
 from locale import format_string
 import locale
 locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
+import json
+from typing import Any, Dict, List, Optional, Tuple
 
 db = SqliteDatabase('database.db')
 cursor = db.cursor()
@@ -391,30 +394,33 @@ class PurchasesWidgetAll(QWidget):
         layout = QVBoxLayout(tab)
 
         self.table_cont = QTableWidget(self)
-        self.table_cont.setColumnCount(18)
+        self.table_cont.setColumnCount(19)  # было 17
         column_headers = [
-            "№ПП",
-            "Закон",
-            "Номер закупки",
-            "Номер контракта",
-            "Дата начала до изм.",
-            "Дата начала действ.",
-            "Дата окончания до изм.",
-            "Дата окончания действ.",
-            "Разница сроков, мес.",
-            "Цена до изменения",
-            "Цена действующая",
-            "Разница с ценой до изменения",
-            "НМЦК",
-            "Разница с НМЦК",
-            "Изменение цены контракта %",
-            "Заказчик по контракту",
-            "Исполнитель",
-            "Наименование закупки",
+            "№ПП",  # 0
+            "Закон",  # 1
+            "Номер закупки",  # 2
+            "Номер контракта",  # 3
+            "Дата заключения доп соглашения",  # 4
+            "Дата окончания до изм.",  # 5
+            "Дата окончания действ.",  # 6
+            "Разница сроков, мес.",  # 7
+            "Цена до изменения",  # 8
+            "Цена действующая",  # 9
+            "Разница с ценой до изменения",  # 10
+            "НМЦК",  # 11
+            "Разница с НМЦК",  # 12
+            "Снижение %",  # 13
+            "Аванс",  # 17
+            "Штрафы",  # 18
+            "Заказчик по контракту",  # 14
+            "Исполнитель",  # 15
+            "Наименование закупки",  # 16
+
         ]
+
         self.table_cont.setHorizontalHeaderLabels(column_headers)
         self.table_cont.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        for col in (15, 16, 17):
+        for col in (16, 17, 18):
             self.table_cont.horizontalHeader().setSectionResizeMode(col, QHeaderView.Fixed)
             self.table_cont.setColumnWidth(col, 400)
         self.table_cont.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -1008,55 +1014,76 @@ class PurchasesWidgetAll(QWidget):
             self.FilterDateContract.setIcon(QIcon("../Pics/arrow-down.png"))
         else:
             self.FilterDateContract.setIcon(QIcon("../Pics/right-arrow.png"))
+
     def show_all_purchases(self):
-      
-    # Очищаем таблицу перед добавлением новых данных
+        # Очищаем таблицу перед добавлением новых данных
         self.table.setRowCount(0)
         self.label.setText(f"Всего записей {len(self.purchases_list)}")
+
         if len(self.purchases_list) != 0:
             for current_position, current_purchase in enumerate(self.purchases_list):
                 # Добавляем новую строку для каждой записи
                 self.table.insertRow(current_position)
-                initial_price =  format_string("%.0f", current_purchase.InitialMaxContractPriceInCurrency, grouping=True)
-                # Добавляем данные в каждую ячейку для текущей записи
-                for col, value in enumerate([current_purchase.Id, current_purchase.PurchaseOrder, current_purchase.RegistryNumber,str(current_purchase.PlacementDate)
-                                             , current_purchase.PurchaseName,current_purchase.AuctionSubject,
-                                             initial_price, "RUB",
-                                              current_purchase.CustomerName
-                                             ]):
+
+                initial_price = format_string(
+                    "%.0f",
+                    current_purchase.InitialMaxContractPriceInCurrency or current_purchase.InitialMaxContractPrice or 0,
+                    grouping=True
+                )
+
+                # Формируем значения: порядковый номер вместо ID
+                values = [
+                    current_position + 1,  # №ПП — порядковый номер (1, 2, 3...)
+                    current_purchase.PurchaseOrder,
+                    current_purchase.RegistryNumber,
+                    str(current_purchase.PlacementDate),
+                    current_purchase.PurchaseName,
+                    current_purchase.LotName,
+                    initial_price,
+                    "RUB",  # валюта
+                    current_purchase.CustomerName,
+                ]
+
+                # Сначала заполняем основные колонки (0-8)
+                for col, value in enumerate(values):
                     item = QTableWidgetItem(str(value))
-
-                    contract = (Contract
-                                .select()
-                                .where(Contract.purchase == current_purchase.Id)
-                                .first())
-                    if contract is None and current_purchase.RegistryNumber:
-                        contract = (Contract
-                                    .select()
-                                    .where(Contract.RegistryNumber == current_purchase.RegistryNumber)
-                                    .first())
-
-                    if contract:
-                        contract_item = QTableWidgetItem("✅")
-                        contract_item.setFlags(contract_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
-                        contract_item.setTextAlignment(Qt.AlignCenter)
-                        contract_item.setData(Qt.UserRole, contract.Id)
-                        self.table.setItem(current_position, 9, contract_item)
-                    else:
-                        empty_item = QTableWidgetItem("❌")
-                        empty_item.setFlags(empty_item.flags() & ~Qt.ItemIsEnabled)
-                        empty_item.setTextAlignment(Qt.AlignCenter)
-                        empty_item.setForeground(Qt.gray)
-                        self.table.setItem(current_position, 9, empty_item)
                     item.setFlags(item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
                     item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
-                    # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
                     self.table.setItem(current_position, col, item)
-                    if col == 6:  # Индексация колонок начинается с 0
+
+                    if col == 6:  # НМЦК — выравнивание вправо
                         item.setTextAlignment(Qt.AlignRight | Qt.AlignTop)
-                    # Устанавливаем перенос текста в ячейке путем увеличения высоты строки
-                    self.table.setRowHeight(current_position, self.table.rowHeight(current_position) + 3)  # Увеличиваем высоту строки                        
-                    # Добавляем данные в виде "название поля    - значение поля" для каждой колонки
+
+                # Затем добавляем колонку 9 — ссылка на контракт
+                contract = (
+                    Contract
+                    .select()
+                    .where(Contract.purchase == current_purchase.Id)
+                    .first()
+                )
+                if contract is None and current_purchase.RegistryNumber:
+                    contract = (
+                        Contract
+                        .select()
+                        .where(Contract.RegistryNumber == current_purchase.RegistryNumber)
+                        .first()
+                    )
+
+                if contract:
+                    contract_item = QTableWidgetItem("✅")
+                    contract_item.setFlags(contract_item.flags() | Qt.ItemIsSelectable | Qt.ItemIsEnabled)
+                    contract_item.setTextAlignment(Qt.AlignCenter)
+                    contract_item.setData(Qt.UserRole, contract.Id)
+                    self.table.setItem(current_position, 9, contract_item)
+                else:
+                    empty_item = QTableWidgetItem("❌")
+                    empty_item.setFlags(empty_item.flags() & ~Qt.ItemIsEnabled)
+                    empty_item.setTextAlignment(Qt.AlignCenter)
+                    empty_item.setForeground(Qt.gray)
+                    self.table.setItem(current_position, 9, empty_item)
+
+                # Увеличиваем высоту строки для переноса текста
+                self.table.setRowHeight(current_position, self.table.rowHeight(current_position) + 3)
         else:
             self.label.setText("Нет записей")
 
@@ -1072,15 +1099,16 @@ class PurchasesWidgetAll(QWidget):
             initial_price = self.parse_float_safe(initial_version.contract_price) if initial_version else None
             current_price = c.ContractPrice if c.ContractPrice is not None else None
 
-            initial_start = self.parse_date_safe(initial_version.date_contract_signed) if initial_version else None
-            current_start = self.parse_date_safe(c.StartDate)
-
             initial_end = self.parse_date_safe(initial_version.date_execution_due) if initial_version else None
             current_end = self.parse_date_safe(c.EndDate)
 
             months_diff = self.months_diff_safe(initial_end, current_end) if initial_end and current_end else None
 
-            nmck = c.purchase.InitialMaxContractPriceInCurrency if c.purchase and c.purchase.InitialMaxContractPriceInCurrency is not None else None
+            nmck = (
+                c.purchase.InitialMaxContractPriceInCurrency
+                if c.purchase and c.purchase.InitialMaxContractPriceInCurrency is not None
+                else None
+            )
 
             diff_initial = (
                 current_price - initial_price
@@ -1104,45 +1132,56 @@ class PurchasesWidgetAll(QWidget):
                 format_string("%.0f", initial_price, grouping=True)
                 if initial_price is not None else "—"
             )
+
             current_price_str = (
                 format_string("%.0f", current_price, grouping=True)
                 if current_price is not None else "—"
             )
+
             diff_initial_str = (
                 format_string("%.0f", diff_initial, grouping=True)
                 if diff_initial is not None else "—"
             )
+
             nmck_str = (
                 format_string("%.0f", nmck, grouping=True)
                 if nmck is not None else "—"
             )
+
             diff_nmck_str = (
                 format_string("%.0f", diff_nmck, grouping=True)
                 if diff_nmck is not None else "—"
             )
+
             reduction_str = f"{reduction:+.2f}%" if reduction is not None else "—"
 
             executor_name = self.get_contract_executor(c)
 
+            # Новая дата из последней версии
+            latest_version_date = self.get_latest_version_date(c)
+            latest_version_date_str = str(latest_version_date) if latest_version_date else "—"
+
+            # Порядок значений строго соответствует column_headers
             values = [
-                c.Id,
-                c.purchase.PurchaseOrder if c.purchase else "—",
-                c.purchase.RegistryNumber if c.purchase else "—",
-                c.ContractNumber or "—",
-                str(initial_start) if initial_start else "—",
-                str(current_start) if current_start else "—",
-                str(initial_end) if initial_end else "—",
-                str(current_end) if current_end else "—",
-                str(months_diff) if months_diff is not None else "—",
-                initial_price_str,
-                current_price_str,
-                diff_initial_str,
-                nmck_str,
-                diff_nmck_str,
-                reduction_str,
-                c.ContractingAuthority or "—",
-                executor_name,
-                c.purchase.PurchaseName if c.purchase else "—",
+                i + 1,  # 0 — №ПП — порядковый номер (1, 2, 3...)
+                c.purchase.PurchaseOrder if c.purchase else "—",  # 1 — Закон
+                c.purchase.RegistryNumber if c.purchase else "—",  # 2 — Номер закупки
+                c.ContractNumber or "—",  # 3 — Номер контракта
+                latest_version_date_str,  # 4 — Дата заключения доп соглашения
+                str(initial_end) if initial_end else "—",  # 5 — Дата окончания до изм.
+                str(current_end) if current_end else "—",  # 6 — Дата окончания действ.
+                str(months_diff) if months_diff is not None else "—",  # 7 — Разница сроков, мес.
+                initial_price_str,  # 8 — Цена до изменения
+                current_price_str,  # 9 — Цена действующая
+                diff_initial_str,  # 10 — Разница с ценой до изменения
+                nmck_str,  # 11 — НМЦК
+                diff_nmck_str,  # 12 — Разница с НМЦК
+                reduction_str,  # 13 — Снижение %
+                "✅" if self.has_advance(c) else "—",  # 14 — Аванс
+                "✅" if self.has_penalty(c) else "—",  # 15 — Штрафы
+                c.ContractingAuthority or "—",  # 16 — Заказчик по контракту
+                executor_name,  # 17 — Исполнитель
+                c.purchase.PurchaseName if c.purchase else "—",  # 18 — Наименование закупки
             ]
 
             for col, val in enumerate(values):
@@ -1151,8 +1190,13 @@ class PurchasesWidgetAll(QWidget):
                 item.setTextAlignment(Qt.AlignTop | Qt.AlignLeft)
                 self.table_cont.setItem(i, col, item)
 
-                if col in (9, 10, 11, 12, 13, 14):
+                # Выравнивание числовых колонок вправо
+                if col in (8, 9, 10, 11, 12, 13):
                     item.setTextAlignment(Qt.AlignRight | Qt.AlignTop)
+
+                # Выравнивание колонок Аванс и Штрафы по центру
+                if col in (14, 15):
+                    item.setTextAlignment(Qt.AlignCenter)
 
             self.table_cont.setRowHeight(i, self.table_cont.rowHeight(i) + 3)
     def highlight_apply_filter_button(self):
@@ -1426,7 +1470,7 @@ class PurchasesWidgetAll(QWidget):
         self.reload_data_cont()
 
     def handle_cell_click(self, row, column):
-        selected_id = self.table.item(row, 0).text()
+        selected_id = self.purchases_list[row].Id
 
         # Используем единую функцию маршрутизации из MainWindow (окно 2 - закупки)
         self.window.navigate_to_page(2)
@@ -1443,7 +1487,7 @@ class PurchasesWidgetAll(QWidget):
         self.window.purchaseViewer.reload_data_id(selected_id)
 
     def handle_cell_click_contract(self, row, column):
-        selected_id = self.table_cont.item(row, 0).text()
+        selected_id = self.contracts_list[row].Id
 
         # Используем единую функцию маршрутизации из MainWindow (окно 8 - контракты)
         self.window.navigate_to_page(8)
@@ -1673,15 +1717,15 @@ class PurchasesWidgetAll(QWidget):
                     self.purchases
                     .select(Purchase.Id, Purchase.PurchaseOrder, Purchase.RegistryNumber, Purchase.ProcurementMethod,
         Purchase.PurchaseName, Purchase.AuctionSubject, Purchase.PurchaseIdentificationCode,
-        Purchase.LotNumber, Purchase.LotName, Purchase.InitialMaxContractPriceInCurrency,
-        Purchase.InitialMaxContractPriceInCurrencyInCurrency, Purchase.ContractCurrency,
+        Purchase.LotNumber, Purchase.LotName, Purchase.InitialMaxContractPrice,
+        Purchase.InitialMaxContractPriceInCurrency, Purchase.ContractCurrency,
         Purchase.OKDPClassification, Purchase.OKPDClassification, Purchase.OKPD2Classification,
         Purchase.PositionCode, Purchase.CustomerName, Purchase.ProcurementOrganization,
         Purchase.PlacementDate, Purchase.UpdateDate, Purchase.ProcurementStage,
         Purchase.ProcurementFeatures, Purchase.ApplicationStartDate, Purchase.ApplicationEndDate,
         Purchase.AuctionDate, Purchase.QueryCount, Purchase.ResponseCount, Purchase.AveragePrice,
         Purchase.MinPrice, Purchase.MaxPrice, Purchase.StandardDeviation, Purchase.CoefficientOfVariation,
-        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceInCurrencyOld,
+        Purchase.TKPData, Purchase.NMCKMarket, Purchase.FinancingLimit, Purchase.InitialMaxContractPriceOld,
         Purchase.notification_link,Purchase.quantity_units,Purchase.nmck_per_unit,
         
         Contract.TotalApplications, Contract.AdmittedApplications, Contract.RejectedApplications,
@@ -1711,24 +1755,167 @@ class PurchasesWidgetAll(QWidget):
                     QMessageBox.warning(self, "Ошибка", "Ошибка записи")
             else:
                 QMessageBox.warning(self, "Предупреждение", "Не выбран файл для сохранения")
-           
-    def export_to_excel_clicked_contract(self ):
-        
+
+    def has_advance(self, contract):
+        """Проверяет, есть ли аванс в common_info_json контракта."""
+        if not contract.common_info_json:
+            return False
+
+        try:
+            data = json.loads(contract.common_info_json) if isinstance(contract.common_info_json,
+                                                                       str) else contract.common_info_json
+        except (json.JSONDecodeError, TypeError):
+            return False
+
+        # Приводим к строке для простого поиска
+        text = json.dumps(data, ensure_ascii=False).lower()
+        return "размер аванса" in text or "аванс" in text
+
+    def has_penalty(self, contract):
+        """
+        Проверяет, есть ли реальная сумма штрафа/пени в последней версии контракта.
+        Ищет в process_info_json и common_info_json:
+        1. Секцию "информация_о_начислении_неустоек_штрафов_пеней" с суммами
+        2. Поле "НЕУСТОЙКИ (ШТРАФЫ, ПЕНИ)" с числовым значением
+        """
+        # Берём последнюю версию контракта
+        versions = (
+            ContractVersion
+            .select(ContractVersion.process_info_json, ContractVersion.common_info_json, ContractVersion.version)
+            .where(ContractVersion.contract == contract)
+        )
+
+        # Находим последнюю версию по номеру
+        pattern = re.compile(r"Версия\s*№?\s*(\d+)\s+от\s+(\d{2}\.\d{2}\.\d{4})", re.IGNORECASE)
+        best_num = -1
+        best_version = None
+
+        for v in versions:
+            if not v.version:
+                continue
+            m = pattern.search(v.version)
+            if m:
+                num = int(m.group(1))
+                if num > best_num:
+                    best_num = num
+                    best_version = v
+
+        if not best_version:
+            best_version = versions.order_by(ContractVersion.id.desc()).first()
+
+        if not best_version:
+            return False
+
+        # Проверяем оба поля
+        for field in (best_version.process_info_json, best_version.common_info_json):
+            if not field:
+                continue
+            try:
+                data = json.loads(field) if isinstance(field, str) else field
+            except (json.JSONDecodeError, TypeError):
+                continue
+
+            # 1. Ищем секцию "информация_о_начислении_неустоек_штрафов_пеней"
+            penalty_info = data.get("информация_о_начислении_неустоек_штрафов_пеней")
+            if penalty_info and isinstance(penalty_info, dict):
+                items = penalty_info.get("items", [])
+                if isinstance(items, list) and len(items) > 0:
+                    for item in items:
+                        if isinstance(item, dict) and "table" in item:
+                            table = item["table"]
+                            if isinstance(table, dict):
+                                rows = table.get("rows", [])
+                                if isinstance(rows, list):
+                                    for row in rows:
+                                        if isinstance(row, dict):
+                                            # Проверяем поля с суммами
+                                            for key in ("ОПЛАЧЕНО, ₽", "НАЧИСЛЕНО, ₽"):
+                                                value = row.get(key)
+                                                if value:
+                                                    if self._is_real_penalty_value(value):
+                                                        return True
+
+            # 2. Ищем поле "НЕУСТОЙКИ (ШТРАФЫ, ПЕНИ)" или похожие
+            penalty_value = self._find_penalty_value(data)
+            if penalty_value is not None:
+                if self._is_real_penalty_value(penalty_value):
+                    return True
+
+        return False
+
+    def _is_real_penalty_value(self, value):
+        """
+        Проверяет, является ли значение реальной суммой штрафа.
+        Возвращает True, если это число > 0 или строка с цифрами (не "Нет", "Да", пустая строка).
+        """
+        if value is None:
+            return False
+
+        if isinstance(value, (int, float)):
+            return value > 0
+
+        if isinstance(value, str):
+            value_clean = value.strip().lower()
+            # Отсекаем явно нечисловые значения
+            if value_clean in ("нет", "да", "null", "none", "", "претензия", "претензия №"):
+                return False
+
+            # Проверяем, есть ли цифры в строке
+            digits = ''.join(ch for ch in value_clean if ch.isdigit())
+            if digits:
+                # Пытаемся распарсить как число
+                try:
+                    # Заменяем запятую на точку для парсинга
+                    value_normalized = value_clean.replace(",", ".").replace(" ", "")
+                    num = float(value_normalized)
+                    return num > 0
+                except ValueError:
+                    # Если не распарсилось как число, но есть цифры — считаем за штраф
+                    return True
+
+        return False
+
+    def _find_penalty_value(self, data, depth=0):
+        """
+        Рекурсивно ищет в JSON-структуре поле, связанное со штрафами.
+        Возвращает значение этого поля, если найдено, иначе None.
+        """
+        if depth > 10:
+            return None
+
+        if isinstance(data, dict):
+            for key, value in data.items():
+                key_lower = key.lower()
+                if "неустойк" in key_lower or "штраф" in key_lower or "пен" in key_lower:
+                    return value
+                result = self._find_penalty_value(value, depth + 1)
+                if result is not None:
+                    return result
+
+        elif isinstance(data, list):
+            for item in data:
+                result = self._find_penalty_value(item, depth + 1)
+                if result is not None:
+                    return result
+
+        return None
+
+    def export_to_excel_clicked_contract(self):
         current_sort_option = self.sort_options_contract.currentText()
-        sort_options  = current_sort_option if current_sort_option is not None  else None
-        min_date = self.min_data_input_contrac.date().toPython() if self.min_data_input_contrac.date().toPython() is not None  else None
-        max_date = self.max_data_input_contrac.date().toPython() if self.max_data_input_contrac.date().toPython() is not None  else None
-        min_price = self.min_price_input_contrac.text() if self.min_price_input_contrac.text() is not None  else None
-        max_price = self.max_price_input_contrac.text()  if self.max_price_input_contrac.text() is not None  else None
-      
+        sort_options = current_sort_option if current_sort_option is not None else None
+        min_date = self.min_data_input_contrac.date().toPython() if self.min_data_input_contrac.date().toPython() is not None else None
+        max_date = self.max_data_input_contrac.date().toPython() if self.max_data_input_contrac.date().toPython() is not None else None
+        min_price = self.min_price_input_contrac.text() if self.min_price_input_contrac.text() is not None else None
+        max_price = self.max_price_input_contrac.text() if self.max_price_input_contrac.text() is not None else None
+
         filters = {
-        'filter_criteria': sort_options ,
-        'start_date': min_date,
-        'end_date': max_date,
-        'min_price': min_price,
-        'max_price': max_price,
-        
-    }
+            'filter_criteria': sort_options,
+            'start_date': min_date,
+            'end_date': max_date,
+            'min_price': min_price,
+            'max_price': max_price,
+        }
+
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.Directory)
 
@@ -1736,12 +1923,22 @@ class PurchasesWidgetAll(QWidget):
             selected_file = file_dialog.selectedFiles()[0]
             selected_file = selected_file if selected_file else None
             if selected_file:
-
                 records, data, user = self.main_window.return_variabels()
-                # cleaned_filename = data.sub(r'[\\/*?:"<>| ]', '_', data)
-                self.data = list(self.contracts.dicts())
-                # print(self.data[0])
-                if export_to_excel_contract(self.data ,f'{selected_file}/Отфильтрованные данные_контракты__{data}_{records}_{user}.xlsx',filters=filters ) == True:
+                # Используем уже отфильтрованный список контрактов
+                if hasattr(self, 'contracts_query') and self.contracts_query is not None:
+                    self.data = list(self.contracts_query.dicts())
+                else:
+                    # Если contracts_query нет, конвертируем список объектов в словари
+                    self.data = [
+                        {
+                            field_name: getattr(contract, field_name, '')
+                            for field_name, field in Contract._meta.fields.items()
+                        }
+                        for contract in self.contracts_list
+                    ]
+                if export_to_excel_contract(self.data,
+                                            f'{selected_file}/Отфильтрованные данные_контракты__{data}_{records}_{user}.xlsx',
+                                            filters=filters) == True:
                     QMessageBox.warning(self, "Успех", "Файл успешно сохранен")
                 else:
                     QMessageBox.warning(self, "Ошибка", "Ошибка записи")
@@ -1845,6 +2042,38 @@ class PurchasesWidgetAll(QWidget):
             .first()
         )
 
+    def get_latest_version_date(self, contract):
+        # contract — это объект Contract, у него есть contract.id
+        versions = (
+            ContractVersion
+            .select(ContractVersion.version)
+            .where(ContractVersion.contract == contract)
+        )
+
+        pattern = re.compile(
+            r"Версия\s*№?\s*(\d+)\s+от\s+(\d{2}\.\d{2}\.\d{4})",
+            re.IGNORECASE
+        )
+        best_num = -1
+        best_date_str = None
+
+        for v in versions:
+            if not v.version:
+                continue
+            m = pattern.search(v.version)
+            if m:
+                num = int(m.group(1))
+                if num > best_num:
+                    best_num = num
+                    best_date_str = m.group(2)
+
+        if not best_date_str:
+            return None
+
+        try:
+            return datetime.strptime(best_date_str, "%d.%m.%Y").date()
+        except ValueError:
+            return None
     def return_filtered_contracts(self):
         # Возвращает уже отфильтрованный список контрактов (после apply_filter_contract)
         return self.contracts_list

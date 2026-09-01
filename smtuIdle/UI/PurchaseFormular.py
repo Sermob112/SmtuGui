@@ -180,8 +180,10 @@ class PurchasesWidget(QWidget):
     def show_current_purchase(self):
         self.tree.clear()
         self.current_parent = None
+
         if not self.purchases:
             return
+
         if len(self.purchases_list) != 0:
             current_purchase = self.purchases_list[self.current_position]
             self.current_purchase = current_purchase
@@ -192,164 +194,496 @@ class PurchasesWidget(QWidget):
                 self.label_form.setText("Формуляр закупки")
             self.label_form.show()
 
+            # =========================
+            # 0. ОБЩИЕ СВЕДЕНИЯ
+            # =========================
             self.add_section_to_table('Общие сведения', expanded=True)
-            self.add_row_to_table("№ПП", str(current_purchase.Id))
-            self.add_row_to_table("Закон",
-                                  current_purchase.PurchaseOrder if current_purchase.PurchaseOrder else "Нет данных")
-            self.add_row_to_table("Реестровый номер",
-                                  current_purchase.RegistryNumber if current_purchase.RegistryNumber else "Нет данных")
-            self.add_row_to_table("Метод закупки",
-                                  current_purchase.ProcurementMethod if current_purchase.ProcurementMethod else "Нет данных")
-            self.add_row_to_table("Наименование закупки",
-                                  current_purchase.PurchaseName if current_purchase.PurchaseName else "Нет данных")
-            self.add_row_to_table("Предмет аукциона",
-                                  current_purchase.AuctionSubject if current_purchase.AuctionSubject else "Нет данных")
-            self.add_row_to_table("Код идентификации закупки",
-                                  current_purchase.PurchaseIdentificationCode if current_purchase.PurchaseIdentificationCode else "Нет данных")
-            self.add_row_to_table("Номер лота",
-                                  str(current_purchase.LotNumber) if current_purchase.LotNumber is not None else "Нет данных")
-            self.add_row_to_table("Наименование лота",
-                                  current_purchase.LotName if current_purchase.LotName else "Нет данных")
-            self.add_row_to_table("Начальная максимальная цена контракта",
-                                  format_string("%.0f", current_purchase.InitialMaxContractPrice,
-                                                grouping=True) + self.symbol if current_purchase.InitialMaxContractPrice is not None else "Нет данных")
-            self.add_row_to_table("Валюта", current_purchase.Currency if current_purchase.Currency else "Нет данных")
-            self.add_row_to_table("Начальная максимальная цена контракта в валюте",
-                                  str(current_purchase.InitialMaxContractPriceInCurrency) if current_purchase.InitialMaxContractPriceInCurrency is not None else "Нет данных")
-            self.add_row_to_table("Количество единиц",
-                                  str(current_purchase.quantity_units) if current_purchase.quantity_units is not None else "Нет данных")
-            self.add_row_to_table("НМЦК за единицу", format_string("%.0f", current_purchase.nmck_per_unit,
-                                                                   grouping=True) + self.symbol if current_purchase.nmck_per_unit is not None else "Нет данных")
-            self.add_row_to_table("Валюта контракта",
-                                  current_purchase.ContractCurrency if current_purchase.ContractCurrency else "Нет данных")
-            self.add_row_to_table("Классификация ОКДП",
-                                  current_purchase.OKDPClassification if current_purchase.OKDPClassification else "Нет данных")
-            self.add_row_to_table("Классификация ОКПД",
-                                  current_purchase.OKPDClassification if current_purchase.OKPDClassification else "Нет данных")
-            self.add_row_to_table("Классификация ОКПД2",
-                                  current_purchase.OKPD2Classification if current_purchase.OKPD2Classification else "Нет данных")
-            self.add_row_to_table("Код позиции",
-                                  current_purchase.PositionCode if current_purchase.PositionCode else "Нет данных")
-            self.add_row_to_table("Наименование заказчика",
-                                  current_purchase.CustomerName if current_purchase.CustomerName else "Нет данных")
-            self.add_row_to_table("Организация закупки",
-                                  current_purchase.ProcurementOrganization if current_purchase.ProcurementOrganization else "Нет данных")
-            self.add_row_to_table("Дата размещения",
-                                  str(current_purchase.PlacementDate) if current_purchase.PlacementDate else "Нет данных")
-            self.add_row_to_table("Дата обновления",
-                                  str(current_purchase.UpdateDate) if current_purchase.UpdateDate else "Нет данных")
-            self.add_row_to_table("Этап закупки",
-                                  current_purchase.ProcurementStage if current_purchase.ProcurementStage else "Нет данных")
-            self.add_row_to_table("Особенности закупки",
-                                  current_purchase.ProcurementFeatures if current_purchase.ProcurementFeatures else "Нет данных")
-            self.add_row_to_table("Дата начала заявки",
-                                  str(current_purchase.ApplicationStartDate) if current_purchase.ApplicationStartDate else "Нет данных")
-            self.add_row_to_table("Дата окончания заявки",
-                                  str(current_purchase.ApplicationEndDate) if current_purchase.ApplicationEndDate else "Нет данных")
-            self.add_row_to_table("Дата аукциона",
-                                  str(current_purchase.AuctionDate) if current_purchase.AuctionDate else "Нет данных")
-            self.add_row_to_table("Извещение о закупке",
-                                  str(current_purchase.notification_link) if current_purchase.notification_link else "Нет данных")
-            self.add_row_to_table("Файл НМЦК",
-                                  str(current_purchase.nmck_file) if current_purchase.nmck_file else "Нет данных")
-            self.add_row_to_table("Файл протокола",
-                                  str(current_purchase.protocol_file) if current_purchase.protocol_file else "Нет данных")
 
-            self.add_section_to_table("Определение НМЦК и ЦКЕИ")
-            self.add_section_to_table("1.Определение НМЦК методом сопоставимых рыночных цен")
-            if current_purchase.TKPData and str(current_purchase.TKPData).strip() not in ("", "None", "-", "[]", "{}"):
+            self.add_row_to_table("№ПП", str(current_purchase.Id))
+            self.add_row_to_table(
+                "Закон",
+                current_purchase.PurchaseOrder if current_purchase.PurchaseOrder else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Реестровый номер",
+                current_purchase.RegistryNumber if current_purchase.RegistryNumber else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Метод закупки",
+                current_purchase.ProcurementMethod if current_purchase.ProcurementMethod else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Наименование закупки",
+                current_purchase.PurchaseName if current_purchase.PurchaseName else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Предмет аукциона",
+                current_purchase.AuctionSubject if current_purchase.AuctionSubject else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Код идентификации закупки",
+                current_purchase.PurchaseIdentificationCode
+                if current_purchase.PurchaseIdentificationCode else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Номер лота",
+                str(current_purchase.LotNumber) if current_purchase.LotNumber is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Наименование лота",
+                current_purchase.LotName if current_purchase.LotName else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Начальная максимальная цена контракта",
+                format_string(
+                    "%.0f",
+                    current_purchase.InitialMaxContractPrice,
+                    grouping=True
+                ) + self.symbol
+                if current_purchase.InitialMaxContractPrice is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Валюта",
+                current_purchase.Currency if current_purchase.Currency else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Начальная максимальная цена контракта в валюте",
+                str(current_purchase.InitialMaxContractPriceInCurrency)
+                if current_purchase.InitialMaxContractPriceInCurrency is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Количество единиц",
+                str(current_purchase.quantity_units)
+                if current_purchase.quantity_units is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "НМЦК за единицу",
+                format_string(
+                    "%.0f",
+                    current_purchase.nmck_per_unit,
+                    grouping=True
+                ) + self.symbol
+                if current_purchase.nmck_per_unit is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Валюта контракта",
+                current_purchase.ContractCurrency
+                if current_purchase.ContractCurrency else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Классификация ОКДП",
+                current_purchase.OKDPClassification
+                if current_purchase.OKDPClassification else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Классификация ОКПД",
+                current_purchase.OKPDClassification
+                if current_purchase.OKPDClassification else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Классификация ОКПД2",
+                current_purchase.OKPD2Classification
+                if current_purchase.OKPD2Classification else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Код позиции",
+                current_purchase.PositionCode
+                if current_purchase.PositionCode else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Наименование заказчика",
+                current_purchase.CustomerName
+                if current_purchase.CustomerName else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Организация закупки",
+                current_purchase.ProcurementOrganization
+                if current_purchase.ProcurementOrganization else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Дата размещения",
+                str(current_purchase.PlacementDate)
+                if current_purchase.PlacementDate else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Дата обновления",
+                str(current_purchase.UpdateDate)
+                if current_purchase.UpdateDate else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Этап закупки",
+                current_purchase.ProcurementStage
+                if current_purchase.ProcurementStage else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Особенности закупки",
+                current_purchase.ProcurementFeatures
+                if current_purchase.ProcurementFeatures else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Дата начала заявки",
+                str(current_purchase.ApplicationStartDate)
+                if current_purchase.ApplicationStartDate else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Дата окончания заявки",
+                str(current_purchase.ApplicationEndDate)
+                if current_purchase.ApplicationEndDate else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Дата аукциона",
+                str(current_purchase.AuctionDate)
+                if current_purchase.AuctionDate else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Извещение о закупке",
+                str(current_purchase.notification_link)
+                if current_purchase.notification_link else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Файл НМЦК",
+                str(current_purchase.nmck_file)
+                if current_purchase.nmck_file else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Файл протокола",
+                str(current_purchase.protocol_file)
+                if current_purchase.protocol_file else "Нет данных"
+            )
+
+            # =========================
+            # 1. ОПРЕДЕЛЕНИЕ НМЦК И ЦКЕИ (заголовок группы)
+            # =========================
+            self.add_section_to_table("Определение НМЦК и ЦКЕИ", expanded=True)
+
+            # =========================
+            # 1.1 Метод сопоставимых рыночных цен
+            # =========================
+            self.add_section_to_table(
+                "1.Определение НМЦК методом сопоставимых рыночных цен",
+                expanded=False
+            )
+
+            # ТКП
+            if current_purchase.TKPData and str(current_purchase.TKPData).strip() not in (
+                    "", "None", "-", "[]", "{}"
+            ):
                 try:
                     tkp_parsed = json.loads(current_purchase.TKPData)
-                    node = QTreeWidgetItem(self.current_parent)
-                    node.setText(0, "ТКП")
-                    self.add_json_to_tree(node, tkp_parsed)
+                    self.add_json_to_tree(self.current_parent, tkp_parsed)
                 except json.JSONDecodeError:
                     self.add_row_to_table("ТКП", str(current_purchase.TKPData))
             else:
                 self.add_row_to_table("ТКП", "Нет данных")
-            self.add_row_to_table("Количество запросов",
-                                  str(current_purchase.QueryCount) if current_purchase.QueryCount is not None else "Нет данных")
-            self.add_row_to_table("Количество ответов",
-                                  str(current_purchase.ResponseCount) if current_purchase.ResponseCount is not None else "Нет данных")
-            self.add_row_to_table("Среднее значение цены", format_string("%.0f", current_purchase.AveragePrice,
-                                                                         grouping=True) + self.symbol if current_purchase.AveragePrice is not None else "Нет данных")
-            self.add_row_to_table("Минимальная цена", format_string("%.0f", current_purchase.MinPrice,
-                                                                    grouping=True) + self.symbol if current_purchase.MinPrice is not None else "Нет данных")
-            self.add_row_to_table("Максимальная цена", format_string("%.0f", current_purchase.MaxPrice,
-                                                                     grouping=True) + self.symbol if current_purchase.MaxPrice is not None else "Нет данных")
-            self.add_row_to_table("Среднее квадратичное отклонение",
-                                  format_string("%.0f", current_purchase.StandardDeviation,
-                                                grouping=True) + self.symbol if current_purchase.StandardDeviation is not None else "Нет данных")
-            self.add_row_to_table("Коэффициент вариации %",
-                                  format_string("%.0f", current_purchase.CoefficientOfVariation * 100,
-                                                grouping=True) + ' %' if current_purchase.CoefficientOfVariation is not None else "Нет данных")
-            self.add_row_to_table("НМЦК рыночная", format_string("%.0f", current_purchase.NMCKMarket,
-                                                                 grouping=True) + self.symbol if current_purchase.NMCKMarket is not None else "Нет данных")
-            self.add_row_to_table("Лимит финансирования", format_string("%.0f", current_purchase.FinancingLimit,
-                                                                        grouping=True) + self.symbol if current_purchase.FinancingLimit is not None else "Нет данных")
 
+            self.add_row_to_table(
+                "Количество запросов",
+                str(current_purchase.QueryCount)
+                if current_purchase.QueryCount is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Количество ответов",
+                str(current_purchase.ResponseCount)
+                if current_purchase.ResponseCount is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Среднее значение цены",
+                format_string(
+                    "%.0f",
+                    current_purchase.AveragePrice,
+                    grouping=True
+                ) + self.symbol
+                if current_purchase.AveragePrice is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Минимальная цена",
+                format_string(
+                    "%.0f",
+                    current_purchase.MinPrice,
+                    grouping=True
+                ) + self.symbol
+                if current_purchase.MinPrice is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Максимальная цена",
+                format_string(
+                    "%.0f",
+                    current_purchase.MaxPrice,
+                    grouping=True
+                ) + self.symbol
+                if current_purchase.MaxPrice is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Среднее квадратичное отклонение",
+                format_string(
+                    "%.0f",
+                    current_purchase.StandardDeviation,
+                    grouping=True
+                ) + self.symbol
+                if current_purchase.StandardDeviation is not None else "Нет данных"
+            )
+
+            # Коэффициент вариации (%)
+            coef_var = (
+                current_purchase.CoefficientOfVariation * 100
+                if current_purchase.CoefficientOfVariation is not None
+                else None
+            )
+            self.add_row_to_table(
+                "Коэффициент вариации %",
+                f"{coef_var:.2f} %"
+                if coef_var is not None else "Нет данных"
+            )
+
+            self.add_row_to_table(
+                "НМЦК рыночная",
+                format_string(
+                    "%.0f",
+                    current_purchase.NMCKMarket,
+                    grouping=True
+                ) + self.symbol
+                if current_purchase.NMCKMarket is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Лимит финансирования",
+                format_string(
+                    "%.0f",
+                    current_purchase.FinancingLimit,
+                    grouping=True
+                ) + self.symbol
+                if current_purchase.FinancingLimit is not None else "Нет данных"
+            )
+
+            # --- NMCK_1, NMCK_2, NMCK_3 ---
+            def add_nmck_field(field_value, label):
+                if field_value and str(field_value).strip() not in ("", "None", "-", "[]", "{}"):
+                    try:
+                        parsed = json.loads(field_value)
+
+                        sub_header = QTreeWidgetItem(self.current_parent)
+                        sub_header.setText(0, label)
+                        sub_header.setFirstColumnSpanned(True)
+
+                        font = QFont()
+                        font.setBold(True)
+                        sub_header.setFont(0, font)
+
+                        self.add_json_to_tree(sub_header, parsed)
+                    except json.JSONDecodeError:
+                        self.add_row_to_table(label, str(field_value))
+                else:
+                    self.add_row_to_table(label, "Нет данных")
+
+            add_nmck_field(
+                current_purchase.NMCK_1,
+                "Цена судна (приведённая к уровню цен года поставки)"
+            )
+            add_nmck_field(
+                current_purchase.NMCK_2,
+                "Цена судна (приведённая к уровню цен первого года строительства)"
+            )
+            add_nmck_field(
+                current_purchase.NMCK_3,
+                "Цена судна (приведённая к уровню цен текущих лет строительства)"
+            )
+
+            self.add_row_to_table(
+                "Количество контрактов",
+                str(current_purchase.ContractCount)
+                if current_purchase.ContractCount is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Определение НМЦК",
+                str(current_purchase.NMC_determ)
+                if current_purchase.NMC_determ is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Определение коэффициента НМЦК",
+                str(current_purchase.NMC_coef_determ)
+                if current_purchase.NMC_coef_determ is not None else "Нет данных"
+            )
+
+            # =========================
+            # 1.2 Метод с общедоступной информацией
+            # =========================
             self.add_section_to_table(
-                "2.Определение НМЦК методом сопоставимых рыночных цен при использовании общедоступной информации")
+                "2.Определение НМЦК методом сопоставимых рыночных цен при использовании общедоступной информации",
+                expanded=False
+            )
 
-            # Вспомогательная функция для безопасного парсинга полей НМЦК
             def parse_nmck(field_data, label):
                 if field_data and str(field_data).strip() not in ("", "None", "-", "[]", "{}"):
                     try:
                         parsed = json.loads(field_data)
-                        # Создаем узел с заголовком и передаем в рекурсивную функцию
-                        node = QTreeWidgetItem(self.current_parent)
-                        node.setText(0, label)
-                        self.add_json_to_tree(node, parsed)
+
+                        sub_header = QTreeWidgetItem(self.current_parent)
+                        sub_header.setText(0, label)
+                        sub_header.setFirstColumnSpanned(True)
+
+                        font = QFont()
+                        font.setBold(True)
+                        sub_header.setFont(0, font)
+
+                        self.add_json_to_tree(sub_header, parsed)
                     except json.JSONDecodeError:
                         self.add_row_to_table(label, str(field_data))
+                else:
+                    self.add_row_to_table(label, "Нет данных")
 
-            parse_nmck(current_purchase.NMCK_1, "Цена судна (год поставки)")
-            parse_nmck(current_purchase.NMCK_2, "Цена судна (первый год строительства)")
-            parse_nmck(current_purchase.NMCK_3, "Цена судна (текущие годы)")
+            parse_nmck(
+                current_purchase.NMCK_1,
+                "Цена судна (год поставки)"
+            )
+            parse_nmck(
+                current_purchase.NMCK_2,
+                "Цена судна (первый год строительства)"
+            )
+            parse_nmck(
+                current_purchase.NMCK_3,
+                "Цена судна (текущие годы)"
+            )
 
-            self.add_section_to_table("3.Определение НМЦК затратным методом")
-            self.add_row_to_table("Наименование организации",
-                                  str(current_purchase.organization_name) if current_purchase.organization_name else "Нет данных")
-            self.add_row_to_table("Дата расчета",
-                                  str(current_purchase.organization_name_date) if current_purchase.organization_name_date else "Нет данных")
-            self.add_row_to_table("Цена", format_string("%.0f", float(current_purchase.organization_price),
-                                                        grouping=True) + self.symbol if current_purchase.organization_price else "Нет данных")
-            self.add_row_to_table("Файл расчета",
-                                  str(current_purchase.organization_name_file) if current_purchase.organization_name_file else "Нет данных")
+            # =========================
+            # 1.3 Затратный метод
+            # =========================
+            self.add_section_to_table(
+                "3.Определение НМЦК затратным методом",
+                expanded=False
+            )
 
-            self.add_section_to_table("4.Итоговое определение НМЦК с использованием нескольких методов")
-            self.add_row_to_table("Способ направления запросов",
-                                  str(current_purchase.method_direction_requests) if current_purchase.method_direction_requests else "Нет данных")
-            self.add_row_to_table("Способ использования общедоступной информации",
-                                  str(current_purchase.method_usage_information) if current_purchase.method_usage_information else "Нет данных")
-            self.add_row_to_table("НМЦК различными способами",
-                                  str(current_purchase.nmc_various_methods) if current_purchase.nmc_various_methods else "Нет данных")
-            self.add_row_to_table("НМЦК затратным методом",
-                                  str(current_purchase.nmc_cost_method) if current_purchase.nmc_cost_method else "Нет данных")
-            self.add_row_to_table("Цена сравнимой продукции",
-                                  str(current_purchase.comparable_product_price) if current_purchase.comparable_product_price else "Нет данных")
-            self.add_row_to_table("НМЦК двумя методами",
-                                  str(current_purchase.nmc_two_methods) if current_purchase.nmc_two_methods else "Нет данных")
+            self.add_row_to_table(
+                "Наименование организации",
+                str(current_purchase.organization_name)
+                if current_purchase.organization_name else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Дата расчета",
+                str(current_purchase.organization_name_date)
+                if current_purchase.organization_name_date else "Нет данных"
+            )
+
+            org_price_val = None
+            if current_purchase.organization_price:
+                try:
+                    org_price_val = float(current_purchase.organization_price)
+                except (ValueError, TypeError):
+                    pass
+
+            self.add_row_to_table(
+                "Цена",
+                format_string(
+                    "%.0f",
+                    org_price_val,
+                    grouping=True
+                ) + self.symbol
+                if org_price_val is not None else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Файл расчета",
+                str(current_purchase.organization_name_file)
+                if current_purchase.organization_name_file else "Нет данных"
+            )
+
+            # =========================
+            # 1.4 Итоговое определение (несколько методов)
+            # =========================
+            self.add_section_to_table(
+                "4.Итоговое определение НМЦК с использованием нескольких методов",
+                expanded=False
+            )
+
+            self.add_row_to_table(
+                "Способ направления запросов",
+                str(current_purchase.method_direction_requests)
+                if current_purchase.method_direction_requests else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Способ использования общедоступной информации",
+                str(current_purchase.method_usage_information)
+                if current_purchase.method_usage_information else "Нет данных"
+            )
+            self.add_row_to_table(
+                "НМЦК различными способами",
+                str(current_purchase.nmc_various_methods)
+                if current_purchase.nmc_various_methods else "Нет данных"
+            )
+            self.add_row_to_table(
+                "НМЦК затратным методом",
+                str(current_purchase.nmc_cost_method)
+                if current_purchase.nmc_cost_method else "Нет данных"
+            )
+            self.add_row_to_table(
+                "Цена сравнимой продукции",
+                str(current_purchase.comparable_product_price)
+                if current_purchase.comparable_product_price else "Нет данных"
+            )
+            self.add_row_to_table(
+                "НМЦК двумя методами",
+                str(current_purchase.nmc_two_methods)
+                if current_purchase.nmc_two_methods else "Нет данных"
+            )
             self.add_file_row_to_table(
                 "Файл итогового определения",
                 current_purchase.file_4 if current_purchase.file_4 else None
             )
 
+            # =========================
             # FINAL DETERMINATION
-            self.finalDetermination = FinalDetermination.select().where(FinalDetermination.purchase == current_purchase)
-            for det in self.finalDetermination:
-                self.add_section_to_table("Итоговое определение НМЦК с использованием нескольких методов.")
-                self.add_row_to_table("Способ направления запросов о предоставлении ценовой информации",
-                                      str(det.RequestMethod))
-                self.add_row_to_table("Способ использования общедоступной информации", str(det.PublicInformationMethod))
-                self.add_row_to_table("НМЦК, полученная различными способами", str(det.NMCObtainedMethods))
-                self.add_row_to_table("НМЦК на основе затратного метода", str(det.CostMethodNMC))
-                self.add_row_to_table("Цена сравнимой продукции", str(det.ComparablePrice))
-                self.add_row_to_table("НМЦК, полученная с применением двух методов", str(det.NMCMethodsTwo))
-                self.add_row_to_table("ЦКЕИ на основе метода", str(det.CEICostMethod))
-                self.add_row_to_table("ЦКЕИ, полученная с применением двух методов", str(det.CEIMethodsTwo))
+            # =========================
+            self.finalDetermination = FinalDetermination.select().where(
+                FinalDetermination.purchase == current_purchase
+            )
 
+            if self.finalDetermination.exists():
+                self.add_section_to_table(
+                    "Итоговое определение НМЦК с использованием нескольких методов (FinalDetermination)",
+                    expanded=True
+                )
+
+                for det in self.finalDetermination:
+                    self.add_row_to_table(
+                        "Способ направления запросов о предоставлении ценовой информации",
+                        str(det.RequestMethod) if det.RequestMethod else "Нет данных"
+                    )
+                    self.add_row_to_table(
+                        "Способ использования общедоступной информации",
+                        str(det.PublicInformationMethod)
+                        if det.PublicInformationMethod else "Нет данных"
+                    )
+                    self.add_row_to_table(
+                        "НМЦК, полученная различными способами",
+                        str(det.NMCObtainedMethods)
+                        if det.NMCObtainedMethods else "Нет данных"
+                    )
+                    self.add_row_to_table(
+                        "НМЦК на основе затратного метода",
+                        str(det.CostMethodNMC)
+                        if det.CostMethodNMC else "Нет данных"
+                    )
+                    self.add_row_to_table(
+                        "Цена сравнимой продукции",
+                        str(det.ComparablePrice)
+                        if det.ComparablePrice else "Нет данных"
+                    )
+                    self.add_row_to_table(
+                        "НМЦК, полученная с применением двух методов",
+                        str(det.NMCMethodsTwo)
+                        if det.NMCMethodsTwo else "Нет данных"
+                    )
+                    self.add_row_to_table(
+                        "ЦКЕИ на основе метода",
+                        str(det.CEICostMethod)
+                        if det.CEICostMethod else "Нет данных"
+                    )
+                    self.add_row_to_table(
+                        "ЦКЕИ, полученная с применением двух методов",
+                        str(det.CEIMethodsTwo)
+                        if det.CEIMethodsTwo else "Нет данных"
+                    )
+
+            # =========================
             # JSON ПОЛЯ ЗАКУПКИ
+            # =========================
             json_fields = [
                 ("Общая информация по закупке", current_purchase.common_info_json),
                 ("Документы закупки", current_purchase.documents_json),
@@ -360,29 +694,44 @@ class PurchasesWidget(QWidget):
                 ("Сведения о договорах закупки", current_purchase.contracts_info_json),
                 ("Изменения закупки", current_purchase.changes_json),
             ]
+
             for section_name, json_string in json_fields:
                 self.add_section_to_table(section_name, expanded=False)
-                if json_string and str(json_string).strip() not in ("", "None", "-"):
-                    try:
-                        self.add_json_to_tree(self.current_parent, json.loads(json_string))
-                    except json.JSONDecodeError:
-                        self.add_row_to_table("Данные", str(json_string))
-                else:
-                    self.add_row_to_table("Данные", "Нет данных")
 
-            # =========================================================
-            # СВЯЗАННЫЕ ДАННЫЕ (ЗАКАЗЧИК, КОНТРАКТЫ, СУДА) - ИСПРАВЛЕННЫЙ БЛОК
-            # =========================================================
+                if json_string and str(json_string).strip() not in (
+                        "", "None", "-", "[]", "{}"
+                ):
+                    try:
+                        parsed_json = json.loads(json_string)
+                        self.add_json_to_tree(self.current_parent, parsed_json)
+                    except json.JSONDecodeError:
+                        self.add_row_to_table(
+                            "Содержимое JSON",
+                            str(json_string)
+                        )
+                else:
+                    self.add_row_to_table(
+                        "Содержимое JSON",
+                        "Нет данных"
+                    )
+
+            # =========================
+            # СВЯЗАННЫЕ ДАННЫЕ
+            # =========================
             self.add_section_to_table('Связанные документы', expanded=True)
-            links_parent = self.current_parent  # Сохраняем родительский узел
+            links_parent = self.current_parent
 
             # 1. ЗАКАЗЧИК
             if current_purchase.CustomerName:
-                customer = Customer.select().where(Customer.name == current_purchase.CustomerName).first()
+                customer = Customer.select().where(
+                    Customer.name == current_purchase.CustomerName
+                ).first()
+
                 if customer:
                     customer_node = QTreeWidgetItem(links_parent)
                     customer_node.setText(0, f"Заказчик: {customer.name}")
                     customer_node.setFirstColumnSpanned(True)
+
                     font_c = QFont()
                     font_c.setBold(True)
                     customer_node.setFont(0, font_c)
@@ -391,8 +740,12 @@ class PurchasesWidget(QWidget):
                     link_item = QTreeWidgetItem(customer_node)
                     link_item.setText(0, 'Перейти в карточку заказчика')
                     link_item.setText(1, f"ID: {customer.id}")
-                    link_item.setData(1, Qt.UserRole, f"GOTO_CUSTOMER:{customer.id}")
+                    link_item.setData(
+                        1, Qt.UserRole,
+                        f"GOTO_CUSTOMER:{customer.id}"
+                    )
                     link_item.setForeground(1, Qt.blue)
+
                     font_link = QFont()
                     font_link.setUnderline(True)
                     link_item.setFont(1, font_link)
@@ -400,92 +753,110 @@ class PurchasesWidget(QWidget):
                     QTreeWidgetItem(customer_node, ['ИНН', str(customer.inn)])
                     QTreeWidgetItem(customer_node, ['КПП', str(customer.kpp)])
 
-            # 2. КОНТРАКТЫ И ИХ СУДА (по RegistryNumber)
+            # 2. КОНТРАКТЫ И СУДА
             contracts = None
 
-            # Сначала ищем по прямой связи FK (purchase_id)
-            fk_contracts = Contract.select().where(Contract.purchase == current_purchase.Id)
+            fk_contracts = Contract.select().where(
+                Contract.purchase == current_purchase.Id
+            )
+
             if fk_contracts.exists():
                 contracts = fk_contracts
-            # Если не нашли — fallback по RegistryNumber
             elif current_purchase.RegistryNumber:
-                rn_contracts = Contract.select().where(Contract.RegistryNumber == current_purchase.RegistryNumber)
+                rn_contracts = Contract.select().where(
+                    Contract.RegistryNumber == current_purchase.RegistryNumber
+                )
                 if rn_contracts.exists():
                     contracts = rn_contracts
 
             if contracts is not None:
                 for contract in contracts:
-                        # Ветка для контракта
-                        c_title = f'Контракт № {contract.ContractNumber}' if contract.ContractNumber else f'Контракт ID {contract.Id}'
-                        contract_node = QTreeWidgetItem(links_parent)
-                        contract_node.setText(0, c_title)
-                        contract_node.setFirstColumnSpanned(True)
-                        font_c = QFont()
-                        font_c.setBold(True)
-                        contract_node.setFont(0, font_c)
-                        contract_node.setBackground(0, QColor(240, 240, 240))
+                    c_title = (
+                        f'Контракт № {contract.ContractNumber}'
+                        if contract.ContractNumber
+                        else f'Контракт ID {contract.Id}'
+                    )
 
-                        # Ссылка на контракт
-                        link_item = QTreeWidgetItem(contract_node)
-                        link_item.setText(0, 'Перейти в карточку контракта')
-                        link_item.setText(1, c_title)
-                        link_item.setData(1, Qt.UserRole, f"GOTO_CONTRACT:{contract.Id}")
-                        link_item.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        link_item.setFont(1, font_link)
+                    contract_node = QTreeWidgetItem(links_parent)
+                    contract_node.setText(0, c_title)
+                    contract_node.setFirstColumnSpanned(True)
 
-                        # Превью контракта
-                        QTreeWidgetItem(contract_node, ['Победитель', str(contract.WinnerExecutor)])
-                        QTreeWidgetItem(contract_node, ['Заказчик', str(contract.ContractingAuthority)])
-                        if contract.ContractPrice is not None:
-                            QTreeWidgetItem(contract_node, ['Цена',
-                                                            f"{format_string('%.2f', float(contract.ContractPrice), grouping=True)} {self.symbol}"])
+                    font_c = QFont()
+                    font_c.setBold(True)
+                    contract_node.setFont(0, font_c)
+                    contract_node.setBackground(0, QColor(240, 240, 240))
 
-                        # БЕЗОПАСНЫЙ парсинг JSON-полей контракта прямо внутрь этой ветки
-                        for label, field_data in [
-                            ("Ценовое предложение", contract.PriceProposal),
-                            ("Заявитель", contract.Applicant),
-                            ("Статус заявителя", contract.Applicant_satatus)
-                        ]:
-                            if field_data and str(field_data).strip() not in ("", "None", "-", "[]", "{}"):
-                                try:
-                                    parsed_data = json.loads(field_data)
-                                    # Создаем временную секцию для add_json_to_tree
-                                    json_node = QTreeWidgetItem(contract_node)
-                                    json_node.setText(0, label)
-                                    self.add_json_to_tree(json_node, parsed_data)
-                                except json.JSONDecodeError:
-                                    QTreeWidgetItem(contract_node, [label, str(field_data)])
+                    link_item = QTreeWidgetItem(contract_node)
+                    link_item.setText(0, 'Перейти в карточку контракта')
+                    link_item.setText(1, c_title)
+                    link_item.setData(
+                        1, Qt.UserRole,
+                        f"GOTO_CONTRACT:{contract.Id}"
+                    )
+                    link_item.setForeground(1, Qt.blue)
+                    link_item.setFont(1, font_link)
 
-                        # 3. СУДА ПО КОНТРАКТУ
-                        try:
-                            # Ищем судно по связи с контрактом
-                            vessels = Vessel.select().where(Vessel.contract == contract)
-                            for vessel in vessels:
-                                v_title = f'Судно (Проект {vessel.ship_project})' if vessel.ship_project else f'Судно ID {vessel.id}'
-                                vessel_node = QTreeWidgetItem(contract_node)  # Вкладываем в контракт
-                                vessel_node.setText(0, v_title)
-                                vessel_node.setFirstColumnSpanned(True)
-                                vessel_node.setFont(0, font_c)
-                                vessel_node.setBackground(0, QColor(250, 250, 250))
+                    QTreeWidgetItem(contract_node, ['Победитель', str(contract.WinnerExecutor)])
+                    QTreeWidgetItem(contract_node, ['Заказчик', str(contract.ContractingAuthority)])
 
-                                v_link = QTreeWidgetItem(vessel_node)
-                                v_link.setText(0, 'Перейти в карточку судна')
-                                v_link.setText(1, v_title)
-                                v_link.setData(1, Qt.UserRole, f"GOTO_VESSEL:{vessel.id}")
-                                v_link.setForeground(1, Qt.blue)
-                                v_link.setFont(1, font_link)
+                    if contract.ContractPrice is not None:
+                        QTreeWidgetItem(
+                            contract_node,
+                            [
+                                'Цена',
+                                f"{format_string('%.2f', float(contract.ContractPrice), grouping=True)} {self.symbol}"
+                            ]
+                        )
 
-                                QTreeWidgetItem(vessel_node, ['ИМО', str(vessel.imo_number)])
-                                QTreeWidgetItem(vessel_node, ['Тип', str(vessel.ship_type)])
-                        except Exception as e:
-                            pass
+                    for label, field_data in [
+                        ("Ценовое предложение", contract.PriceProposal),
+                        ("Заявитель", contract.Applicant),
+                        ("Статус заявителя", contract.Applicant_satatus)
+                    ]:
+                        if field_data and str(field_data).strip() not in (
+                                "", "None", "-", "[]", "{}"
+                        ):
+                            try:
+                                parsed_data = json.loads(field_data)
+                                json_node = QTreeWidgetItem(contract_node)
+                                json_node.setText(0, label)
+                                self.add_json_to_tree(json_node, parsed_data)
+                            except json.JSONDecodeError:
+                                QTreeWidgetItem(contract_node, [label, str(field_data)])
+
+                    try:
+                        vessels = Vessel.select().where(Vessel.contract == contract)
+                        for vessel in vessels:
+                            v_title = (
+                                f'Судно (Проект {vessel.ship_project})'
+                                if vessel.ship_project
+                                else f'Судно ID {vessel.id}'
+                            )
+
+                            vessel_node = QTreeWidgetItem(contract_node)
+                            vessel_node.setText(0, v_title)
+                            vessel_node.setFirstColumnSpanned(True)
+                            vessel_node.setFont(0, font_c)
+                            vessel_node.setBackground(0, QColor(250, 250, 250))
+
+                            v_link = QTreeWidgetItem(vessel_node)
+                            v_link.setText(0, 'Перейти в карточку судна')
+                            v_link.setText(1, v_title)
+                            v_link.setData(
+                                1, Qt.UserRole,
+                                f"GOTO_VESSEL:{vessel.id}"
+                            )
+                            v_link.setForeground(1, Qt.blue)
+                            v_link.setFont(1, font_link)
+
+                            QTreeWidgetItem(vessel_node, ['ИМО', str(vessel.imo_number)])
+                            QTreeWidgetItem(vessel_node, ['Тип', str(vessel.ship_type)])
+                    except Exception:
+                        pass
         else:
             self.label.setText("Нет записи")
             self.label_form.setText("Карточка закупки")
             self.label_form.show()
-
     def add_file_row_to_table(self, label, file_path):
         item = QTreeWidgetItem(self.current_parent)
         item.setText(0, label)
@@ -538,149 +909,226 @@ class PurchasesWidget(QWidget):
                 item.setData(1, Qt.UserRole, link)
 
     def add_json_to_tree(self, parent_item, json_data, parent_key=""):
+        """
+        Упрощённое отображение JSON в дереве.
+
+        Объект kind == "kv":
+
+            {
+                "kind": "kv",
+                "text": "23.03.2026",
+                "hrefs": [],
+                "title": "Дата заключения контракта"
+            }
+
+        отображается одной строкой:
+
+            Дата заключения контракта | 23.03.2026
+
+        Поля kind, hrefs и items в дерево не выводятся.
+        """
+
         key_translations = {
-            "title": "Заголовок",
-            "items": "Элементы",
-            "hrefs": "Ссылки",
-            "all_hrefs": "Все ссылки",
-            "header": "Название группы",
-            "kind": "Тип",
-            "kv": "Значение",
-            "type": "Тип документа",
-            "sign_link": "Ссылка на подпись",
-            "sign_url": "Ссылка на подпись",
-            "table_standalone": "Отдельная таблица",
-            "url": "Ссылка",
-            "parsed_table": "Табличные данные",
+            "общие_данные": "Общие данные",
+            "общая_информация": "Общая информация",
+            "информация_о_заказчике": "Информация о заказчике",
+            "информация_о_поставщиках": "Информация о поставщиках",
+            "информация_об_изменении_контракта": (
+                "Информация об изменении контракта"
+            ),
+            "table": "Таблица",
             "rows": "Строки таблицы",
             "headers": "Заголовки колонок",
-            "doc_name": "Название документа",
-            "files": "Файлы",
-            "links": "Связанные ссылки",
-            "text": "Текст",
-            "table": "Таблица",
-            "Totals summary": "Общая сумма",
-            "Rows by index": "Строк по индексу",
-            "Nested": "Вложения"
-        }
-
-        # Словарь перевода значений
-        value_translations = {
-            "kv": "Значение",
-            "title": "Заголовок",
+            "rows_by_index": "Строки таблицы",
+            "totals_row": "Итоговая строка",
+            "totals_summary": "Итоговая сводка",
+            "nested": "Вложенные данные",
+            "section_title": "Заголовок раздела",
             "header": "Название группы",
-            "kind": "Тип",
-            "type": "Тип документа",
+            "name": "Название",
+            "price": "Цена",
+            "sum": "Сумма",
+            "quantity": "Количество",
+            "quantitu": "Количество",
+            "ktru": "КТРУ",
+            "raw_sum_text": "Текстовая сумма",
             "url": "Ссылка",
-            "text": "Текст",
-            "items": "Элементы",
-            "files": "Файлы",
-            "links": "Связанные ссылки",
-            "doc_name": "Название документа",
-            "rows": "Строки таблицы",
-            "headers": "Заголовки колонок",
-            "parsed_table": "Табличные данные",
-            "table_standalone": "Отдельная таблица",
-            "sign_link": "Ссылка на подпись",
             "sign_url": "Ссылка на подпись",
-            "all_hrefs": "Все ссылки",
-            "hrefs": "Ссылки",
-            # Добавляй сюда типовые строковые значения из твоих данных
-            "true": "Да",
-            "false": "Нет",
-            "null": "Нет данных",
-            "None": "Нет данных",
-            "table": "Таблица",
-            "Totals summary": "Общая сумма",
-            "Rows by index": "Строк по индексу",
-            "Nested": "Вложения"
+            "sign_link": "Ссылка на подпись",
+            "text": "Текст",
+            "table standalone": "Отдельная таблица",
+            "table_standalone": "Отдельная таблица",
+            "Parsed_table": "Отдельная таблица",
+
         }
 
-        def translate_key(key):
-            if key in key_translations:
-                return key_translations[key]
-            return str(key).replace("_", " ").capitalize()
-
-        def translate_value(value):
-            if value is None:
-                return "Нет данных"
-            str_val = str(value)
-            # Точное совпадение со словарём
-            if str_val in value_translations:
-                return value_translations[str_val]
-            # Lowercase совпадение (для "True"/"False" и т.п.)
-            if str_val.lower() in value_translations:
-                return value_translations[str_val.lower()]
-            return str_val
-
-        if not json_data:
+        if json_data in (None, "", [], {}):
             return
 
+        # ---------------------------------------------------------
+        # Обработка одной записи вида kind == "kv"
+        # ---------------------------------------------------------
+        if isinstance(json_data, dict) and json_data.get("kind") == "kv":
+            title = json_data.get("title") or "Параметр"
+            text = json_data.get("text")
+
+            item = QTreeWidgetItem(parent_item)
+            item.setText(0, str(title))
+            item.setText(
+                1,
+                str(text) if text not in (None, "") else "Нет данных"
+            )
+
+            font = QFont()
+            font.setPointSize(10)
+            item.setFont(0, font)
+            item.setFont(1, font)
+
+            # Сохраняем первую ссылку из hrefs, но сам hrefs не отображаем
+            hrefs = json_data.get("hrefs") or []
+
+            if hrefs:
+                url = hrefs[0]
+
+                item.setForeground(1, Qt.blue)
+
+                link_font = QFont()
+                link_font.setPointSize(10)
+                link_font.setUnderline(True)
+                item.setFont(1, link_font)
+
+                item.setData(1, Qt.UserRole, str(url))
+
+            return
+
+        # ---------------------------------------------------------
+        # Обработка словаря
+        # ---------------------------------------------------------
         if isinstance(json_data, dict):
             for key, value in json_data.items():
-                if key == "null" or key is None:
-                    key = "Параметр"
 
-                display_key = translate_key(key)
+                # Служебные поля не выводим
+                if key in ("kind", "hrefs", "all_hrefs"):
+                    continue
+
+                # Узел items пропускаем, а его содержимое выводим
+                # непосредственно в родительский узел
+                if key == "items":
+                    if isinstance(value, list):
+                        for item_value in value:
+                            self.add_json_to_tree(
+                                parent_item,
+                                item_value,
+                                "items"
+                            )
+                    elif isinstance(value, dict):
+                        self.add_json_to_tree(
+                            parent_item,
+                            value,
+                            "items"
+                        )
+                    continue
+
+                # Заголовок группы не дублируем внутри JSON
+                if key == "header" and parent_key:
+                    continue
+
+                # Пустые значения не создают лишние строки
+                if value in (None, "", [], {}):
+                    continue
+
+                display_key = key_translations.get(
+                    key,
+                    str(key).replace("_", " ").capitalize()
+                )
 
                 if isinstance(value, (dict, list)):
                     child = QTreeWidgetItem(parent_item)
                     child.setText(0, display_key)
+
                     font = QFont()
                     font.setBold(True)
                     child.setFont(0, font)
-                    self.add_json_to_tree(child, value, key)
-                else:
-                    if key == "text":
-                        parent_item.setText(1, translate_value(value))
-                    elif key in ("url", "sign_url", "sign_link"):
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, display_key)
-                        child.setText(1, str(value))  # URL не переводим
-                        child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
-                        child.setData(1, Qt.UserRole, str(value))
-                    elif key in ("all_hrefs", "hrefs"):
-                        pass
-                    else:
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, display_key)
-                        child.setText(1, translate_value(value))  # ← перевод значения
 
-        elif isinstance(json_data, list):
-            for idx, item in enumerate(json_data):
-                if isinstance(item, (dict, list)):
-                    child_name = f"Запись {idx + 1}"
-                    if parent_key == "headers":
-                        child_name = f"Колонка {idx + 1}"
-                    elif parent_key in ("all_hrefs", "hrefs"):
-                        child_name = f"Ссылка {idx + 1}"
+                    self.add_json_to_tree(
+                        child,
+                        value,
+                        key
+                    )
+                else:
+                    child = QTreeWidgetItem(parent_item)
+                    child.setText(0, display_key)
+                    child.setText(1, str(value))
+
+            return
+
+        # ---------------------------------------------------------
+        # Обработка списков
+        # ---------------------------------------------------------
+        if isinstance(json_data, list):
+            for index, value in enumerate(json_data):
+
+                # Элементы kind == "kv" сразу становятся строками
+                if (
+                        isinstance(value, dict)
+                        and value.get("kind") == "kv"
+                ):
+                    self.add_json_to_tree(
+                        parent_item,
+                        value,
+                        parent_key
+                    )
+                    continue
+
+                # Вложенные словари и списки
+                if isinstance(value, (dict, list)):
+
+                    if parent_key in ("rows", "rows_by_index"):
+                        item_name = f"Строка {index + 1}"
+                    elif parent_key == "headers":
+                        item_name = f"Колонка {index + 1}"
+                    else:
+                        item_name = f"Запись {index + 1}"
 
                     child = QTreeWidgetItem(parent_item)
-                    child.setText(0, child_name)
+                    child.setText(0, item_name)
 
-                    if parent_key in ("all_hrefs", "hrefs"):
-                        child.setText(1, str(item))  # URL не переводим
-                        child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
-                        child.setData(1, Qt.UserRole, str(item))
-                    else:
-                        self.add_json_to_tree(child, item, parent_key)
+                    font = QFont()
+                    font.setBold(True)
+                    child.setFont(0, font)
+
+                    self.add_json_to_tree(
+                        child,
+                        value,
+                        parent_key
+                    )
+
+                # Простые значения списка
                 else:
+                    child = QTreeWidgetItem(parent_item)
+
                     if parent_key == "headers":
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Колонка {idx + 1}")
-                        child.setText(1, translate_value(item))  # ← перевод значения
+                        child.setText(
+                            0,
+                            f"Колонка {index + 1}"
+                        )
                     else:
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Элемент {idx + 1}")
-                        child.setText(1, translate_value(item))  # ← перевод значения
-        else:
-            parent_item.setText(1, translate_value(json_data))  # ← перевод корневого значения
+                        child.setText(
+                            0,
+                            f"Элемент {index + 1}"
+                        )
+
+                    child.setText(
+                        1,
+                        str(value) if value is not None else "Нет данных"
+                    )
+
+            return
+
+        # ---------------------------------------------------------
+        # Простое скалярное значение
+        # ---------------------------------------------------------
+        parent_item.setText(1, str(json_data))
 
     def add_section_to_table(self, section_text, expanded=False):
         # Создаем родительскую ветку (Группу)

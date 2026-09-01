@@ -448,147 +448,162 @@ def insert_in_table_for_users(csv_file_path):
     return errors
 
 
-
-
 def export_to_excel(data, output_excel_path, filters):
     try:
         # Создайте DataFrame из данных
-        filter_df = pd.DataFrame([filters],columns=[
-    "search_input", "filter_criteria", "purchase_order", "start_date", "end_date", "min_price", "max_price"
-])
-        
+        filter_df = pd.DataFrame([filters])  # Убран columns=[...]
+
         filter_column_translation = {
-    "search_input": "Поисковый Запрос",
-    "filter_criteria": "Критерии Фильтра",
-    "purchase_order": "Заказ Закупки",
-    "start_date": "Дата Начала",
-    "end_date": "Дата Окончания",
-    "min_price": "Минимальная Цена",
-    "max_price": "Максимальная Цена"
-}
+            "search_input": "Поисковый Запрос",
+            "filter_criteria": "Критерии Фильтра",
+            "purchase_order": "Заказ Закупки",
+            "start_date": "Дата Начала",
+            "end_date": "Дата Окончания",
+            "min_price": "Минимальная Цена",
+            "max_price": "Максимальная Цена"
+        }
         # Замените пустые значения фильтров на пустые строки для правильного отображения в Excel
         filter_df.fillna('', inplace=True)
-        # selected_data = [tuple[:69] for tuple in data]
-       
-        selected_columns = ["Id",
-             "PurchaseOrder", "RegistryNumber", "ProcurementMethod", "PurchaseName",
-                 "AuctionSubject", "PurchaseIdentificationCode", "LotNumber", "LotName",
-                 "InitialMaxContractPrice", "Currency", "InitialMaxContractPriceInCurrency", 
-                 "ContractCurrency", "OKDPClassification", "OKPDClassification",
-                 "OKPD2Classification", "PositionCode", "CustomerName", "ProcurementOrganization",
-                 "PlacementDate", "UpdateDate", "ProcurementStage", "ProcurementFeatures",
-                "ApplicationStartDate", "ApplicationEndDate", "AuctionDate","QueryCount","ResponseCount",
-                "AveragePrice","MinPrice","MaxPrice","StandardDeviation","CoefficientOfVariation","TKPData","NMCKMarket",
-                "FinancingLimit", "InitialMaxContractPriceOld","notification_link","quantity_units",
-                "nmck_per_unit",
-                "TotalApplications", "AdmittedApplications", "RejectedApplications",
-                "PriceProposal", "Applicant", "Applicant_satatus", "WinnerExecutor",
-                "ContractingAuthority", "ContractIdentifier", "RegistryNumber_contract",
-                "ContractNumber", "StartDate", "EndDate", "ContractPrice", "AdvancePayment",
-                "ReductionNMC", "ReductionNMCPercent", "SupplierProtocol", "ContractFile",
 
-                "RequestMethod","PublicInformationMethod","NMCObtainedMethods","CostMethodNMC",
-                "ComparablePrice","NMCMethodsTwo","CEIComparablePrices","CEICostMethod","CEIMethodsTwo",
-                
-                "CurrencyValue","CurrentCurrency","DateValueChanged","CurrencyRateDate","PreviousCurrency", ]
-        selected_data = [[t[selected_columns.index(col)] for col in selected_columns] for t in data]
-        # print(selected_data[0])
+        selected_columns = [
+            "Id", "PurchaseOrder", "RegistryNumber", "ProcurementMethod", "PurchaseName",
+            "AuctionSubject", "PurchaseIdentificationCode", "LotNumber", "LotName",
+            "InitialMaxContractPrice", "Currency", "InitialMaxContractPriceInCurrency",
+            "ContractCurrency", "OKDPClassification", "OKPDClassification",
+            "OKPD2Classification", "PositionCode", "CustomerName", "ProcurementOrganization",
+            "PlacementDate", "UpdateDate", "ProcurementStage", "ProcurementFeatures",
+            "ApplicationStartDate", "ApplicationEndDate", "AuctionDate", "QueryCount",
+            "ResponseCount", "AveragePrice", "MinPrice", "MaxPrice", "StandardDeviation",
+            "CoefficientOfVariation", "TKPData", "NMCKMarket", "FinancingLimit",
+            "InitialMaxContractPriceOld", "notification_link", "quantity_units",
+            "nmck_per_unit", "TotalApplications", "AdmittedApplications", "RejectedApplications",
+            "PriceProposal", "Applicant", "Applicant_satatus", "WinnerExecutor",
+            "ContractingAuthority", "ContractIdentifier", "RegistryNumber_contract",
+            "ContractNumber", "StartDate", "EndDate", "ContractPrice", "AdvancePayment",
+            "ReductionNMC", "ReductionNMCPercent", "SupplierProtocol", "ContractFile",
+            "RequestMethod", "PublicInformationMethod", "NMCObtainedMethods", "CostMethodNMC",
+            "ComparablePrice", "NMCMethodsTwo", "CEIComparablePrices", "CEICostMethod",
+            "CEIMethodsTwo", "CurrencyValue", "CurrentCurrency", "DateValueChanged",
+            "CurrencyRateDate", "PreviousCurrency",
+        ]
+
+        # Преобразуем кортежи в списки с правильным порядком колонок
+        selected_data = []
+        for t in data:
+            row = []
+            for col in selected_columns:
+                try:
+                    idx = selected_columns.index(col)
+                    row.append(t[idx] if idx < len(t) else '')
+                except (ValueError, IndexError):
+                    row.append('')
+            selected_data.append(row)
+
         # Создайте DataFrame с данными
         data_df = pd.DataFrame(selected_data, columns=selected_columns)
 
         # Создайте словарь для перевода названий столбцов
         column_translation = {
-            "Id":"Номер",
-        "PurchaseOrder": "Закон",
-        "RegistryNumber": "Реестровый Номер",
-        "ProcurementMethod": "Метод Закупки",
-        "PurchaseName": "Название Закупки",
-        "AuctionSubject": "Тема Аукциона",
-        "PurchaseIdentificationCode": "Идентификационный Код Закупки",
-        "LotNumber": "Номер Лота",
-        "LotName": "Название Лота",
-        "InitialMaxContractPrice": "Начальная Максимальная Цена Контракта",
-        "Currency": "Валюта",
-        "InitialMaxContractPriceInCurrency": "Начальная Максимальная Цена Контракта в Валюте",
-        "ContractCurrency": "Валюта Контракта",
-        "OKDPClassification": "Классификация ОКДП",
-        "OKPDClassification": "Классификация ОКПД",
-        "OKPD2Classification": "Классификация ОКПД2",
-        "PositionCode": "Код Позиции",
-        "CustomerName": "Наименование Заказчика",
-        "ProcurementOrganization": "Организация Закупки",
-        "PlacementDate": "Дата Размещения",
-        "UpdateDate": "Дата Обновления",
-        "ProcurementStage": "Этап Закупки",
-        "ProcurementFeatures": "Особенности Закупки",
-        "ApplicationStartDate": "Дата Начала Подачи Заявок",
-        "ApplicationEndDate": "Дата Окончания Подачи Заявок",
-        "AuctionDate": "Дата Аукциона",
-        "QueryCount":"Количество запросов",
-        "ResponseCount":"Количество ответов",
-        "AveragePrice":"Среднее значение цены",
-        "MinPrice":"Минимальная цена",
-        "MaxPrice":"Максимальная цена",
-        "StandardDeviation":"Среднее квадратичное отклонение",
-        "CoefficientOfVariation":"Коэффициент вариации",
-        "TKPData":"ТКП",
-        "NMCKMarket":"Цена рыночная",
-        "FinancingLimit":"Лимит финансирования",
-        "InitialMaxContractPriceOld":"Прошлая цена",
-        "TotalApplications": "Общее количество заявок",
-        "AdmittedApplications": "Общее количество допущенных заявок",
-        "RejectedApplications": "Общее количество отклоненных заявок",
-        "PriceProposal": "Ценовое предложение",
-        "Applicant": "Заявитель",
-        "Applicant_satatus": "Статус заявителя",
-        "WinnerExecutor": "Победитель-исполнитель контракта",
-        "ContractingAuthority": "Заказчик по контракту",
-        "ContractIdentifier": "Идентификатор договора",
-        "RegistryNumber_contract": "Реестровый номер договора",
-        "ContractNumber": "№ договора",
-        "StartDate": "Дата начала/подписания",
-        "EndDate": "Дата окончания/исполнения",
-        "ContractPrice": "Цена договора, руб.",
-        "AdvancePayment": "Размер авансирования, руб./(%)",
-        "ReductionNMC": "Снижение НМЦК, руб.",
-        "ReductionNMCPercent": "Снижение НМЦК, %",
-        "SupplierProtocol": "Протоколы определения поставщика (выписка)",
-        "ContractFile": "Договор",
-        "RequestMethod":"Способ направления запросов о предоставлении ценовой информации",
-        "PublicInformationMethod": "Способ использования общедоступной информации",
-        "NMCObtainedMethods": "НМЦК, полученная различными способами", 
-        "CostMethodNMC": "НМЦК на основе затратного метода, руб. (в случае его применения)",
-        "ComparablePrice": "Цена сравнимой продукции",
-        "NMCMethodsTwo": "НМЦК, полученная с применением двух методов",
-        "CEIComparablePrices": "ЦКЕИ на основе метода сопоставимых рыночных цен",
-        "CEICostMethod": "ЦКЕИ на основе затратного метода, руб. (в случае его применения)",
-        "CEIMethodsTwo":"ЦКЕИ, полученная с применением двух методов",
-        "CurrencyValue" :"Значение валюты",
-        "CurrentCurrency" :"Текущая валюта",
-        "DateValueChanged" :"Дата изменения значения валюты",
-        "CurrencyRateDate" :"Дата курса валюты",
-        "PreviousCurrency" :"Предыдущая валюта",
-        "notification_link":"Извещение о закупке",
-        "quantity_units":"Количество единиц",
-        "nmck_per_unit":"НМЦК за единицу",
-
-    }
+            "Id": "Номер",
+            "PurchaseOrder": "Закон",
+            "RegistryNumber": "Реестровый Номер",
+            "ProcurementMethod": "Метод Закупки",
+            "PurchaseName": "Название Закупки",
+            "AuctionSubject": "Тема Аукциона",
+            "PurchaseIdentificationCode": "Идентификационный Код Закупки",
+            "LotNumber": "Номер Лота",
+            "LotName": "Название Лота",
+            "InitialMaxContractPrice": "Начальная Максимальная Цена Контракта",
+            "Currency": "Валюта",
+            "InitialMaxContractPriceInCurrency": "Начальная Максимальная Цена Контракта в Валюте",
+            "ContractCurrency": "Валюта Контракта",
+            "OKDPClassification": "Классификация ОКДП",
+            "OKPDClassification": "Классификация ОКПД",
+            "OKPD2Classification": "Классификация ОКПД2",
+            "PositionCode": "Код Позиции",
+            "CustomerName": "Наименование Заказчика",
+            "ProcurementOrganization": "Организация Закупки",
+            "PlacementDate": "Дата Размещения",
+            "UpdateDate": "Дата Обновления",
+            "ProcurementStage": "Этап Закупки",
+            "ProcurementFeatures": "Особенности Закупки",
+            "ApplicationStartDate": "Дата Начала Подачи Заявок",
+            "ApplicationEndDate": "Дата Окончания Подачи Заявок",
+            "AuctionDate": "Дата Аукциона",
+            "QueryCount": "Количество запросов",
+            "ResponseCount": "Количество ответов",
+            "AveragePrice": "Среднее значение цены",
+            "MinPrice": "Минимальная цена",
+            "MaxPrice": "Максимальная цена",
+            "StandardDeviation": "Среднее квадратичное отклонение",
+            "CoefficientOfVariation": "Коэффициент вариации",
+            "TKPData": "ТКП",
+            "NMCKMarket": "Цена рыночная",
+            "FinancingLimit": "Лимит финансирования",
+            "InitialMaxContractPriceOld": "Прошлая цена",
+            "TotalApplications": "Общее количество заявок",
+            "AdmittedApplications": "Общее количество допущенных заявок",
+            "RejectedApplications": "Общее количество отклоненных заявок",
+            "PriceProposal": "Ценовое предложение",
+            "Applicant": "Заявитель",
+            "Applicant_satatus": "Статус заявителя",
+            "WinnerExecutor": "Победитель-исполнитель контракта",
+            "ContractingAuthority": "Заказчик по контракту",
+            "ContractIdentifier": "Идентификатор договора",
+            "RegistryNumber_contract": "Реестровый номер договора",
+            "ContractNumber": "№ договора",
+            "StartDate": "Дата начала/подписания",
+            "EndDate": "Дата окончания/исполнения",
+            "ContractPrice": "Цена договора, руб.",
+            "AdvancePayment": "Размер авансирования, руб./(%)",
+            "ReductionNMC": "Снижение НМЦК, руб.",
+            "ReductionNMCPercent": "Снижение НМЦК, %",
+            "SupplierProtocol": "Протоколы определения поставщика (выписка)",
+            "ContractFile": "Договор",
+            "RequestMethod": "Способ направления запросов о предоставлении ценовой информации",
+            "PublicInformationMethod": "Способ использования общедоступной информации",
+            "NMCObtainedMethods": "НМЦК, полученная различными способами",
+            "CostMethodNMC": "НМЦК на основе затратного метода, руб. (в случае его применения)",
+            "ComparablePrice": "Цена сравнимой продукции",
+            "NMCMethodsTwo": "НМЦК, полученная с применением двух методов",
+            "CEIComparablePrices": "ЦКЕИ на основе метода сопоставимых рыночных цен",
+            "CEICostMethod": "ЦКЕИ на основе затратного метода, руб. (в случае его применения)",
+            "CEIMethodsTwo": "ЦКЕИ, полученная с применением двух методов",
+            "CurrencyValue": "Значение валюты",
+            "CurrentCurrency": "Текущая валюта",
+            "DateValueChanged": "Дата изменения значения валюты",
+            "CurrencyRateDate": "Дата курса валюты",
+            "PreviousCurrency": "Предыдущая валюта",
+            "notification_link": "Извещение о закупке",
+            "quantity_units": "Количество единиц",
+            "nmck_per_unit": "НМЦК за единицу",
+        }
 
         filter_df.rename(columns=filter_column_translation, inplace=True)
-
         data_df.rename(columns=column_translation, inplace=True)
+
         with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
             filter_df.to_excel(writer, index=False)
             data_df.to_excel(writer, startrow=2, header=True, index=False)
-        return True
-    except Exception as e:
-        print("Ошибка при экспорте данных в Excel:", e)
 
+        return True
+
+    except Exception as e:
+        import traceback
+        print("Ошибка при экспорте данных в Excel:", e)
+        print(traceback.format_exc())
+        return False
 def export_to_excel_contract(data, output_excel_path, filters):
     try:
-        filter_df = pd.DataFrame([filters], columns=[
-            "filter_criteria", "start_date", "end_date", "min_price", "max_price"
-        ])
+        print("DEBUG: filters =", filters)
+        print("DEBUG: len(data) =", len(data))
+        if len(data) > 0:
+            print("DEBUG: data[0] keys =", data[0].keys())
+
+        # Создаём DataFrame из словаря filters
+        filter_df = pd.DataFrame([filters])
+        print("DEBUG: filter_df created")
+
         filter_column_translation = {
             "filter_criteria": "Критерии фильтра",
             "start_date":      "Дата начала",
@@ -597,6 +612,7 @@ def export_to_excel_contract(data, output_excel_path, filters):
             "max_price":       "Максимальная цена",
         }
         filter_df.fillna('', inplace=True)
+        print("DEBUG: filter_df renamed")
         filter_df.rename(columns=filter_column_translation, inplace=True)
 
         # Собираем порядок полей и подписи прямо из модели Contract
@@ -604,6 +620,7 @@ def export_to_excel_contract(data, output_excel_path, filters):
             name: (field.verbose_name or name)
             for name, field in Contract._meta.fields.items()
         }
+        print("DEBUG: field_translation keys =", list(field_translation.keys()))
 
         rows = []
         for t in data:
@@ -612,17 +629,23 @@ def export_to_excel_contract(data, output_excel_path, filters):
                 row[verbose_name] = t.get(field_name, '')
             rows.append(row)
 
+        print("DEBUG: rows created, len =", len(rows))
         data_df = pd.DataFrame(rows, columns=list(field_translation.values()))
+        print("DEBUG: data_df created")
         data_df.fillna('', inplace=True)
 
+        print("DEBUG: about to write Excel")
         with pd.ExcelWriter(output_excel_path, engine='openpyxl') as writer:
             filter_df.to_excel(writer, index=False)
             data_df.to_excel(writer, startrow=2, header=True, index=False)
 
+        print("DEBUG: Excel written successfully")
         return True
 
     except Exception as e:
+        import traceback
         print("Ошибка при экспорте данных в Excel:", e)
+        print(traceback.format_exc())
         return False
 
 

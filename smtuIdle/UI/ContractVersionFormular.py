@@ -138,8 +138,25 @@ class ContractVersionWidget(QWidget):
             item.setData(1, Qt.UserRole, value_text)
 
     def add_json_to_tree(self, parent_item, json_data, parent_key=""):
+        """
+        Упрощённое отображение JSON в дереве.
+
+        Запись вида:
+
+            {
+                "kind": "kv",
+                "title": "Дата заключения контракта",
+                "text": "23.03.2026",
+                "hrefs": []
+            }
+
+        отображается как:
+
+            Дата заключения контракта | 23.03.2026
+        """
+
         key_translations = {
-            "title": "Заголовок",
+            "title": "Название",
             "items": "Элементы",
             "hrefs": "Ссылки",
             "all_hrefs": "Все ссылки",
@@ -150,6 +167,7 @@ class ContractVersionWidget(QWidget):
             "sign_link": "Ссылка на подпись",
             "sign_url": "Ссылка на подпись",
             "table_standalone": "Отдельная таблица",
+            "table standalone": "Отдельная таблица",
             "url": "Ссылка",
             "parsed_table": "Табличные данные",
             "rows": "Строки таблицы",
@@ -157,80 +175,176 @@ class ContractVersionWidget(QWidget):
             "doc_name": "Название документа",
             "files": "Файлы",
             "links": "Связанные ссылки",
-            "text": "Текст"
+            "text": "Текст",
+            "table": "Таблица",
+            "nested": "Вложенные данные",
+            "rows_by_index": "Строки таблицы",
+            "totals_row": "Итоговая строка",
+            "totals_summary": "Итоговая сводка",
         }
 
-        if not json_data:
+        if json_data in (None, "", [], {}):
             return
 
+        # ---------------------------------------------------------
+        # Запись вида kind == "kv"
+        # ---------------------------------------------------------
+        if isinstance(json_data, dict) and json_data.get("kind") == "kv":
+            title = json_data.get("title") or "Параметр"
+            text = json_data.get("text")
+
+            item = QTreeWidgetItem(parent_item)
+            item.setText(0, str(title))
+            item.setText(
+                1,
+                str(text) if text not in (None, "") else "Нет данных"
+            )
+
+            font = QFont()
+            font.setPointSize(10)
+            item.setFont(0, font)
+            item.setFont(1, font)
+
+            # Ссылки используются, но отдельно в дерево не выводятся
+            hrefs = json_data.get("hrefs") or []
+
+            if hrefs:
+                item.setForeground(1, Qt.blue)
+
+                link_font = QFont()
+                link_font.setPointSize(10)
+                link_font.setUnderline(True)
+                item.setFont(1, link_font)
+
+                item.setData(
+                    1,
+                    Qt.UserRole,
+                    str(hrefs[0])
+                )
+
+            return
+
+        # ---------------------------------------------------------
+        # Словарь
+        # ---------------------------------------------------------
         if isinstance(json_data, dict):
             for key, value in json_data.items():
-                if key == "null" or key is None:
-                    key = "Параметр"
 
-                if key in key_translations:
-                    display_key = key_translations[key]
-                else:
-                    display_key = str(key).replace("_", " ").capitalize()
+                # Технические поля скрываем
+                if key in ("kind", "hrefs", "all_hrefs"):
+                    continue
+
+                # Узел items пропускаем и сразу выводим его содержимое
+                if key == "items":
+                    if isinstance(value, list):
+                        for item_value in value:
+                            self.add_json_to_tree(
+                                parent_item,
+                                item_value,
+                                "items"
+                            )
+                    elif isinstance(value, dict):
+                        self.add_json_to_tree(
+                            parent_item,
+                            value,
+                            "items"
+                        )
+                    continue
+
+                # Не дублируем служебный header внутри раздела
+                if key == "header" and parent_key:
+                    continue
+
+                # Пустые поля не показываем
+                if value in (None, "", [], {}):
+                    continue
+
+                display_key = key_translations.get(
+                    key,
+                    str(key).replace("_", " ").capitalize()
+                )
 
                 if isinstance(value, (dict, list)):
                     child = QTreeWidgetItem(parent_item)
                     child.setText(0, display_key)
+
                     font = QFont()
                     font.setBold(True)
                     child.setFont(0, font)
-                    self.add_json_to_tree(child, value, key)
-                else:
-                    if key == "text":
-                        parent_item.setText(1, str(value))
-                    elif key in ("url", "sign_url", "sign_link"):
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, display_key)
-                        child.setText(1, str(value))
-                        child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
-                        child.setData(1, Qt.UserRole, str(value))
-                    elif key in ("all_hrefs", "hrefs"):
-                        pass
-                    else:
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, display_key)
-                        child.setText(1, str(value) if value is not None else "Нет данных")
 
-        elif isinstance(json_data, list):
-            for idx, item in enumerate(json_data):
-                if isinstance(item, (dict, list)):
-                    child_name = f"Запись {idx + 1}"
-                    if parent_key == "headers":
-                        child_name = f"Колонка {idx + 1}"
-                    elif parent_key in ("all_hrefs", "hrefs"):
-                        child_name = f"Ссылка {idx + 1}"
+                    self.add_json_to_tree(
+                        child,
+                        value,
+                        key
+                    )
+                else:
+                    child = QTreeWidgetItem(parent_item)
+                    child.setText(0, display_key)
+                    child.setText(1, str(value))
+
+            return
+
+        # ---------------------------------------------------------
+        # Список
+        # ---------------------------------------------------------
+        if isinstance(json_data, list):
+            for index, value in enumerate(json_data):
+
+                # kind == kv сразу становится строкой title | text
+                if (
+                        isinstance(value, dict)
+                        and value.get("kind") == "kv"
+                ):
+                    self.add_json_to_tree(
+                        parent_item,
+                        value,
+                        parent_key
+                    )
+                    continue
+
+                if isinstance(value, (dict, list)):
+                    if parent_key in ("rows", "rows_by_index"):
+                        item_name = f"Строка {index + 1}"
+                    elif parent_key == "headers":
+                        item_name = f"Колонка {index + 1}"
+                    else:
+                        item_name = f"Запись {index + 1}"
 
                     child = QTreeWidgetItem(parent_item)
-                    child.setText(0, child_name)
+                    child.setText(0, item_name)
 
-                    if parent_key in ("all_hrefs", "hrefs"):
-                        child.setText(1, str(item))
-                        child.setForeground(1, Qt.blue)
-                        font_link = QFont()
-                        font_link.setUnderline(True)
-                        child.setFont(1, font_link)
-                        child.setData(1, Qt.UserRole, str(item))
-                    else:
-                        self.add_json_to_tree(child, item, parent_key)
+                    font = QFont()
+                    font.setBold(True)
+                    child.setFont(0, font)
+
+                    self.add_json_to_tree(
+                        child,
+                        value,
+                        parent_key
+                    )
                 else:
+                    child = QTreeWidgetItem(parent_item)
+
                     if parent_key == "headers":
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Колонка {idx + 1}")
-                        child.setText(1, str(item) if item is not None else "Нет данных")
+                        child.setText(
+                            0,
+                            f"Колонка {index + 1}"
+                        )
                     else:
-                        child = QTreeWidgetItem(parent_item)
-                        child.setText(0, f"Элемент {idx + 1}")
-                        child.setText(1, str(item) if item is not None else "Нет данных")
-        else:
-            parent_item.setText(1, str(json_data))
+                        child.setText(
+                            0,
+                            f"Элемент {index + 1}"
+                        )
+
+                    child.setText(
+                        1,
+                        str(value) if value is not None else "Нет данных"
+                    )
+
+            return
+
+        # Простое скалярное значение
+        parent_item.setText(1, str(json_data))
 
     def show_current_version(self):
         self.tree.clear()
@@ -288,14 +402,32 @@ class ContractVersionWidget(QWidget):
             ]
 
             for section_name, json_string in json_fields:
-                self.add_section_to_table(section_name, expanded=False)
+                self.add_section_to_table(
+                    section_name,
+                    expanded=False
+                )
 
-                if json_string and str(json_string).strip() not in ("", "None", "-", "[]", "{}"):
+                if json_string and str(json_string).strip() not in (
+                        "",
+                        "None",
+                        "-",
+                        "[]",
+                        "{}"
+                ):
                     try:
                         parsed_json = json.loads(json_string)
-                        self.add_json_to_tree(self.current_parent, parsed_json)
+
+                        # items пропускается внутри add_json_to_tree
+                        self.add_json_to_tree(
+                            self.current_parent,
+                            parsed_json
+                        )
+
                     except json.JSONDecodeError:
-                        self.add_row_to_table("Данные", str(json_string))
+                        self.add_row_to_table(
+                            "Содержимое JSON",
+                            str(json_string)
+                        )
                 else:
                     self.add_row_to_table("Данные", "Нет данных")
 
